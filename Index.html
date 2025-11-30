@@ -13,7 +13,6 @@
         /* TEMA ESCURO */
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; }
         
-        /* Estilos dos Cards */
         .dark-card { background-color: #1f2937; border: 1px solid #374151; }
         .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; }
         .dark-input:focus { border-color: #FBBF24; outline: none; }
@@ -62,6 +61,10 @@
                     <input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-3 uppercase" placeholder="ABC-1234">
                 </div>
             </div>
+             <div>
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Foto do CRLV (Doc da Moto)</label>
+                <input type="file" id="cad-crlv-foto" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"/>
+            </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
@@ -69,9 +72,13 @@
                     <input type="text" id="cad-cpf" class="w-full dark-input rounded-lg p-3" placeholder="000.000.000-00">
                 </div>
                 <div>
-                    <label class="text-[10px] uppercase font-bold text-gray-500">CNH ou RG</label>
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Nº CNH ou RG</label>
                     <input type="text" id="cad-doc" class="w-full dark-input rounded-lg p-3" placeholder="Número">
                 </div>
+            </div>
+             <div>
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Foto da CNH ou RG (Frente e Verso)</label>
+                <input type="file" id="cad-doc-foto" accept="image/*" multiple class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"/>
             </div>
 
             <div>
@@ -167,9 +174,8 @@
             btnAtivo.classList.add('bg-gray-700', 'text-white');
         }
 
-        // --- CADASTRO (SHEETMONKEY + WHATSAPP) ---
+        // --- CADASTRO (COM AVISO DE FOTOS) ---
         function enviarCadastro() {
-            // 1. Coleta os Dados Novos
             const nome = document.getElementById('cad-nome').value;
             const zap = document.getElementById('cad-zap').value;
             const placa = document.getElementById('cad-placa').value;
@@ -177,16 +183,21 @@
             const doc = document.getElementById('cad-doc').value;
             const disp = document.getElementById('cad-disp').value;
 
-            if(!nome || !zap || !placa) { alert("Preencha os campos principais!"); return; }
+            // Verifica se selecionou fotos (apenas para avisar no zap)
+            const temFotoCRLV = document.getElementById('cad-crlv-foto').files.length > 0;
+            const temFotoDoc = document.getElementById('cad-doc-foto').files.length > 0;
+
+            if(!nome || !zap || !placa || !cpf) { alert("Preencha os campos obrigatórios!"); return; }
+            if(!temFotoCRLV || !temFotoDoc) { alert("Por favor, selecione as fotos dos documentos antes de enviar."); return; }
 
             const btn = document.getElementById('btn-enviar-cad');
             const textoOriginal = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
             btn.disabled = true;
 
-            // 2. Monta o Pacote para a Planilha (USE ESSES NOMES NA PLANILHA)
+            // DADOS APENAS DE TEXTO PARA A PLANILHA
             const dadosParaPlanilha = {
-                'x-sheetmonkey-insert-worksheet': 'Motoboys', // Vai para a aba Motoboys
+                'x-sheetmonkey-insert-worksheet': 'Motoboys',
                 'Data': new Date().toLocaleString('pt-BR'),
                 'Nome': nome,
                 'WhatsApp': zap,
@@ -196,29 +207,29 @@
                 'Disponibilidade': disp
             };
 
-            // -------------------------------------------------------------
-            // COLOQUE SEU LINK DO SHEETMONKEY AQUI
+            // SEU LINK DO SHEETMONKEY AQUI
             const urlSheetMonkey = "https://api.sheetmonkey.io/form/SEU_CODIGO_AQUI";
-            // -------------------------------------------------------------
 
-            // 3. Envia para a Nuvem
             fetch(urlSheetMonkey, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dadosParaPlanilha)
             }).then(() => {
                 
-                // 4. Abre o WhatsApp do Admin
                 const numAdmin = "5511999999999"; // SEU NÚMERO AQUI
                 
-                const textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A` +
+                // Mensagem do WhatsApp com aviso das fotos
+                let textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A` +
                                  `👤 *Nome:* ${nome}%0A` +
                                  `📱 *Zap:* ${zap}%0A` +
                                  `🛵 *Placa:* ${placa}%0A` +
                                  `📄 *CPF:* ${cpf}%0A` +
                                  `🆔 *Doc:* ${doc}%0A` +
-                                 `🕒 *Disp:* ${disp}%0A%0A` +
-                                 `_Dados salvos na planilha!_`;
+                                 `🕒 *Disp:* ${disp}%0A` +
+                                 `-----------------------%0A` +
+                                 `📸 *ATENÇÃO:* Estou com as fotos do CRLV e CNH/RG prontas para enviar aqui no WhatsApp!%0A` +
+                                 `-----------------------%0A` +
+                                 `_Ficha de texto salva no sistema._`;
 
                 window.open(`https://wa.me/${numAdmin}?text=${textoZap}`, '_blank');
                 
@@ -227,9 +238,8 @@
 
             }).catch(erro => {
                 console.error('Erro:', erro);
-                // Fallback
                 const numAdmin = "5511999999999"; 
-                window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}`, '_blank');
+                window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}. Tenho fotos para mandar.`, '_blank');
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
             });
@@ -258,4 +268,5 @@
         }
     </script>
 </body>
-</html>
+    </html>
+                    
