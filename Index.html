@@ -44,7 +44,7 @@
 
     <div id="aba-cadastro" class="w-full max-w-md dark-card rounded-2xl p-5 shadow-2xl fade-in">
         <h2 class="text-lg font-bold text-white mb-1">Novo por aqui?</h2>
-        <p class="text-xs text-gray-400 mb-4">Seus dados serão salvos no nosso sistema.</p>
+        <p class="text-xs text-gray-400 mb-4">Envie seus documentos para análise.</p>
         
         <div class="space-y-4">
             <div>
@@ -58,14 +58,30 @@
                     <input type="text" id="cad-zap" class="w-full dark-input rounded-lg p-3" placeholder="(00) 00000-0000">
                 </div>
                 <div>
-                    <label class="text-[10px] uppercase font-bold text-gray-500">Modelo Moto</label>
-                    <input type="text" id="cad-moto" class="w-full dark-input rounded-lg p-3" placeholder="Ex: Fan 160">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Placa da Moto</label>
+                    <input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-3 uppercase" placeholder="ABC-1234">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500">CPF</label>
+                    <input type="text" id="cad-cpf" class="w-full dark-input rounded-lg p-3" placeholder="000.000.000-00">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500">CNH ou RG</label>
+                    <input type="text" id="cad-doc" class="w-full dark-input rounded-lg p-3" placeholder="Número">
                 </div>
             </div>
 
             <div>
-                <label class="text-[10px] uppercase font-bold text-gray-500">Chave PIX (Para receber)</label>
-                <input type="text" id="cad-pix" class="w-full dark-input rounded-lg p-3" placeholder="CPF, Celular ou Email">
+                <label class="text-[10px] uppercase font-bold text-gray-500">Disponibilidade</label>
+                <select id="cad-disp" class="w-full dark-input rounded-lg p-3 text-white">
+                    <option value="Integral">Integral (Dia todo)</option>
+                    <option value="Noite">Apenas Noite</option>
+                    <option value="Fim de Semana">Fim de Semana</option>
+                    <option value="Extra">Renda Extra</option>
+                </select>
             </div>
 
             <button onclick="enviarCadastro()" id="btn-enviar-cad" class="w-full bg-yellow-400 text-black font-bold py-3 rounded-xl shadow-lg hover:bg-yellow-300 transform active:scale-95 transition flex justify-center items-center gap-2 mt-2">
@@ -133,8 +149,12 @@
     </div>
 
     <script>
-        $(document).ready(function(){ $('#cad-zap').mask('(00) 00000-0000'); });
+        $(document).ready(function(){ 
+            $('#cad-zap').mask('(00) 00000-0000'); 
+            $('#cad-cpf').mask('000.000.000-00'); 
+        });
 
+        // --- NAVEGAÇÃO ---
         function mudarAba(abaNome) {
             ['cadastro', 'tutorial', 'calc'].forEach(aba => {
                 document.getElementById('aba-' + aba).classList.add('hidden');
@@ -147,41 +167,58 @@
             btnAtivo.classList.add('bg-gray-700', 'text-white');
         }
 
-        // --- FUNÇÃO DE CADASTRO COM DESTINO ESPECÍFICO ---
+        // --- CADASTRO (SHEETMONKEY + WHATSAPP) ---
         function enviarCadastro() {
+            // 1. Coleta os Dados Novos
             const nome = document.getElementById('cad-nome').value;
             const zap = document.getElementById('cad-zap').value;
-            const moto = document.getElementById('cad-moto').value;
-            const pix = document.getElementById('cad-pix').value;
+            const placa = document.getElementById('cad-placa').value;
+            const cpf = document.getElementById('cad-cpf').value;
+            const doc = document.getElementById('cad-doc').value;
+            const disp = document.getElementById('cad-disp').value;
 
-            if(!nome || !zap) { alert("Preencha Nome e WhatsApp!"); return; }
+            if(!nome || !zap || !placa) { alert("Preencha os campos principais!"); return; }
 
             const btn = document.getElementById('btn-enviar-cad');
             const textoOriginal = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
             btn.disabled = true;
 
-            // DADOS PARA A PLANILHA
+            // 2. Monta o Pacote para a Planilha (USE ESSES NOMES NA PLANILHA)
             const dadosParaPlanilha = {
-                'x-sheetmonkey-insert-worksheet': 'Motoboys', // <--- O PULO DO GATO: MANDA PARA A NOVA ABA
+                'x-sheetmonkey-insert-worksheet': 'Motoboys', // Vai para a aba Motoboys
                 'Data': new Date().toLocaleString('pt-BR'),
                 'Nome': nome,
                 'WhatsApp': zap,
-                'Moto': moto,
-                'Pix': pix
+                'Placa': placa,
+                'Documento': doc,
+                'CPF': cpf,
+                'Disponibilidade': disp
             };
 
-            // SEU LINK DO SHEETMONKEY AQUI (Pode ser o mesmo do outro site)
-            const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr";
+            // -------------------------------------------------------------
+            // COLOQUE SEU LINK DO SHEETMONKEY AQUI
+            const urlSheetMonkey = "https://api.sheetmonkey.io/form/SEU_CODIGO_AQUI";
+            // -------------------------------------------------------------
 
+            // 3. Envia para a Nuvem
             fetch(urlSheetMonkey, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dadosParaPlanilha)
             }).then(() => {
                 
-                const numAdmin = "5584982005039"; // SEU NÚMERO
-                const textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A👤 *Nome:* ${nome}%0A📱 *Zap:* ${zap}%0A🛵 *Moto:* ${moto}%0A💠 *PIX:* ${pix}%0A%0A_Dados salvos na planilha!_`;
+                // 4. Abre o WhatsApp do Admin
+                const numAdmin = "5511999999999"; // SEU NÚMERO AQUI
+                
+                const textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A` +
+                                 `👤 *Nome:* ${nome}%0A` +
+                                 `📱 *Zap:* ${zap}%0A` +
+                                 `🛵 *Placa:* ${placa}%0A` +
+                                 `📄 *CPF:* ${cpf}%0A` +
+                                 `🆔 *Doc:* ${doc}%0A` +
+                                 `🕒 *Disp:* ${disp}%0A%0A` +
+                                 `_Dados salvos na planilha!_`;
 
                 window.open(`https://wa.me/${numAdmin}?text=${textoZap}`, '_blank');
                 
@@ -190,14 +227,15 @@
 
             }).catch(erro => {
                 console.error('Erro:', erro);
-                // Fallback caso a planilha falhe
-                const numAdmin = "5584982005039"; 
+                // Fallback
+                const numAdmin = "5511999999999"; 
                 window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}`, '_blank');
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
             });
         }
 
+        // --- CALCULADORA ---
         let total = 0;
         let qtd = 0;
 
@@ -220,5 +258,4 @@
         }
     </script>
 </body>
-                </html>
-    
+</html>
