@@ -17,6 +17,15 @@
         .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; }
         .dark-input:focus { border-color: #FBBF24; outline: none; }
 
+        /* Estilo dos Checkboxes Personalizados */
+        .checkbox-label {
+            display: flex; align-items: center; gap: 8px;
+            background-color: #111827; padding: 10px; border-radius: 8px; border: 1px solid #4b5563;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .checkbox-label:hover { border-color: #FBBF24; }
+        .custom-checkbox { accent-color: #FBBF24; width: 18px; height: 18px; }
+
         /* Destaque do Protocolo */
         .msg-zap { background-color: #075E54; color: white; border-radius: 0 10px 10px 10px; padding: 10px; font-size: 13px; border-left: 4px solid #25D366; }
         .codigo-destaque { background-color: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #FBBF24; font-weight: bold; }
@@ -87,16 +96,17 @@
             </div>
 
             <div>
-                <label class="text-[10px] uppercase font-bold text-gray-500">Disponibilidade</label>
-                <select id="cad-disp" class="w-full dark-input rounded-lg p-3 text-white">
-                    <option value="Integral">Integral (Dia todo)</option>
-                    <option value="Noite">Apenas Noite</option>
-                    <option value="Fim de Semana">Fim de Semana</option>
-                    <option value="Extra">Renda Extra</option>
-                </select>
+                <label class="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Disponibilidade (Marque todas)</label>
+                <div class="grid grid-cols-2 gap-2 text-sm text-gray-300">
+                    <label class="checkbox-label"><input type="checkbox" name="disp" value="Manhã" class="custom-checkbox"> Manhã</label>
+                    <label class="checkbox-label"><input type="checkbox" name="disp" value="Tarde" class="custom-checkbox"> Tarde</label>
+                    <label class="checkbox-label"><input type="checkbox" name="disp" value="Noite" class="custom-checkbox"> Noite</label>
+                    <label class="checkbox-label"><input type="checkbox" name="disp" value="Integral (Dia Todo)" class="custom-checkbox"> Integral</label>
+                    <label class="checkbox-label col-span-2"><input type="checkbox" name="disp" value="Renda Extra" class="custom-checkbox"> Renda Extra</label>
+                </div>
             </div>
 
-            <button onclick="enviarCadastro()" id="btn-enviar-cad" class="w-full bg-yellow-400 text-black font-bold py-3 rounded-xl shadow-lg hover:bg-yellow-300 transform active:scale-95 transition flex justify-center items-center gap-2 mt-2">
+            <button onclick="enviarCadastro()" id="btn-enviar-cad" class="w-full bg-yellow-400 text-black font-bold py-3 rounded-xl shadow-lg hover:bg-yellow-300 transform active:scale-95 transition flex justify-center items-center gap-2 mt-4">
                 <i class="fab fa-whatsapp text-xl"></i> Enviar Ficha
             </button>
         </div>
@@ -179,29 +189,37 @@
             btnAtivo.classList.add('bg-gray-700', 'text-white');
         }
 
-        // --- CADASTRO (COM PIX E AVISO DE FOTOS) ---
+        // --- CADASTRO (COM MÚLTIPLA ESCOLHA) ---
         function enviarCadastro() {
             const nome = document.getElementById('cad-nome').value;
             const zap = document.getElementById('cad-zap').value;
             const placa = document.getElementById('cad-placa').value;
             const cpf = document.getElementById('cad-cpf').value;
             const doc = document.getElementById('cad-doc').value;
-            const pix = document.getElementById('cad-pix').value; // Novo Campo
-            const disp = document.getElementById('cad-disp').value;
+            const pix = document.getElementById('cad-pix').value;
 
-            // Verifica fotos
+            // COLETAR OPÇÕES DE DISPONIBILIDADE
+            let checkboxes = document.querySelectorAll('input[name="disp"]:checked');
+            let dispArray = [];
+            checkboxes.forEach((checkbox) => { dispArray.push(checkbox.value); });
+            
+            // Transforma array em string (Ex: "Manhã, Tarde")
+            let dispFinal = dispArray.join(", ");
+
+            // Validações
             const temFotoCRLV = document.getElementById('cad-crlv-foto').files.length > 0;
             const temFotoDoc = document.getElementById('cad-doc-foto').files.length > 0;
 
             if(!nome || !zap || !placa || !cpf || !pix) { alert("Preencha todos os campos!"); return; }
-            if(!temFotoCRLV || !temFotoDoc) { alert("Por favor, selecione as fotos dos documentos antes de enviar."); return; }
+            if(dispFinal === "") { alert("Marque pelo menos uma disponibilidade!"); return; }
+            if(!temFotoCRLV || !temFotoDoc) { alert("Por favor, selecione as fotos dos documentos."); return; }
 
             const btn = document.getElementById('btn-enviar-cad');
             const textoOriginal = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
             btn.disabled = true;
 
-            // DADOS PARA A PLANILHA (Certifique-se que as colunas existem)
+            // DADOS PARA A PLANILHA
             const dadosParaPlanilha = {
                 'x-sheetmonkey-insert-worksheet': 'Motoboys',
                 'Data': new Date().toLocaleString('pt-BR'),
@@ -211,7 +229,7 @@
                 'Documento': doc,
                 'CPF': cpf,
                 'Pix': pix,
-                'Disponibilidade': disp
+                'Disponibilidade': dispFinal // Agora envia a lista de horários
             };
 
             // SEU LINK DO SHEETMONKEY
@@ -223,18 +241,17 @@
                 body: JSON.stringify(dadosParaPlanilha)
             }).then(() => {
                 
-                const numAdmin = "5584982005039"; // SEU NÚMERO AQUI
+                const numAdmin = "5584982005039"; // SEU NÚMERO
                 
-                // Mensagem com PIX e aviso de fotos
                 let textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A` +
                                  `👤 *Nome:* ${nome}%0A` +
                                  `📱 *Zap:* ${zap}%0A` +
                                  `🛵 *Placa:* ${placa}%0A` +
                                  `📄 *CPF:* ${cpf}%0A` +
                                  `💠 *PIX:* ${pix}%0A` +
-                                 `🕒 *Disp:* ${disp}%0A` +
+                                 `🕒 *Disp:* ${dispFinal}%0A` +
                                  `-----------------------%0A` +
-                                 `📸 *ATENÇÃO:* Estou com as fotos do CRLV e CNH/RG prontas para enviar aqui!%0A` +
+                                 `📸 *ATENÇÃO:* Estou com as fotos do CRLV e CNH/RG prontas para enviar!%0A` +
                                  `-----------------------%0A` +
                                  `_Ficha salva no sistema._`;
 
@@ -246,7 +263,7 @@
             }).catch(erro => {
                 console.error('Erro:', erro);
                 const numAdmin = "5584982005039"; 
-                window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}. Tenho fotos e PIX ${pix}.`, '_blank');
+                window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}`, '_blank');
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
             });
@@ -275,5 +292,4 @@
         }
     </script>
 </body>
-    </html>
-    
+</html>
