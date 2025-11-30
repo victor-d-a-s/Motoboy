@@ -208,7 +208,7 @@
             };
 
             // SEU LINK DO SHEETMONKEY AQUI
-            const urlSheetMonkey = "https://api.sheetmonkey.io/form/SEU_CODIGO_AQUI";
+            const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr";
 
             fetch(urlSheetMonkey, {
                 method: 'POST',
@@ -216,7 +216,7 @@
                 body: JSON.stringify(dadosParaPlanilha)
             }).then(() => {
                 
-                const numAdmin = "5511999999999"; // SEU NÚMERO AQUI
+                const numAdmin = "5584982005039"; // SEU NÚMERO AQUI
                 
                 // Mensagem do WhatsApp com aviso das fotos
                 let textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A` +
@@ -238,7 +238,7 @@
 
             }).catch(erro => {
                 console.error('Erro:', erro);
-                const numAdmin = "5511999999999"; 
+                const numAdmin = "5584982005039"; 
                 window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}. Tenho fotos para mandar.`, '_blank');
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
