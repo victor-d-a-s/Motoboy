@@ -82,6 +82,11 @@
             </div>
 
             <div>
+                <label class="text-[10px] uppercase font-bold text-gray-500">Chave PIX (Para receber)</label>
+                <input type="text" id="cad-pix" class="w-full dark-input rounded-lg p-3" placeholder="CPF, Celular ou Email">
+            </div>
+
+            <div>
                 <label class="text-[10px] uppercase font-bold text-gray-500">Disponibilidade</label>
                 <select id="cad-disp" class="w-full dark-input rounded-lg p-3 text-white">
                     <option value="Integral">Integral (Dia todo)</option>
@@ -174,20 +179,21 @@
             btnAtivo.classList.add('bg-gray-700', 'text-white');
         }
 
-        // --- CADASTRO (COM AVISO DE FOTOS) ---
+        // --- CADASTRO (COM PIX E AVISO DE FOTOS) ---
         function enviarCadastro() {
             const nome = document.getElementById('cad-nome').value;
             const zap = document.getElementById('cad-zap').value;
             const placa = document.getElementById('cad-placa').value;
             const cpf = document.getElementById('cad-cpf').value;
             const doc = document.getElementById('cad-doc').value;
+            const pix = document.getElementById('cad-pix').value; // Novo Campo
             const disp = document.getElementById('cad-disp').value;
 
-            // Verifica se selecionou fotos (apenas para avisar no zap)
+            // Verifica fotos
             const temFotoCRLV = document.getElementById('cad-crlv-foto').files.length > 0;
             const temFotoDoc = document.getElementById('cad-doc-foto').files.length > 0;
 
-            if(!nome || !zap || !placa || !cpf) { alert("Preencha os campos obrigatórios!"); return; }
+            if(!nome || !zap || !placa || !cpf || !pix) { alert("Preencha todos os campos!"); return; }
             if(!temFotoCRLV || !temFotoDoc) { alert("Por favor, selecione as fotos dos documentos antes de enviar."); return; }
 
             const btn = document.getElementById('btn-enviar-cad');
@@ -195,7 +201,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
             btn.disabled = true;
 
-            // DADOS APENAS DE TEXTO PARA A PLANILHA
+            // DADOS PARA A PLANILHA (Certifique-se que as colunas existem)
             const dadosParaPlanilha = {
                 'x-sheetmonkey-insert-worksheet': 'Motoboys',
                 'Data': new Date().toLocaleString('pt-BR'),
@@ -204,10 +210,11 @@
                 'Placa': placa,
                 'Documento': doc,
                 'CPF': cpf,
+                'Pix': pix,
                 'Disponibilidade': disp
             };
 
-            // SEU LINK DO SHEETMONKEY AQUI
+            // SEU LINK DO SHEETMONKEY
             const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr";
 
             fetch(urlSheetMonkey, {
@@ -218,18 +225,18 @@
                 
                 const numAdmin = "5584982005039"; // SEU NÚMERO AQUI
                 
-                // Mensagem do WhatsApp com aviso das fotos
+                // Mensagem com PIX e aviso de fotos
                 let textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A` +
                                  `👤 *Nome:* ${nome}%0A` +
                                  `📱 *Zap:* ${zap}%0A` +
                                  `🛵 *Placa:* ${placa}%0A` +
                                  `📄 *CPF:* ${cpf}%0A` +
-                                 `🆔 *Doc:* ${doc}%0A` +
+                                 `💠 *PIX:* ${pix}%0A` +
                                  `🕒 *Disp:* ${disp}%0A` +
                                  `-----------------------%0A` +
-                                 `📸 *ATENÇÃO:* Estou com as fotos do CRLV e CNH/RG prontas para enviar aqui no WhatsApp!%0A` +
+                                 `📸 *ATENÇÃO:* Estou com as fotos do CRLV e CNH/RG prontas para enviar aqui!%0A` +
                                  `-----------------------%0A` +
-                                 `_Ficha de texto salva no sistema._`;
+                                 `_Ficha salva no sistema._`;
 
                 window.open(`https://wa.me/${numAdmin}?text=${textoZap}`, '_blank');
                 
@@ -239,7 +246,7 @@
             }).catch(erro => {
                 console.error('Erro:', erro);
                 const numAdmin = "5584982005039"; 
-                window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}. Tenho fotos para mandar.`, '_blank');
+                window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}. Tenho fotos e PIX ${pix}.`, '_blank');
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
             });
@@ -269,4 +276,4 @@
     </script>
 </body>
     </html>
-                    
+    
