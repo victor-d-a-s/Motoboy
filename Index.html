@@ -17,7 +17,6 @@
         .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; }
         .dark-input:focus { border-color: #FBBF24; outline: none; }
 
-        /* Estilo dos Checkboxes Personalizados */
         .checkbox-label {
             display: flex; align-items: center; gap: 8px;
             background-color: #111827; padding: 10px; border-radius: 8px; border: 1px solid #4b5563;
@@ -26,7 +25,6 @@
         .checkbox-label:hover { border-color: #FBBF24; }
         .custom-checkbox { accent-color: #FBBF24; width: 18px; height: 18px; }
 
-        /* Destaque do Protocolo */
         .msg-zap { background-color: #075E54; color: white; border-radius: 0 10px 10px 10px; padding: 10px; font-size: 13px; border-left: 4px solid #25D366; }
         .codigo-destaque { background-color: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #FBBF24; font-weight: bold; }
         
@@ -67,7 +65,7 @@
                 </div>
                 <div>
                     <label class="text-[10px] uppercase font-bold text-gray-500">Placa da Moto</label>
-                    <input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-3 uppercase" placeholder="ABC-1234">
+                    <input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-3 uppercase font-bold" placeholder="ABC-1234" maxlength="8">
                 </div>
             </div>
              <div>
@@ -101,7 +99,7 @@
                     <label class="checkbox-label"><input type="checkbox" name="disp" value="Manhã" class="custom-checkbox"> Manhã</label>
                     <label class="checkbox-label"><input type="checkbox" name="disp" value="Tarde" class="custom-checkbox"> Tarde</label>
                     <label class="checkbox-label"><input type="checkbox" name="disp" value="Noite" class="custom-checkbox"> Noite</label>
-                    <label class="checkbox-label"><input type="checkbox" name="disp" value="Integral (Dia Todo)" class="custom-checkbox"> Integral</label>
+                    <label class="checkbox-label"><input type="checkbox" name="disp" value="Integral" class="custom-checkbox"> Integral</label>
                     <label class="checkbox-label col-span-2"><input type="checkbox" name="disp" value="Renda Extra" class="custom-checkbox"> Renda Extra</label>
                 </div>
             </div>
@@ -113,38 +111,18 @@
     </div>
 
     <div id="aba-tutorial" class="w-full max-w-md dark-card rounded-2xl p-5 shadow-2xl fade-in hidden">
-        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <i class="fas fa-info-circle text-yellow-400"></i> Entendendo o Valor
-        </h2>
-        
+        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-yellow-400"></i> Entendendo o Valor</h2>
         <div class="space-y-4">
-            <p class="text-sm text-gray-300">Quando receber um pedido no grupo, o <strong>seu valor</strong> estará escondido no final da mensagem, no campo "Prot".</p>
-
+            <p class="text-sm text-gray-300">Quando receber um pedido, seu valor estará no campo "Prot".</p>
             <div class="msg-zap">
                 <p class="font-bold text-xs text-green-300 mb-1">Mensagem do Pedido:</p>
                 <p>📍 Retirada: Shopping...</p>
-                <p>🏁 Entrega: Centro...</p>
                 <p>💰 Pagamento: PIX</p>
                 <p class="mt-2">🔑 Prot: <span class="codigo-destaque">#01450</span></p>
             </div>
-
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                <h3 class="font-bold text-white mb-2 text-center text-sm">COMO LER O CÓDIGO?</h3>
-                <div class="flex justify-between items-center text-sm border-b border-gray-700 pb-2 mb-2">
-                    <span class="text-gray-400">#01450</span>
-                    <i class="fas fa-arrow-right text-gray-600"></i>
-                    <span class="text-green-400 font-bold">R$ 14,50</span>
-                </div>
-                <div class="flex justify-between items-center text-sm border-b border-gray-700 pb-2 mb-2">
-                    <span class="text-gray-400">#00800</span>
-                    <i class="fas fa-arrow-right text-gray-600"></i>
-                    <span class="text-green-400 font-bold">R$ 8,00</span>
-                </div>
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-gray-400">#02200</span>
-                    <i class="fas fa-arrow-right text-gray-600"></i>
-                    <span class="text-green-400 font-bold">R$ 22,00</span>
-                </div>
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 text-sm">
+                <p class="mb-2"><span class="text-gray-400">#01450</span> ➔ <span class="text-green-400 font-bold">R$ 14,50</span></p>
+                <p><span class="text-gray-400">#00800</span> ➔ <span class="text-green-400 font-bold">R$ 8,00</span></p>
             </div>
         </div>
     </div>
@@ -152,31 +130,29 @@
     <div id="aba-calc" class="w-full max-w-md dark-card rounded-2xl p-5 shadow-2xl fade-in hidden">
         <h2 class="text-lg font-bold text-white mb-1">Calculadora Diária</h2>
         <p class="text-xs text-gray-400 mb-4">Some os valores do "Prot" aqui.</p>
-
         <div class="flex gap-2 mb-4">
             <input type="number" id="valor-corrida" class="flex-1 dark-input rounded-lg p-3 text-lg font-bold text-center text-white placeholder-gray-600" placeholder="0.00">
             <button onclick="somarCorrida()" class="bg-green-600 hover:bg-green-500 text-white px-6 rounded-lg font-bold text-xl shadow-lg active:scale-95 transition">+</button>
         </div>
-
-        <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 mb-4 text-center relative overflow-hidden">
-            <div class="absolute inset-0 opacity-10 bg-green-500 blur-xl"></div>
-            <p class="text-gray-400 text-xs uppercase tracking-widest mb-1 relative z-10">Faturamento Hoje</p>
-            <p id="total-ganho" class="text-green-400 font-bold text-4xl relative z-10">R$ 0,00</p>
-            <p class="text-gray-500 text-xs mt-2 relative z-10"><span id="qtd-corridas">0</span> entregas realizadas</p>
+        <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 mb-4 text-center">
+            <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Faturamento Hoje</p>
+            <p id="total-ganho" class="text-green-400 font-bold text-4xl">R$ 0,00</p>
+            <p class="text-gray-500 text-xs mt-2"><span id="qtd-corridas">0</span> entregas realizadas</p>
         </div>
-
-        <button onclick="limparCalculadora()" class="w-full border border-red-900/50 text-red-400 text-xs py-3 rounded-lg hover:bg-red-900/20 transition">
-            <i class="fas fa-trash-alt mr-1"></i> Zerar Calculadora
-        </button>
+        <button onclick="limparCalculadora()" class="w-full border border-red-900/50 text-red-400 text-xs py-3 rounded-lg hover:bg-red-900/20 transition"><i class="fas fa-trash-alt mr-1"></i> Zerar Calculadora</button>
     </div>
 
     <script>
         $(document).ready(function(){ 
             $('#cad-zap').mask('(00) 00000-0000'); 
             $('#cad-cpf').mask('000.000.000-00'); 
+            
+            // Força Placa Maiúscula
+            $('#cad-placa').on('input', function() {
+                $(this).val($(this).val().toUpperCase());
+            });
         });
 
-        // --- NAVEGAÇÃO ---
         function mudarAba(abaNome) {
             ['cadastro', 'tutorial', 'calc'].forEach(aba => {
                 document.getElementById('aba-' + aba).classList.add('hidden');
@@ -189,7 +165,48 @@
             btnAtivo.classList.add('bg-gray-700', 'text-white');
         }
 
-        // --- CADASTRO (COM MÚLTIPLA ESCOLHA) ---
+        // --- VALIDAÇÃO DE CPF (Algoritmo Real) ---
+        function validarCPF(cpf) {
+            cpf = cpf.replace(/[^\d]+/g, '');
+            if (cpf == '') return false;
+            // Elimina CPFs invalidos conhecidos
+            if (cpf.length != 11 || 
+                cpf == "00000000000" || 
+                cpf == "11111111111" || 
+                cpf == "22222222222" || 
+                cpf == "33333333333" || 
+                cpf == "44444444444" || 
+                cpf == "55555555555" || 
+                cpf == "66666666666" || 
+                cpf == "77777777777" || 
+                cpf == "88888888888" || 
+                cpf == "99999999999")
+                    return false;
+            // Valida 1o digito
+            let add = 0;
+            for (let i=0; i < 9; i ++) add += parseInt(cpf.charAt(i)) * (10 - i);
+            let rev = 11 - (add % 11);
+            if (rev == 10 || rev == 11) rev = 0;
+            if (rev != parseInt(cpf.charAt(9))) return false;
+            // Valida 2o digito
+            add = 0;
+            for (let i = 0; i < 10; i ++) add += parseInt(cpf.charAt(i)) * (11 - i);
+            rev = 11 - (add % 11);
+            if (rev == 10 || rev == 11) rev = 0;
+            if (rev != parseInt(cpf.charAt(10))) return false;
+            return true;
+        }
+
+        // --- VALIDAÇÃO DE PLACA (Mercosul e Antiga) ---
+        function validarPlaca(placa) {
+            // Remove traços
+            const limpa = placa.replace('-', '');
+            // Padrão Antigo: AAA1234 | Padrão Mercosul: AAA1A23
+            const regexPlaca = /^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$/;
+            return regexPlaca.test(limpa);
+        }
+
+        // --- CADASTRO ---
         function enviarCadastro() {
             const nome = document.getElementById('cad-nome').value;
             const zap = document.getElementById('cad-zap').value;
@@ -198,28 +215,35 @@
             const doc = document.getElementById('cad-doc').value;
             const pix = document.getElementById('cad-pix').value;
 
-            // COLETAR OPÇÕES DE DISPONIBILIDADE
+            // Disponibilidade
             let checkboxes = document.querySelectorAll('input[name="disp"]:checked');
             let dispArray = [];
             checkboxes.forEach((checkbox) => { dispArray.push(checkbox.value); });
-            
-            // Transforma array em string (Ex: "Manhã, Tarde")
             let dispFinal = dispArray.join(", ");
 
-            // Validações
+            // Validações Básicas
             const temFotoCRLV = document.getElementById('cad-crlv-foto').files.length > 0;
             const temFotoDoc = document.getElementById('cad-doc-foto').files.length > 0;
 
             if(!nome || !zap || !placa || !cpf || !pix) { alert("Preencha todos os campos!"); return; }
-            if(dispFinal === "") { alert("Marque pelo menos uma disponibilidade!"); return; }
-            if(!temFotoCRLV || !temFotoDoc) { alert("Por favor, selecione as fotos dos documentos."); return; }
+            if(dispFinal === "") { alert("Marque a disponibilidade!"); return; }
+            if(!temFotoCRLV || !temFotoDoc) { alert("Selecione as fotos dos documentos."); return; }
+
+            // VALIDAÇÕES AVANÇADAS
+            if(!validarCPF(cpf)) {
+                alert("CPF Inválido! Verifique os números.");
+                return;
+            }
+            if(!validarPlaca(placa)) {
+                alert("Placa Inválida! Use o formato AAA-1234 ou Mercosul.");
+                return;
+            }
 
             const btn = document.getElementById('btn-enviar-cad');
             const textoOriginal = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
             btn.disabled = true;
 
-            // DADOS PARA A PLANILHA
             const dadosParaPlanilha = {
                 'x-sheetmonkey-insert-worksheet': 'Motoboys',
                 'Data': new Date().toLocaleString('pt-BR'),
@@ -229,11 +253,10 @@
                 'Documento': doc,
                 'CPF': cpf,
                 'Pix': pix,
-                'Disponibilidade': dispFinal // Agora envia a lista de horários
+                'Disponibilidade': dispFinal
             };
 
-            // SEU LINK DO SHEETMONKEY
-            const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr";
+            const urlSheetMonkey = "https://api.sheetmonkey.io/form/SEU_CODIGO_AQUI"; // SEU LINK
 
             fetch(urlSheetMonkey, {
                 method: 'POST',
@@ -241,7 +264,7 @@
                 body: JSON.stringify(dadosParaPlanilha)
             }).then(() => {
                 
-                const numAdmin = "5584982005039"; // SEU NÚMERO
+                const numAdmin = "5511999999999"; // SEU NÚMERO
                 
                 let textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A` +
                                  `👤 *Nome:* ${nome}%0A` +
@@ -251,18 +274,17 @@
                                  `💠 *PIX:* ${pix}%0A` +
                                  `🕒 *Disp:* ${dispFinal}%0A` +
                                  `-----------------------%0A` +
-                                 `📸 *ATENÇÃO:* Estou com as fotos do CRLV e CNH/RG prontas para enviar!%0A` +
+                                 `📸 *ATENÇÃO:* Fotos do CRLV e CNH/RG prontas para enviar!%0A` +
                                  `-----------------------%0A` +
                                  `_Ficha salva no sistema._`;
 
                 window.open(`https://wa.me/${numAdmin}?text=${textoZap}`, '_blank');
-                
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
 
             }).catch(erro => {
                 console.error('Erro:', erro);
-                const numAdmin = "5584982005039"; 
+                const numAdmin = "5511999999999"; 
                 window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}`, '_blank');
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
@@ -270,9 +292,7 @@
         }
 
         // --- CALCULADORA ---
-        let total = 0;
-        let qtd = 0;
-
+        let total = 0; let qtd = 0;
         function somarCorrida() {
             const input = document.getElementById('valor-corrida');
             let valor = parseFloat(input.value.replace(',', '.'));
@@ -282,14 +302,10 @@
             document.getElementById('qtd-corridas').innerText = qtd;
             input.value = ''; input.focus();
         }
-
         function limparCalculadora() {
-            if(confirm("Zerar tudo?")) {
-                total = 0; qtd = 0;
-                document.getElementById('total-ganho').innerText = "R$ 0,00";
-                document.getElementById('qtd-corridas').innerText = "0";
-            }
+            if(confirm("Zerar tudo?")) { total = 0; qtd = 0; document.getElementById('total-ganho').innerText = "R$ 0,00"; document.getElementById('qtd-corridas').innerText = "0"; }
         }
     </script>
 </body>
-</html>
+                                                      </html>
+                    
