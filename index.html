@@ -14,11 +14,12 @@
         /* TEMA ESCURO */
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; }
         .dark-card { background-color: #1f2937; border: 1px solid #374151; }
-        .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; transition: border-color 0.3s; }
+        .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; }
         .dark-input:focus { border-color: #FBBF24; outline: none; }
+        .dark-input:disabled { background-color: #1f2937; color: #6b7280; cursor: not-allowed; }
         
         /* Validação Visual */
-        .input-error { border-color: #EF4444 !important; background-color: rgba(239, 68, 68, 0.1); }
+        .input-error { border-color: #EF4444 !important; }
         .input-success { border-color: #10B981 !important; }
 
         .checkbox-label { display: flex; align-items: center; gap: 8px; background-color: #111827; padding: 10px; border-radius: 8px; border: 1px solid #4b5563; cursor: pointer; transition: all 0.2s; }
@@ -75,11 +76,7 @@
                 </div>
             </div>
 
-            <div>
-                <label class="text-[10px] uppercase font-bold text-gray-500">Seu WhatsApp</label>
-                <input type="text" id="cad-zap" class="w-full dark-input rounded-lg p-3" placeholder="(00) 90000-0000">
-                <p id="erro-zap" class="text-[10px] text-red-500 mt-1 hidden">Número inválido! Verifique o DDD e o 9º dígito.</p>
-            </div>
+            <div><label class="text-[10px] uppercase font-bold text-gray-500">WhatsApp</label><input type="text" id="cad-zap" class="w-full dark-input rounded-lg p-3" placeholder="(00) 00000-0000"></div>
 
             <div class="bg-gray-800 p-3 rounded-lg border border-gray-700">
                 <p class="text-[10px] uppercase font-bold text-blue-400 mb-2">Endereço Residencial</p>
@@ -87,6 +84,7 @@
                     <label class="text-[10px] text-gray-500">CEP</label>
                     <input type="text" id="cad-cep" onblur="buscarCep()" class="w-full dark-input rounded-lg p-2" placeholder="00000-000">
                     <div id="loading-cep" class="absolute right-3 top-8 hidden"><i class="fas fa-spinner fa-spin text-blue-500"></i></div>
+                    <p id="erro-cep" class="text-[10px] text-red-500 mt-1 hidden">CEP inválido!</p>
                 </div>
                 <div class="mb-3"><label class="text-[10px] text-gray-500">Rua</label><input type="text" id="cad-rua" class="w-full dark-input rounded-lg p-2 bg-gray-900" readonly></div>
                 <div class="grid grid-cols-3 gap-3 mb-3">
@@ -125,8 +123,21 @@
 
             <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Foto do CRLV</label><input type="file" id="cad-crlv-foto" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"/></div>
             
-            <div><label class="text-[10px] uppercase font-bold text-gray-500">Nº CNH ou RG</label><input type="text" id="cad-doc" class="w-full dark-input rounded-lg p-3" placeholder="Número do Documento"></div>
-            <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Foto da CNH/RG</label><input type="file" id="cad-doc-foto" accept="image/*" multiple class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"/></div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Tipo Doc</label>
+                    <select id="cad-tipo-doc" class="w-full dark-input rounded-lg p-3 text-white text-sm">
+                        <option value="CNH">CNH</option>
+                        <option value="RG">RG</option>
+                    </select>
+                </div>
+                <div class="col-span-2">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Número do Documento</label>
+                    <input type="text" id="cad-doc" class="w-full dark-input rounded-lg p-3" placeholder="Digite o número">
+                </div>
+            </div>
+            
+            <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Foto do Documento (Frente/Verso)</label><input type="file" id="cad-doc-foto" accept="image/*" multiple class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"/></div>
 
             <div><label class="text-[10px] uppercase font-bold text-gray-500">Chave PIX</label><input type="text" id="cad-pix" class="w-full dark-input rounded-lg p-3" placeholder="Para receber pagamentos"></div>
 
@@ -246,7 +257,7 @@
             } catch(e) { console.error(e); } finally { document.getElementById('loading-cep').classList.add('hidden'); }
         }
 
-        // --- VALIDAÇÕES ESTRUTURAIS ---
+        // --- VALIDAÇÕES ---
         function validarCPF(cpf) {
             cpf = cpf.replace(/[^\d]+/g, '');
             if (cpf == '' || cpf.length != 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -264,15 +275,10 @@
             return /^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$/.test(limpa);
         }
 
-        // --- NOVA VALIDAÇÃO DE TELEFONE ---
         function validarTelefone(telefone) {
-            // Remove tudo que não é numero
             const limpo = telefone.replace(/\D/g, '');
-            // Verifica tamanho (11 digitos: DDD + 9 + 8 numeros)
             if (limpo.length !== 11) return false;
-            // Verifica se o DDD é valido (maior que 10) e se o numero começa com 9
             if (parseInt(limpo.substring(0, 2)) < 11 || parseInt(limpo.substring(2, 3)) !== 9) return false;
-            // Verifica repetidos (ex: 11999999999)
             if (/^(\d)\1+$/.test(limpo)) return false;
             return true;
         }
@@ -300,6 +306,7 @@
             const cor = document.getElementById('cad-cor').value;
             
             const cpf = document.getElementById('cad-cpf').value;
+            const tipoDoc = document.getElementById('cad-tipo-doc').value; // NOVO
             const doc = document.getElementById('cad-doc').value;
             const pix = document.getElementById('cad-pix').value;
 
@@ -310,27 +317,13 @@
             const temFotoCRLV = document.getElementById('cad-crlv-foto').files.length > 0;
             const temFotoDoc = document.getElementById('cad-doc-foto').files.length > 0;
 
-            // Validações de Preenchimento
             if(!nome || !sexo || !zap || !placa || !cpf || !pix || !nasc || !bairro || !emerNome || !num) { alert("Preencha todos os campos!"); return; }
             if(dispFinal === "") { alert("Marque a disponibilidade!"); return; }
-            if(!temFotoCRLV || !temFotoDoc) { alert("Anexe as fotos dos documentos!"); return; }
-
-            // Validações Lógicas
             if(!validarCPF(cpf)) { alert("CPF Inválido!"); return; }
             if(!validarPlaca(placa)) { alert("Placa Inválida!"); return; }
-            
-            // Valida Telefone do Motoboy
-            if(!validarTelefone(zap)) {
-                alert("Número de WhatsApp inválido! Verifique o DDD e o 9º dígito.");
-                document.getElementById('cad-zap').focus();
-                return;
-            }
-            // Valida Telefone de Emergência
-            if(!validarTelefone(emerTel)) {
-                alert("Número de Emergência inválido! Verifique o DDD.");
-                document.getElementById('cad-emergencia-tel').focus();
-                return;
-            }
+            if(!validarTelefone(zap)) { alert("WhatsApp inválido!"); return; }
+            if(!validarTelefone(emerTel)) { alert("Telefone de emergência inválido!"); return; }
+            if(!temFotoCRLV || !temFotoDoc) { alert("Anexe as fotos dos documentos!"); return; }
 
             const btn = document.getElementById('btn-enviar-cad');
             btn.innerHTML = 'Salvando...'; btn.disabled = true;
@@ -341,16 +334,16 @@
                 'WhatsApp': zap, 'CEP': cep, 'Endereço': `${rua}, ${num}`, 'Bairro': bairro, 'Cidade': cidade, 
                 'Emergencia_Nome': emerNome, 'Emergencia_Parentesco': emerGrau, 'Emergencia_Tel': emerTel,
                 'Placa': placa, 'Modelo': modelo, 'Cor': cor, 
-                'Documento': doc, 'CPF': cpf, 'Pix': pix, 'Disponibilidade': dispFinal
+                'Tipo_Doc': tipoDoc, 'Documento': doc, 'CPF': cpf, 'Pix': pix, 'Disponibilidade': dispFinal
             };
 
-            const urlSheetMonkey = "https://api.sheetmonkey.io/form/SEU_CODIGO_AQUI"; 
+            const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr"; 
 
             fetch(urlSheetMonkey, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados)
             }).then(() => {
-                const numAdmin = "5511999999999"; 
-                const msg = `🏍️ *NOVO CADASTRO*%0A👤 *Nome:* ${nome} (${idade} anos)%0A📱 *Zap:* ${zap}%0A📍 *Local:* ${bairro}%0A🛵 *Moto:* ${modelo} - ${placa}%0A🚨 *SOS:* ${emerNome} - ${emerTel}%0A📸 *FOTOS PRONTAS!*`;
+                const numAdmin = "5584982005039"; 
+                const msg = `🏍️ *NOVO CADASTRO*%0A👤 *Nome:* ${nome} (${idade} anos)%0A📱 *Zap:* ${zap}%0A📍 *Local:* ${bairro}%0A🛵 *Moto:* ${modelo} - ${placa}%0A🆔 *Doc:* ${tipoDoc} - ${doc}%0A🚨 *SOS:* ${emerNome} - ${emerTel}%0A📸 *FOTOS PRONTAS!*`;
                 window.open(`https://wa.me/${numAdmin}?text=${msg}`, '_blank');
                 btn.innerHTML = 'Enviar Ficha Completa'; btn.disabled = false;
             }).catch(e => { alert("Erro ao salvar."); btn.disabled = false; });
@@ -364,7 +357,7 @@
             document.getElementById('loading-saldo').classList.remove('hidden');
             document.getElementById('painel-saldo').classList.add('hidden');
 
-            const urlSheetDB = "https://sheetdb.io/api/v1/SEU_CODIGO_SHEETDB";
+            const urlSheetDB = "https://sheetdb.io/api/v1/i845olyhjg02x";
 
             try {
                 const res = await axios.get(`${urlSheetDB}/search?CPF=${cpf}`);
