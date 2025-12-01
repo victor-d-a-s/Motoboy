@@ -13,18 +13,20 @@
     <style>
         /* TEMA ESCURO */
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; }
-        
         .dark-card { background-color: #1f2937; border: 1px solid #374151; }
-        .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; }
+        .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; transition: border-color 0.3s; }
         .dark-input:focus { border-color: #FBBF24; outline: none; }
+        
+        /* Validação Visual */
+        .input-error { border-color: #EF4444 !important; background-color: rgba(239, 68, 68, 0.1); }
+        .input-success { border-color: #10B981 !important; }
 
         .checkbox-label { display: flex; align-items: center; gap: 8px; background-color: #111827; padding: 10px; border-radius: 8px; border: 1px solid #4b5563; cursor: pointer; transition: all 0.2s; }
         .checkbox-label:hover { border-color: #FBBF24; }
         .custom-checkbox { accent-color: #FBBF24; width: 18px; height: 18px; }
-
+        
         .msg-zap { background-color: #075E54; color: white; border-radius: 0 10px 10px 10px; padding: 10px; font-size: 13px; border-left: 4px solid #25D366; }
         .codigo-destaque { background-color: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #FBBF24; font-weight: bold; }
-        
         .fade-in { animation: fadeIn 0.4s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -47,20 +49,87 @@
 
     <div id="aba-cadastro" class="w-full max-w-md dark-card rounded-2xl p-5 shadow-2xl fade-in">
         <h2 class="text-lg font-bold text-white mb-1">Novo por aqui?</h2>
-        <p class="text-xs text-gray-400 mb-4">Envie seus documentos para análise.</p>
+        <p class="text-xs text-gray-400 mb-4">Preencha sua ficha completa.</p>
+        
         <div class="space-y-4">
+            <div><label class="text-[10px] uppercase font-bold text-gray-500">Seu CPF</label><input type="text" id="cad-cpf" class="w-full dark-input rounded-lg p-3" placeholder="000.000.000-00"></div>
+            
             <div><label class="text-[10px] uppercase font-bold text-gray-500">Nome Completo</label><input type="text" id="cad-nome" class="w-full dark-input rounded-lg p-3" placeholder="Ex: João da Silva"></div>
-            <div class="grid grid-cols-2 gap-3">
-                <div><label class="text-[10px] uppercase font-bold text-gray-500">WhatsApp</label><input type="text" id="cad-zap" class="w-full dark-input rounded-lg p-3" placeholder="(00) 00000-0000"></div>
-                <div><label class="text-[10px] uppercase font-bold text-gray-500">Placa da Moto</label><input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-3 uppercase font-bold" placeholder="ABC-1234" maxlength="8"></div>
+            
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Sexo</label>
+                    <select id="cad-sexo" class="w-full dark-input rounded-lg p-3 text-white text-sm">
+                        <option value="" disabled selected>---</option>
+                        <option value="M">Masc</option>
+                        <option value="F">Fem</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Nascimento</label>
+                    <input type="text" id="cad-nasc" onblur="calcularIdade()" class="w-full dark-input rounded-lg p-3 text-center" placeholder="Dia/Mês/Ano">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Idade</label>
+                    <input type="text" id="cad-idade" class="w-full dark-input rounded-lg p-3 text-center font-bold" readonly>
+                </div>
             </div>
+
+            <div>
+                <label class="text-[10px] uppercase font-bold text-gray-500">Seu WhatsApp</label>
+                <input type="text" id="cad-zap" class="w-full dark-input rounded-lg p-3" placeholder="(00) 90000-0000">
+                <p id="erro-zap" class="text-[10px] text-red-500 mt-1 hidden">Número inválido! Verifique o DDD e o 9º dígito.</p>
+            </div>
+
+            <div class="bg-gray-800 p-3 rounded-lg border border-gray-700">
+                <p class="text-[10px] uppercase font-bold text-blue-400 mb-2">Endereço Residencial</p>
+                <div class="mb-3 relative">
+                    <label class="text-[10px] text-gray-500">CEP</label>
+                    <input type="text" id="cad-cep" onblur="buscarCep()" class="w-full dark-input rounded-lg p-2" placeholder="00000-000">
+                    <div id="loading-cep" class="absolute right-3 top-8 hidden"><i class="fas fa-spinner fa-spin text-blue-500"></i></div>
+                </div>
+                <div class="mb-3"><label class="text-[10px] text-gray-500">Rua</label><input type="text" id="cad-rua" class="w-full dark-input rounded-lg p-2 bg-gray-900" readonly></div>
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                    <div class="col-span-1"><label class="text-[10px] text-gray-500">Número</label><input type="text" id="cad-numero" class="w-full dark-input rounded-lg p-2"></div>
+                    <div class="col-span-2"><label class="text-[10px] text-gray-500">Bairro</label><input type="text" id="cad-bairro" class="w-full dark-input rounded-lg p-2 bg-gray-900" readonly></div>
+                </div>
+                <div><label class="text-[10px] text-gray-500">Cidade/UF</label><input type="text" id="cad-cidade" class="w-full dark-input rounded-lg p-2 bg-gray-900" readonly></div>
+            </div>
+            
+            <div class="bg-red-900/10 p-3 rounded-lg border border-red-900/30">
+                <p class="text-[10px] uppercase font-bold text-red-400 mb-2"><i class="fas fa-ambulance mr-1"></i> Contato de Emergência</p>
+                <div class="mb-3">
+                    <label class="text-[10px] text-gray-500">Nome do Parente/Amigo</label>
+                    <input type="text" id="cad-emergencia-nome" class="w-full dark-input rounded-lg p-2" placeholder="Ex: Maria">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-gray-500">Parentesco</label>
+                        <input type="text" id="cad-emergencia-grau" class="w-full dark-input rounded-lg p-2" placeholder="Ex: Mãe, Esposa">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500">Telefone (C/ DDD)</label>
+                        <input type="text" id="cad-emergencia-tel" class="w-full dark-input rounded-lg p-2" placeholder="(00) 90000-0000">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-3 rounded-lg border border-gray-700">
+                <p class="text-[10px] uppercase font-bold text-yellow-500 mb-2">Dados da Moto</p>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div><label class="text-[10px] text-gray-500">Placa</label><input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-2 uppercase font-bold" placeholder="ABC-1234"></div>
+                    <div><label class="text-[10px] text-gray-500">Modelo</label><input type="text" id="cad-modelo" class="w-full dark-input rounded-lg p-2" placeholder="Ex: Fan 160"></div>
+                </div>
+                <div><label class="text-[10px] text-gray-500">Cor</label><input type="text" id="cad-cor" class="w-full dark-input rounded-lg p-2" placeholder="Ex: Vermelha"></div>
+            </div>
+
             <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Foto do CRLV</label><input type="file" id="cad-crlv-foto" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"/></div>
-            <div class="grid grid-cols-2 gap-3">
-                <div><label class="text-[10px] uppercase font-bold text-gray-500">CPF</label><input type="text" id="cad-cpf" class="w-full dark-input rounded-lg p-3" placeholder="000.000.000-00"></div>
-                <div><label class="text-[10px] uppercase font-bold text-gray-500">Nº CNH ou RG</label><input type="text" id="cad-doc" class="w-full dark-input rounded-lg p-3" placeholder="Número"></div>
-            </div>
+            
+            <div><label class="text-[10px] uppercase font-bold text-gray-500">Nº CNH ou RG</label><input type="text" id="cad-doc" class="w-full dark-input rounded-lg p-3" placeholder="Número do Documento"></div>
             <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Foto da CNH/RG</label><input type="file" id="cad-doc-foto" accept="image/*" multiple class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"/></div>
-            <div><label class="text-[10px] uppercase font-bold text-gray-500">Chave PIX</label><input type="text" id="cad-pix" class="w-full dark-input rounded-lg p-3" placeholder="CPF, Celular ou Email"></div>
+
+            <div><label class="text-[10px] uppercase font-bold text-gray-500">Chave PIX</label><input type="text" id="cad-pix" class="w-full dark-input rounded-lg p-3" placeholder="Para receber pagamentos"></div>
+
             <div>
                 <label class="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Disponibilidade</label>
                 <div class="grid grid-cols-2 gap-2 text-sm text-gray-300">
@@ -71,7 +140,10 @@
                     <label class="checkbox-label col-span-2"><input type="checkbox" name="disp" value="Renda Extra" class="custom-checkbox"> Renda Extra</label>
                 </div>
             </div>
-            <button onclick="enviarCadastro()" id="btn-enviar-cad" class="w-full bg-yellow-400 text-black font-bold py-3 rounded-xl shadow-lg hover:bg-yellow-300 transform active:scale-95 transition flex justify-center items-center gap-2 mt-4"><i class="fab fa-whatsapp text-xl"></i> Enviar Ficha</button>
+
+            <button onclick="enviarCadastro()" id="btn-enviar-cad" class="w-full bg-yellow-400 text-black font-bold py-3 rounded-xl shadow-lg hover:bg-yellow-300 transform active:scale-95 transition flex justify-center items-center gap-2 mt-4">
+                <i class="fab fa-whatsapp text-xl"></i> Enviar Ficha Completa
+            </button>
         </div>
     </div>
 
@@ -95,7 +167,6 @@
     <div id="aba-calc" class="w-full max-w-md dark-card rounded-2xl p-5 shadow-2xl fade-in hidden">
         <h2 class="text-lg font-bold text-white mb-1">Extrato Oficial</h2>
         <p class="text-xs text-gray-400 mb-4">Consulte o saldo liberado pela Central.</p>
-
         <div class="space-y-4">
             <div>
                 <label class="text-[10px] uppercase font-bold text-gray-500">Seu CPF (Cadastrado)</label>
@@ -104,7 +175,6 @@
                     <button onclick="buscarSaldo()" class="bg-blue-600 text-white px-4 rounded-lg font-bold hover:bg-blue-500"><i class="fas fa-search"></i></button>
                 </div>
             </div>
-
             <div id="painel-saldo" class="hidden">
                 <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 mb-4 text-center relative overflow-hidden">
                     <div class="absolute inset-0 opacity-10 bg-green-500 blur-xl"></div>
@@ -112,11 +182,7 @@
                     <p id="total-ganho" class="text-green-400 font-bold text-4xl relative z-10">R$ 0,00</p>
                     <p class="text-gray-500 text-xs mt-2 relative z-10"><span id="qtd-corridas">0</span> lançamentos encontrados</p>
                 </div>
-                <div class="text-center text-[10px] text-gray-500">
-                    <p>Busca realizada por CPF.</p>
-                </div>
             </div>
-
             <div id="loading-saldo" class="hidden text-center py-4">
                 <i class="fas fa-spinner fa-spin text-2xl text-blue-500"></i>
                 <p class="text-xs text-gray-400 mt-2">Consultando planilha...</p>
@@ -127,8 +193,11 @@
     <script>
         $(document).ready(function(){ 
             $('#cad-zap').mask('(00) 00000-0000'); 
+            $('#cad-emergencia-tel').mask('(00) 00000-0000');
             $('#cad-cpf').mask('000.000.000-00'); 
-            $('#login-cpf').mask('000.000.000-00'); // Máscara na busca também
+            $('#cad-nasc').mask('00/00/0000');
+            $('#cad-cep').mask('00000-000');
+            $('#login-cpf').mask('000.000.000-00');
             $('#cad-placa').on('input', function() { $(this).val($(this).val().toUpperCase()); });
         });
 
@@ -144,7 +213,40 @@
             btnAtivo.classList.add('bg-gray-700', 'text-white');
         }
 
-        // Validações
+        // --- CÁLCULO DE IDADE ---
+        function calcularIdade() {
+            const dataStr = document.getElementById('cad-nasc').value;
+            if(dataStr.length !== 10) return;
+            const partes = dataStr.split('/');
+            const hoje = new Date();
+            const nasc = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+            let idade = hoje.getFullYear() - nasc.getFullYear();
+            const m = hoje.getMonth() - nasc.getMonth();
+            if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+            if(!isNaN(idade) && idade > 0) document.getElementById('cad-idade').value = idade;
+        }
+
+        // --- BUSCA CEP ---
+        async function buscarCep() {
+            let cepField = document.getElementById('cad-cep');
+            let cep = cepField.value.replace(/\D/g, '');
+            if(cep.length !== 8) return;
+            document.getElementById('loading-cep').classList.remove('hidden');
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await res.json();
+                if(!data.erro) {
+                    document.getElementById('cad-rua').value = data.logradouro;
+                    document.getElementById('cad-bairro').value = data.bairro;
+                    document.getElementById('cad-cidade').value = `${data.localidade}/${data.uf}`;
+                    document.getElementById('cad-numero').focus();
+                } else {
+                    document.getElementById('cad-rua').value = "";
+                }
+            } catch(e) { console.error(e); } finally { document.getElementById('loading-cep').classList.add('hidden'); }
+        }
+
+        // --- VALIDAÇÕES ESTRUTURAIS ---
         function validarCPF(cpf) {
             cpf = cpf.replace(/[^\d]+/g, '');
             if (cpf == '' || cpf.length != 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -156,16 +258,47 @@
             if (rev != parseInt(cpf.charAt(10))) return false;
             return true;
         }
+        
         function validarPlaca(placa) {
             const limpa = placa.replace('-', '');
             return /^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$/.test(limpa);
         }
 
-        // Cadastro
+        // --- NOVA VALIDAÇÃO DE TELEFONE ---
+        function validarTelefone(telefone) {
+            // Remove tudo que não é numero
+            const limpo = telefone.replace(/\D/g, '');
+            // Verifica tamanho (11 digitos: DDD + 9 + 8 numeros)
+            if (limpo.length !== 11) return false;
+            // Verifica se o DDD é valido (maior que 10) e se o numero começa com 9
+            if (parseInt(limpo.substring(0, 2)) < 11 || parseInt(limpo.substring(2, 3)) !== 9) return false;
+            // Verifica repetidos (ex: 11999999999)
+            if (/^(\d)\1+$/.test(limpo)) return false;
+            return true;
+        }
+
+        // --- CADASTRO ---
         function enviarCadastro() {
+            // Coleta
             const nome = document.getElementById('cad-nome').value;
+            const sexo = document.getElementById('cad-sexo').value;
+            const nasc = document.getElementById('cad-nasc').value;
+            const idade = document.getElementById('cad-idade').value;
             const zap = document.getElementById('cad-zap').value;
+            const cep = document.getElementById('cad-cep').value;
+            const rua = document.getElementById('cad-rua').value;
+            const num = document.getElementById('cad-numero').value;
+            const bairro = document.getElementById('cad-bairro').value;
+            const cidade = document.getElementById('cad-cidade').value;
+            
+            const emerNome = document.getElementById('cad-emergencia-nome').value;
+            const emerGrau = document.getElementById('cad-emergencia-grau').value;
+            const emerTel = document.getElementById('cad-emergencia-tel').value;
+            
             const placa = document.getElementById('cad-placa').value;
+            const modelo = document.getElementById('cad-modelo').value;
+            const cor = document.getElementById('cad-cor').value;
+            
             const cpf = document.getElementById('cad-cpf').value;
             const doc = document.getElementById('cad-doc').value;
             const pix = document.getElementById('cad-pix').value;
@@ -177,33 +310,53 @@
             const temFotoCRLV = document.getElementById('cad-crlv-foto').files.length > 0;
             const temFotoDoc = document.getElementById('cad-doc-foto').files.length > 0;
 
-            if(!nome || !zap || !placa || !cpf || !pix) { alert("Preencha todos os campos!"); return; }
+            // Validações de Preenchimento
+            if(!nome || !sexo || !zap || !placa || !cpf || !pix || !nasc || !bairro || !emerNome || !num) { alert("Preencha todos os campos!"); return; }
             if(dispFinal === "") { alert("Marque a disponibilidade!"); return; }
+            if(!temFotoCRLV || !temFotoDoc) { alert("Anexe as fotos dos documentos!"); return; }
+
+            // Validações Lógicas
             if(!validarCPF(cpf)) { alert("CPF Inválido!"); return; }
             if(!validarPlaca(placa)) { alert("Placa Inválida!"); return; }
-            if(!temFotoCRLV || !temFotoDoc) { alert("Anexe as fotos dos documentos!"); return; }
+            
+            // Valida Telefone do Motoboy
+            if(!validarTelefone(zap)) {
+                alert("Número de WhatsApp inválido! Verifique o DDD e o 9º dígito.");
+                document.getElementById('cad-zap').focus();
+                return;
+            }
+            // Valida Telefone de Emergência
+            if(!validarTelefone(emerTel)) {
+                alert("Número de Emergência inválido! Verifique o DDD.");
+                document.getElementById('cad-emergencia-tel').focus();
+                return;
+            }
 
             const btn = document.getElementById('btn-enviar-cad');
             btn.innerHTML = 'Salvando...'; btn.disabled = true;
 
             const dados = {
                 'x-sheetmonkey-insert-worksheet': 'Motoboys',
-                'Data': new Date().toLocaleString(), 'Nome': nome, 'WhatsApp': zap, 'Placa': placa, 'Documento': doc, 'CPF': cpf, 'Pix': pix, 'Disponibilidade': dispFinal
+                'Data': new Date().toLocaleString(), 'Nome': nome, 'Sexo': sexo, 'Nascimento': nasc, 'Idade': idade,
+                'WhatsApp': zap, 'CEP': cep, 'Endereço': `${rua}, ${num}`, 'Bairro': bairro, 'Cidade': cidade, 
+                'Emergencia_Nome': emerNome, 'Emergencia_Parentesco': emerGrau, 'Emergencia_Tel': emerTel,
+                'Placa': placa, 'Modelo': modelo, 'Cor': cor, 
+                'Documento': doc, 'CPF': cpf, 'Pix': pix, 'Disponibilidade': dispFinal
             };
 
-            const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr"; 
+            const urlSheetMonkey = "https://api.sheetmonkey.io/form/SEU_CODIGO_AQUI"; 
 
             fetch(urlSheetMonkey, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados)
             }).then(() => {
-                const numAdmin = "5584982005039"; // SEU NÚMERO
-                const msg = `🏍️ *NOVO CADASTRO*%0A👤 ${nome}%0A📱 ${zap}%0A🛵 ${placa}%0A📄 ${cpf}%0A📸 *FOTOS PRONTAS PARA ENVIAR!*`;
+                const numAdmin = "5511999999999"; 
+                const msg = `🏍️ *NOVO CADASTRO*%0A👤 *Nome:* ${nome} (${idade} anos)%0A📱 *Zap:* ${zap}%0A📍 *Local:* ${bairro}%0A🛵 *Moto:* ${modelo} - ${placa}%0A🚨 *SOS:* ${emerNome} - ${emerTel}%0A📸 *FOTOS PRONTAS!*`;
                 window.open(`https://wa.me/${numAdmin}?text=${msg}`, '_blank');
-                btn.innerHTML = 'Enviar Ficha'; btn.disabled = false;
+                btn.innerHTML = 'Enviar Ficha Completa'; btn.disabled = false;
             }).catch(e => { alert("Erro ao salvar."); btn.disabled = false; });
         }
 
-        // --- BUSCA SALDO POR CPF ---
+        // Busca Saldo
         async function buscarSaldo() {
             const cpf = document.getElementById('login-cpf').value;
             if(cpf.length < 14) { alert("Digite o CPF completo."); return; }
@@ -211,29 +364,23 @@
             document.getElementById('loading-saldo').classList.remove('hidden');
             document.getElementById('painel-saldo').classList.add('hidden');
 
-            // URL SHEETDB - Planilha deve ter coluna 'CPF' e 'Valor' na aba de pagamentos
-            const urlSheetDB = "https://sheetdb.io/api/v1/i845olyhjg02x";
+            const urlSheetDB = "https://sheetdb.io/api/v1/SEU_CODIGO_SHEETDB";
 
             try {
-                // Busca exata pelo CPF formatado (ex: 000.000.000-00)
                 const res = await axios.get(`${urlSheetDB}/search?CPF=${cpf}`);
                 const dados = res.data;
-
                 let soma = 0;
                 dados.forEach(item => {
                     let v = item.Valor.toString().replace('R$', '').replace(',', '.').trim();
                     if(!isNaN(parseFloat(v))) soma += parseFloat(v);
                 });
-
                 document.getElementById('total-ganho').innerText = soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 document.getElementById('qtd-corridas').innerText = dados.length;
-                
                 document.getElementById('loading-saldo').classList.add('hidden');
                 document.getElementById('painel-saldo').classList.remove('hidden');
-
             } catch (error) {
                 console.error(error);
-                alert("CPF não encontrado ou erro no sistema.");
+                alert("Erro ao consultar sistema.");
                 document.getElementById('loading-saldo').classList.add('hidden');
             }
         }
