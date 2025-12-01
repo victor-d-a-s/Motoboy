@@ -387,12 +387,12 @@
                 'Tipo_Pix': tipoPix, 'Pix': pix, 'Disponibilidade': dispFinal
             };
 
-            const urlSheetMonkey = "https://api.sheetmonkey.io/form/SEU_CODIGO_AQUI"; 
+            const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr"; 
 
             fetch(urlSheetMonkey, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados)
             }).then(() => {
-                const numAdmin = "5511999999999"; 
+                const numAdmin = "5584982005039"; 
                 const msg = `🏍️ *NOVO CADASTRO*%0A👤 *Nome:* ${nome} (${idade} anos)%0A📱 *Zap:* ${zap}%0A📍 *Local:* ${bairro}%0A🛵 *Moto:* ${modelo} - ${placa}%0A🆔 *Doc:* ${tipoDoc} - ${doc}%0A💠 *PIX:* ${tipoPix} - ${pix}%0A🚨 *SOS:* ${emerNome} - ${emerTel}%0A📸 *FOTOS PRONTAS!*`;
                 window.open(`https://wa.me/${numAdmin}?text=${msg}`, '_blank');
                 btn.innerHTML = 'Enviar Ficha Completa'; btn.disabled = false;
@@ -407,7 +407,7 @@
             document.getElementById('loading-saldo').classList.remove('hidden');
             document.getElementById('painel-saldo').classList.add('hidden');
 
-            const urlSheetDB = "https://sheetdb.io/api/v1/SEU_CODIGO_SHEETDB";
+            const urlSheetDB = "https://sheetdb.io/api/v1/i845olyhjg02x";
 
             try {
                 const res = await axios.get(`${urlSheetDB}/search?CPF=${cpf}`);
