@@ -256,7 +256,7 @@
                 'Disponibilidade': dispFinal
             };
 
-            const urlSheetMonkey = "https://api.sheetmonkey.io/form/SEU_CODIGO_AQUI"; // SEU LINK
+            const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr"; // SEU LINK
 
             fetch(urlSheetMonkey, {
                 method: 'POST',
@@ -264,7 +264,7 @@
                 body: JSON.stringify(dadosParaPlanilha)
             }).then(() => {
                 
-                const numAdmin = "5511999999999"; // SEU NÚMERO
+                const numAdmin = "5584982005039"; // SEU NÚMERO
                 
                 let textoZap = `🏍️ *NOVO CADASTRO PARCEIRO*%0A%0A` +
                                  `👤 *Nome:* ${nome}%0A` +
@@ -284,7 +284,7 @@
 
             }).catch(erro => {
                 console.error('Erro:', erro);
-                const numAdmin = "5511999999999"; 
+                const numAdmin = "5584982005039"; 
                 window.open(`https://wa.me/${numAdmin}?text=ERRO PLANILHA - CADASTRO: ${nome}`, '_blank');
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
@@ -307,5 +307,5 @@
         }
     </script>
 </body>
-                                                      </html>
+    </html>
                     
