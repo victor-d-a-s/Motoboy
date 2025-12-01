@@ -139,7 +139,21 @@
             
             <div><label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Foto do Documento (Frente/Verso)</label><input type="file" id="cad-doc-foto" accept="image/*" multiple class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"/></div>
 
-            <div><label class="text-[10px] uppercase font-bold text-gray-500">Chave PIX</label><input type="text" id="cad-pix" class="w-full dark-input rounded-lg p-3" placeholder="Para receber pagamentos"></div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Tipo Pix</label>
+                    <select id="cad-tipo-pix" class="w-full dark-input rounded-lg p-3 text-white text-sm">
+                        <option value="CPF/CNPJ">CPF</option>
+                        <option value="Celular">Celular</option>
+                        <option value="Email">Email</option>
+                        <option value="Aleatória">Aleatória</option>
+                    </select>
+                </div>
+                <div class="col-span-2">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Chave PIX</label>
+                    <input type="text" id="cad-pix" class="w-full dark-input rounded-lg p-3" placeholder="Digite a chave">
+                </div>
+            </div>
 
             <div>
                 <label class="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Disponibilidade</label>
@@ -257,7 +271,7 @@
             } catch(e) { console.error(e); } finally { document.getElementById('loading-cep').classList.add('hidden'); }
         }
 
-        // --- VALIDAÇÕES ---
+        // --- VALIDAÇÕES ESTRUTURAIS ---
         function validarCPF(cpf) {
             cpf = cpf.replace(/[^\d]+/g, '');
             if (cpf == '' || cpf.length != 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -306,8 +320,10 @@
             const cor = document.getElementById('cad-cor').value;
             
             const cpf = document.getElementById('cad-cpf').value;
-            const tipoDoc = document.getElementById('cad-tipo-doc').value; // NOVO
+            const tipoDoc = document.getElementById('cad-tipo-doc').value;
             const doc = document.getElementById('cad-doc').value;
+            
+            const tipoPix = document.getElementById('cad-tipo-pix').value; // NOVO
             const pix = document.getElementById('cad-pix').value;
 
             let checkboxes = document.querySelectorAll('input[name="disp"]:checked');
@@ -334,7 +350,8 @@
                 'WhatsApp': zap, 'CEP': cep, 'Endereço': `${rua}, ${num}`, 'Bairro': bairro, 'Cidade': cidade, 
                 'Emergencia_Nome': emerNome, 'Emergencia_Parentesco': emerGrau, 'Emergencia_Tel': emerTel,
                 'Placa': placa, 'Modelo': modelo, 'Cor': cor, 
-                'Tipo_Doc': tipoDoc, 'Documento': doc, 'CPF': cpf, 'Pix': pix, 'Disponibilidade': dispFinal
+                'Tipo_Doc': tipoDoc, 'Documento': doc, 'CPF': cpf, 
+                'Tipo_Pix': tipoPix, 'Pix': pix, 'Disponibilidade': dispFinal
             };
 
             const urlSheetMonkey = "https://api.sheetmonkey.io/form/bjbGYT8y9RCwwAk71aqbLr"; 
@@ -343,7 +360,7 @@
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados)
             }).then(() => {
                 const numAdmin = "5584982005039"; 
-                const msg = `🏍️ *NOVO CADASTRO*%0A👤 *Nome:* ${nome} (${idade} anos)%0A📱 *Zap:* ${zap}%0A📍 *Local:* ${bairro}%0A🛵 *Moto:* ${modelo} - ${placa}%0A🆔 *Doc:* ${tipoDoc} - ${doc}%0A🚨 *SOS:* ${emerNome} - ${emerTel}%0A📸 *FOTOS PRONTAS!*`;
+                const msg = `🏍️ *NOVO CADASTRO*%0A👤 *Nome:* ${nome} (${idade} anos)%0A📱 *Zap:* ${zap}%0A📍 *Local:* ${bairro}%0A🛵 *Moto:* ${modelo} - ${placa}%0A🆔 *Doc:* ${tipoDoc} - ${doc}%0A💠 *PIX:* ${tipoPix} - ${pix}%0A🚨 *SOS:* ${emerNome} - ${emerTel}%0A📸 *FOTOS PRONTAS!*`;
                 window.open(`https://wa.me/${numAdmin}?text=${msg}`, '_blank');
                 btn.innerHTML = 'Enviar Ficha Completa'; btn.disabled = false;
             }).catch(e => { alert("Erro ao salvar."); btn.disabled = false; });
