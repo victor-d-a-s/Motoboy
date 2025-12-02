@@ -116,7 +116,10 @@
             <div class="bg-gray-800 p-3 rounded-lg border border-gray-700">
                 <p class="text-[10px] uppercase font-bold text-yellow-500 mb-2">Dados da Moto</p>
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div><label class="text-[10px] text-gray-500">Placa</label><input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-2 uppercase font-bold" placeholder="ABC-1234"></div>
+                    <div>
+                        <label class="text-[10px] text-gray-500">Placa</label>
+                        <input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-2 font-bold uppercase" placeholder="ABC-1234">
+                    </div>
                     <div><label class="text-[10px] text-gray-500">Modelo</label><input type="text" id="cad-modelo" class="w-full dark-input rounded-lg p-2" placeholder="Ex: Fan 160"></div>
                 </div>
                 <div><label class="text-[10px] text-gray-500">Cor</label><input type="text" id="cad-cor" class="w-full dark-input rounded-lg p-2" placeholder="Ex: Vermelha"></div>
@@ -224,6 +227,8 @@
             $('#cad-nasc').mask('00/00/0000');
             $('#cad-cep').mask('00000-000');
             $('#login-cpf').mask('000.000.000-00');
+            
+            // Força Placa Maiúscula (Script + Classe)
             $('#cad-placa').on('input', function() { $(this).val($(this).val().toUpperCase()); });
         });
 
@@ -239,51 +244,17 @@
             btnAtivo.classList.add('bg-gray-700', 'text-white');
         }
 
-        // --- CÁLCULO E VALIDAÇÃO DE IDADE ---
+        // --- CÁLCULO DE IDADE ---
         function calcularIdade() {
             const dataStr = document.getElementById('cad-nasc').value;
-            const campoIdade = document.getElementById('cad-idade');
-            const campoNasc = document.getElementById('cad-nasc');
-            
-            // Limpa erros anteriores
-            campoNasc.classList.remove('input-error');
-            campoIdade.value = "";
-
             if(dataStr.length !== 10) return;
-
             const partes = dataStr.split('/');
-            const dia = parseInt(partes[0]);
-            const mes = parseInt(partes[1]);
-            const ano = parseInt(partes[2]);
-
-            // Validação de Data Real (Ex: impede 31/02)
-            const dateObj = new Date(ano, mes - 1, dia);
-            if (dateObj.getFullYear() !== ano || dateObj.getMonth() + 1 !== mes || dateObj.getDate() !== dia) {
-                alert("Data inválida! Verifique o dia e mês.");
-                campoNasc.classList.add('input-error');
-                return;
-            }
-
             const hoje = new Date();
-            let idade = hoje.getFullYear() - ano;
-            const m = hoje.getMonth() - (mes - 1);
-            if (m < 0 || (m === 0 && hoje.getDate() < dia)) {
-                idade--;
-            }
-
-            // Regras de Negócio
-            if (idade < 18) {
-                alert("É necessário ser maior de 18 anos para o cadastro.");
-                campoNasc.value = "";
-                return;
-            }
-            if (idade > 100) {
-                alert("Ano de nascimento inválido.");
-                campoNasc.value = "";
-                return;
-            }
-
-            campoIdade.value = idade;
+            const nasc = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+            let idade = hoje.getFullYear() - nasc.getFullYear();
+            const m = hoje.getMonth() - nasc.getMonth();
+            if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+            if(!isNaN(idade) && idade > 0) document.getElementById('cad-idade').value = idade;
         }
 
         // --- BUSCA CEP ---
@@ -305,7 +276,8 @@
                 }
             } catch(e) { console.error(e); } finally { document.getElementById('loading-cep').classList.add('hidden'); }
         }
-        // --- VALIDAÇÕES ---
+
+        // --- VALIDAÇÕES ESTRUTURAIS ---
         function validarCPF(cpf) {
             cpf = cpf.replace(/[^\d]+/g, '');
             if (cpf == '' || cpf.length != 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -317,18 +289,20 @@
             if (rev != parseInt(cpf.charAt(10))) return false;
             return true;
         }
+        
         function validarPlaca(placa) {
-            const limpa = placa.replace('-', '');
-            return /^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$/.test(limpa);
+            const limpa = placa.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            const antiga = /^[A-Z]{3}[0-9]{4}$/;
+            const mercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+            return antiga.test(limpa) || mercosul.test(limpa);
         }
+
         function validarTelefone(telefone) {
             const limpo = telefone.replace(/\D/g, '');
             if (limpo.length !== 11) return false;
             if (parseInt(limpo.substring(0, 2)) < 11 || parseInt(limpo.substring(2, 3)) !== 9) return false;
-            if (/^(\d)\1+$/.test(limpo)) return false;
             return true;
         }
-
         // --- CADASTRO ---
         function enviarCadastro() {
             // Coleta
@@ -369,7 +343,7 @@
             if(!nome || !sexo || !zap || !placa || !cpf || !pix || !nasc || !bairro || !emerNome || !num) { alert("Preencha todos os campos!"); return; }
             if(dispFinal === "") { alert("Marque a disponibilidade!"); return; }
             if(!validarCPF(cpf)) { alert("CPF Inválido!"); return; }
-            if(!validarPlaca(placa)) { alert("Placa Inválida!"); return; }
+            if(!validarPlaca(placa)) { alert("Placa Inválida! Use o formato Antigo ou Mercosul."); return; }
             if(!validarTelefone(zap)) { alert("WhatsApp inválido!"); return; }
             if(!validarTelefone(emerTel)) { alert("Telefone de emergência inválido!"); return; }
             if(!temFotoCRLV || !temFotoDoc) { alert("Anexe as fotos dos documentos!"); return; }
