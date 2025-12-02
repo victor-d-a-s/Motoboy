@@ -14,12 +14,11 @@
         /* TEMA ESCURO */
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; }
         .dark-card { background-color: #1f2937; border: 1px solid #374151; }
-        .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; }
+        .dark-input { background-color: #111827; border: 1px solid #4b5563; color: white; transition: border-color 0.3s; }
         .dark-input:focus { border-color: #FBBF24; outline: none; }
         .dark-input:disabled { background-color: #1f2937; color: #6b7280; cursor: not-allowed; }
         .dark-input:read-only { background-color: #374151; color: #9CA3AF; cursor: not-allowed; }
         
-        /* Validação Visual */
         .input-error { border-color: #EF4444 !important; }
         .input-success { border-color: #10B981 !important; }
 
@@ -118,7 +117,7 @@
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <div>
                         <label class="text-[10px] text-gray-500">Placa</label>
-                        <input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-2 font-bold uppercase" placeholder="ABC-1234">
+                        <input type="text" id="cad-placa" class="w-full dark-input rounded-lg p-2 uppercase font-bold" placeholder="ABC-1234">
                     </div>
                     <div><label class="text-[10px] text-gray-500">Modelo</label><input type="text" id="cad-modelo" class="w-full dark-input rounded-lg p-2" placeholder="Ex: Fan 160"></div>
                 </div>
@@ -228,7 +227,7 @@
             $('#cad-cep').mask('00000-000');
             $('#login-cpf').mask('000.000.000-00');
             
-            // Força Placa Maiúscula (Script + Classe)
+            // Força Placa Maiúscula
             $('#cad-placa').on('input', function() { $(this).val($(this).val().toUpperCase()); });
         });
 
@@ -277,7 +276,7 @@
             } catch(e) { console.error(e); } finally { document.getElementById('loading-cep').classList.add('hidden'); }
         }
 
-        // --- VALIDAÇÕES ESTRUTURAIS ---
+        // --- VALIDAÇÕES ---
         function validarCPF(cpf) {
             cpf = cpf.replace(/[^\d]+/g, '');
             if (cpf == '' || cpf.length != 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -289,21 +288,20 @@
             if (rev != parseInt(cpf.charAt(10))) return false;
             return true;
         }
-        
         function validarPlaca(placa) {
             const limpa = placa.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
             const antiga = /^[A-Z]{3}[0-9]{4}$/;
             const mercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
             return antiga.test(limpa) || mercosul.test(limpa);
         }
-
         function validarTelefone(telefone) {
             const limpo = telefone.replace(/\D/g, '');
             if (limpo.length !== 11) return false;
             if (parseInt(limpo.substring(0, 2)) < 11 || parseInt(limpo.substring(2, 3)) !== 9) return false;
             return true;
         }
-        // --- CADASTRO ---
+
+        // --- CADASTRO (SHEETMONKEY) ---
         function enviarCadastro() {
             // Coleta
             const nome = document.getElementById('cad-nome').value;
@@ -343,7 +341,7 @@
             if(!nome || !sexo || !zap || !placa || !cpf || !pix || !nasc || !bairro || !emerNome || !num) { alert("Preencha todos os campos!"); return; }
             if(dispFinal === "") { alert("Marque a disponibilidade!"); return; }
             if(!validarCPF(cpf)) { alert("CPF Inválido!"); return; }
-            if(!validarPlaca(placa)) { alert("Placa Inválida! Use o formato Antigo ou Mercosul."); return; }
+            if(!validarPlaca(placa)) { alert("Placa Inválida!"); return; }
             if(!validarTelefone(zap)) { alert("WhatsApp inválido!"); return; }
             if(!validarTelefone(emerTel)) { alert("Telefone de emergência inválido!"); return; }
             if(!temFotoCRLV || !temFotoDoc) { alert("Anexe as fotos dos documentos!"); return; }
@@ -373,7 +371,7 @@
             }).catch(e => { alert("Erro ao salvar."); btn.disabled = false; });
         }
 
-        // Busca Saldo
+        // --- BUSCA SALDO (SHEETDB CORRIGIDO) ---
         async function buscarSaldo() {
             const cpf = document.getElementById('login-cpf').value;
             if(cpf.length < 14) { alert("Digite o CPF completo."); return; }
@@ -384,20 +382,34 @@
             const urlSheetDB = "https://sheetdb.io/api/v1/i845olyhjg02x";
 
             try {
-                const res = await axios.get(`${urlSheetDB}/search?CPF=${cpf}`);
+                // Busca na aba 'Pagamentos'
+                const res = await axios.get(`${urlSheetDB}/search?sheet=Pagamentos&CPF=${cpf}`);
                 const dados = res.data;
+
+                if (dados.length === 0) {
+                    alert("Nenhum pagamento encontrado para este CPF. Verifique se o CPF na planilha está formatado (com pontos e traço).");
+                    document.getElementById('loading-saldo').classList.add('hidden');
+                    return;
+                }
+
                 let soma = 0;
                 dados.forEach(item => {
-                    let v = item.Valor.toString().replace('R$', '').replace(',', '.').trim();
-                    if(!isNaN(parseFloat(v))) soma += parseFloat(v);
+                    let v = item.Valor;
+                    if(v) {
+                        let valorLimpo = String(v).replace('R$', '').replace(',', '.').trim();
+                        let valorFloat = parseFloat(valorLimpo);
+                        if(!isNaN(valorFloat)) soma += valorFloat;
+                    }
                 });
+
                 document.getElementById('total-ganho').innerText = soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 document.getElementById('qtd-corridas').innerText = dados.length;
                 document.getElementById('loading-saldo').classList.add('hidden');
                 document.getElementById('painel-saldo').classList.remove('hidden');
+
             } catch (error) {
-                console.error(error);
-                alert("Erro ao consultar sistema.");
+                console.error("Erro SheetDB:", error);
+                alert("Erro na conexão com a planilha. Verifique se a aba 'Pagamentos' existe e o cabeçalho 'CPF' está correto.");
                 document.getElementById('loading-saldo').classList.add('hidden');
             }
         }
