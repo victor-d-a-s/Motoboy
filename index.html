@@ -19,13 +19,16 @@
         .dark-input:disabled { background-color: #1f2937; color: #6b7280; cursor: not-allowed; }
         .dark-input:read-only { background-color: #374151; color: #9CA3AF; cursor: not-allowed; }
         
-        .input-error { border-color: #EF4444 !important; }
+        /* Validação Visual */
+        .input-error { border-color: #EF4444 !important; background-color: rgba(239, 68, 68, 0.1); }
         .input-success { border-color: #10B981 !important; }
 
+        /* Checkboxes */
         .checkbox-label { display: flex; align-items: center; gap: 8px; background-color: #111827; padding: 10px; border-radius: 8px; border: 1px solid #4b5563; cursor: pointer; transition: all 0.2s; }
         .checkbox-label:hover { border-color: #FBBF24; }
         .custom-checkbox { accent-color: #FBBF24; width: 18px; height: 18px; }
         
+        /* Destaque do Protocolo */
         .msg-zap { background-color: #075E54; color: white; border-radius: 0 10px 10px 10px; padding: 10px; font-size: 13px; border-left: 4px solid #25D366; }
         .codigo-destaque { background-color: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #FBBF24; font-weight: bold; }
         .fade-in { animation: fadeIn 0.4s ease-in; }
@@ -62,8 +65,8 @@
                     <label class="text-[10px] uppercase font-bold text-gray-500">Sexo</label>
                     <select id="cad-sexo" class="w-full dark-input rounded-lg p-3 text-white text-sm">
                         <option value="" disabled selected>---</option>
-                        <option value="M">Masc</option>
-                        <option value="F">Fem</option>
+                        <option value="Masculino">Masc</option>
+                        <option value="Feminino">Fem</option>
                     </select>
                 </div>
                 <div>
@@ -107,7 +110,7 @@
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-500">Telefone (C/ DDD)</label>
-                        <input type="text" id="cad-emergencia-tel" class="w-full dark-input rounded-lg p-2" placeholder="(00) 90000-0000">
+                        <input type="text" id="cad-emergencia-tel" class="w-full dark-input rounded-lg p-2" placeholder="(00) 00000-0000">
                     </div>
                 </div>
             </div>
@@ -227,8 +230,10 @@
             $('#cad-cep').mask('00000-000');
             $('#login-cpf').mask('000.000.000-00');
             
-            // Força Placa Maiúscula
-            $('#cad-placa').on('input', function() { $(this).val($(this).val().toUpperCase()); });
+            // Força Placa Maiúscula (Input Event)
+            $('#cad-placa').on('input', function() { 
+                $(this).val($(this).val().toUpperCase()); 
+            });
         });
 
         function mudarAba(abaNome) {
@@ -246,22 +251,45 @@
         // --- CÁLCULO DE IDADE ---
         function calcularIdade() {
             const dataStr = document.getElementById('cad-nasc').value;
+            const campoNasc = document.getElementById('cad-nasc');
+            const campoIdade = document.getElementById('cad-idade');
+            campoIdade.value = "";
+            campoNasc.classList.remove('input-error');
+
             if(dataStr.length !== 10) return;
+
             const partes = dataStr.split('/');
+            const dia = parseInt(partes[0]);
+            const mes = parseInt(partes[1]);
+            const ano = parseInt(partes[2]);
+
+            // Valida Data
+            const dateObj = new Date(ano, mes - 1, dia);
+            if (dateObj.getFullYear() !== ano || dateObj.getMonth() + 1 !== mes || dateObj.getDate() !== dia) {
+                alert("Data inválida!"); campoNasc.classList.add('input-error'); return;
+            }
+
             const hoje = new Date();
-            const nasc = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
-            let idade = hoje.getFullYear() - nasc.getFullYear();
-            const m = hoje.getMonth() - nasc.getMonth();
-            if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
-            if(!isNaN(idade) && idade > 0) document.getElementById('cad-idade').value = idade;
+            let idade = hoje.getFullYear() - ano;
+            const m = hoje.getMonth() - (mes - 1);
+            if (m < 0 || (m === 0 && hoje.getDate() < dia)) idade--;
+
+            if (idade < 18) { alert("Menor de 18 anos não permitido."); campoNasc.value = ""; return; }
+            if (idade > 100) { alert("Data inválida."); campoNasc.value = ""; return; }
+
+            campoIdade.value = idade;
         }
 
         // --- BUSCA CEP ---
         async function buscarCep() {
             let cepField = document.getElementById('cad-cep');
             let cep = cepField.value.replace(/\D/g, '');
+            cepField.classList.remove('input-error', 'input-success');
+            document.getElementById('erro-cep').classList.add('hidden');
+
             if(cep.length !== 8) return;
             document.getElementById('loading-cep').classList.remove('hidden');
+
             try {
                 const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
                 const data = await res.json();
@@ -270,13 +298,15 @@
                     document.getElementById('cad-bairro').value = data.bairro;
                     document.getElementById('cad-cidade').value = `${data.localidade}/${data.uf}`;
                     document.getElementById('cad-numero').focus();
+                    cepField.classList.add('input-success');
                 } else {
                     document.getElementById('cad-rua').value = "";
+                    cepField.classList.add('input-error');
+                    document.getElementById('erro-cep').classList.remove('hidden');
                 }
             } catch(e) { console.error(e); } finally { document.getElementById('loading-cep').classList.add('hidden'); }
         }
-
-        // --- VALIDAÇÕES ---
+        // --- VALIDAÇÕES ESTRUTURAIS ---
         function validarCPF(cpf) {
             cpf = cpf.replace(/[^\d]+/g, '');
             if (cpf == '' || cpf.length != 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -288,12 +318,20 @@
             if (rev != parseInt(cpf.charAt(10))) return false;
             return true;
         }
+        
         function validarPlaca(placa) {
+            // Remove tudo que não é alfanumérico e deixa maiúsculo
             const limpa = placa.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            
+            // Antiga: 3 Letras e 4 Números (ABC1234)
             const antiga = /^[A-Z]{3}[0-9]{4}$/;
+            
+            // Mercosul: 3 Letras, 1 Número, 1 Letra, 2 Números (ABC1C34)
             const mercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+            
             return antiga.test(limpa) || mercosul.test(limpa);
         }
+
         function validarTelefone(telefone) {
             const limpo = telefone.replace(/\D/g, '');
             if (limpo.length !== 11) return false;
@@ -341,7 +379,7 @@
             if(!nome || !sexo || !zap || !placa || !cpf || !pix || !nasc || !bairro || !emerNome || !num) { alert("Preencha todos os campos!"); return; }
             if(dispFinal === "") { alert("Marque a disponibilidade!"); return; }
             if(!validarCPF(cpf)) { alert("CPF Inválido!"); return; }
-            if(!validarPlaca(placa)) { alert("Placa Inválida!"); return; }
+            if(!validarPlaca(placa)) { alert("Placa Inválida! Use formato Antigo ou Mercosul."); return; }
             if(!validarTelefone(zap)) { alert("WhatsApp inválido!"); return; }
             if(!validarTelefone(emerTel)) { alert("Telefone de emergência inválido!"); return; }
             if(!temFotoCRLV || !temFotoDoc) { alert("Anexe as fotos dos documentos!"); return; }
@@ -370,11 +408,12 @@
                 btn.innerHTML = 'Enviar Ficha Completa'; btn.disabled = false;
             }).catch(e => { alert("Erro ao salvar."); btn.disabled = false; });
         }
-
-        // --- BUSCA SALDO (SHEETDB CORRIGIDO) ---
+        // --- BUSCA SALDO (ROBUSTA) ---
         async function buscarSaldo() {
-            const cpf = document.getElementById('login-cpf').value;
-            if(cpf.length < 14) { alert("Digite o CPF completo."); return; }
+            const cpfInput = document.getElementById('login-cpf').value;
+            const cpfBusca = cpfInput.trim();
+
+            if(cpfBusca.length < 14) { alert("Digite o CPF completo."); return; }
 
             document.getElementById('loading-saldo').classList.remove('hidden');
             document.getElementById('painel-saldo').classList.add('hidden');
@@ -382,34 +421,40 @@
             const urlSheetDB = "https://sheetdb.io/api/v1/i845olyhjg02x";
 
             try {
-                // Busca na aba 'Pagamentos'
-                const res = await axios.get(`${urlSheetDB}/search?sheet=Pagamentos&CPF=${cpf}`);
+                // Busca na aba 'Pagamentos' com limite de 1000 linhas
+                const res = await axios.get(`${urlSheetDB}/search?sheet=Pagamentos&CPF=${cpfBusca}&limit=1000`);
                 const dados = res.data;
 
                 if (dados.length === 0) {
-                    alert("Nenhum pagamento encontrado para este CPF. Verifique se o CPF na planilha está formatado (com pontos e traço).");
+                    alert("Nenhum pagamento encontrado. Verifique se o CPF na planilha está formatado (com pontos e traço).");
                     document.getElementById('loading-saldo').classList.add('hidden');
                     return;
                 }
 
                 let soma = 0;
+                let contagem = 0;
+
                 dados.forEach(item => {
                     let v = item.Valor;
                     if(v) {
-                        let valorLimpo = String(v).replace('R$', '').replace(',', '.').trim();
-                        let valorFloat = parseFloat(valorLimpo);
-                        if(!isNaN(valorFloat)) soma += valorFloat;
+                        // Limpa R$, espaços e troca virgula por ponto
+                        let valorLimpo = String(v).replace('R$', '').replace(/\s/g, '').replace(',', '.');
+                        let valorFinal = parseFloat(valorLimpo);
+                        if(!isNaN(valorFinal)) {
+                            soma += valorFinal;
+                            contagem++;
+                        }
                     }
                 });
 
                 document.getElementById('total-ganho').innerText = soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                document.getElementById('qtd-corridas').innerText = dados.length;
+                document.getElementById('qtd-corridas').innerText = contagem;
                 document.getElementById('loading-saldo').classList.add('hidden');
                 document.getElementById('painel-saldo').classList.remove('hidden');
 
             } catch (error) {
-                console.error("Erro SheetDB:", error);
-                alert("Erro na conexão com a planilha. Verifique se a aba 'Pagamentos' existe e o cabeçalho 'CPF' está correto.");
+                console.error("Erro API:", error);
+                alert("Erro de conexão. Verifique se a aba 'Pagamentos' existe na planilha.");
                 document.getElementById('loading-saldo').classList.add('hidden');
             }
         }
