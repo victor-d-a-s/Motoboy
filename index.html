@@ -275,8 +275,9 @@
 
     <script>
         // --- CONFIGURAÇÃO SUPABASE ---
+        // ATUALIZADO COM SUA CHAVE CORRETA
         const SUPABASE_URL = 'https://ofpnnijkhgsjarixoyhg.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvZnBubmlqa2hnc2phcml4b3loZyIsImJvbGUiOiJhbm9uIiwiaWF0IjoxNzY1MDY1Mjc2LCJleHAiOjIwODA2NDEyNzZ9.dNOIIETmTz3l1HvhuT-ihAiymJqiaYZnklzzBzDGCFU';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcG5uaWpraGdzamFyaXhveWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjUyNzYsImV4cCI6MjA4MDY0MTI3Nn0.dNOIIETmTz3l1HvhuT-ihAiymJqiaYZnklzzBzDGCFU';
         
         let sbClient = null;
         let userSession = null;
@@ -292,7 +293,9 @@
         // --- INICIALIZAÇÃO ---
         window.onload = async function() {
             try {
+                // Instancia o cliente com a nova chave
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                
                 const { data: { session } } = await sbClient.auth.getSession();
 
                 if (session) { 
@@ -303,18 +306,18 @@
                     document.getElementById('global-loading').style.display = 'none';
                 }
             } catch(e) {
-                alert("Erro de conexão.");
                 console.error(e);
+                alert("Erro ao conectar com servidor.");
+                document.getElementById('global-loading').style.display = 'none';
+                showScreen('welcome');
             }
         };
 
         // --- SISTEMA DE NAVEGAÇÃO ---
         function showScreen(id) {
-            // Esconde todas
             ['welcome', 'cadastro', 'pending', 'radar', 'active', 'extract'].forEach(s => document.getElementById('screen-'+s).classList.add('hidden'));
             document.getElementById('screen-'+id).classList.remove('hidden');
 
-            // Lógica Menu Inferior e Header
             const isApp = ['radar', 'active', 'extract'].includes(id);
             const menu = document.getElementById('bottom-menu');
             const header = document.getElementById('app-header');
@@ -327,41 +330,32 @@
                 header.classList.add('hidden'); header.classList.remove('flex');
             }
 
-            // Global Loading Off
             document.getElementById('global-loading').style.display = 'none';
         }
 
         function navegar(tab) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-'+tab).classList.add('active');
-            
-            // Se tentar ir pro radar mas tem corrida ativa, força active
             if(tab === 'radar' && pedidoAtual) { navegar('active'); return; }
-            
             showScreen(tab);
         }
 
-        // --- LÓGICA DE USUÁRIO (LOGIN/APROVAÇÃO) ---
+       // --- LÓGICA DE USUÁRIO (LOGIN/APROVAÇÃO) ---
         async function verificarEstadoUsuario() {
             try {
-                // 1. Busca perfil
                 const { data: perfil, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
                 
                 if (error || !perfil) {
-                    // Usuário deletado ou erro
                     sbClient.auth.signOut(); 
                     location.reload(); 
                     return;
                 }
 
-                // 2. Atualiza Saldo no Header
                 document.getElementById('header-saldo').innerText = `R$ ${(perfil.saldo || 0).toFixed(2)}`;
 
-                // 3. Verifica Status Aprovação
                 if (perfil.status !== 'Aprovado') {
                     showScreen('pending');
                 } else {
-                    // APROVADO: Inicia App
                     iniciarOperacao();
                 }
             } catch(e) { console.error(e); showScreen('welcome'); }
@@ -388,7 +382,6 @@
         function fazerLogout() { sbClient.auth.signOut(); location.reload(); }
 
         async function enviarCadastro() {
-            // Coleta básica (expandir conforme necessidade)
             const nome = document.getElementById('cad-nome').value;
             const cpf = document.getElementById('cad-cpf').value;
             const zap = document.getElementById('cad-zap').value;
@@ -417,16 +410,16 @@
                 location.reload();
             }
         }
-                // --- OPERAÇÃO (CORE) ---
+
+        // --- OPERAÇÃO (CORE) ---
         function iniciarOperacao() {
-            // Status Online
             document.getElementById('status-dot').classList.remove('bg-gray-500');
             document.getElementById('status-dot').classList.add('bg-green-500', 'animate-pulse');
             document.getElementById('status-text').innerText = "Online";
 
-            verificarPedidoAtivo(); // Checa se já está em corrida
-            carregarRadar(); // Carrega lista
-            inscreverRealtime(); // Escuta novos pedidos
+            verificarPedidoAtivo(); 
+            carregarRadar(); 
+            inscreverRealtime(); 
         }
 
         // --- RADAR ---
@@ -479,11 +472,9 @@
                 if(payload.new.status === 'Solicitado') adicionarCardRadar(payload.new);
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos' }, payload => {
-                // Se o pedido sair de Solicitado (alguém pegou), remove do radar
                 if(payload.new.status !== 'Solicitado') {
                     const el = document.getElementById(`card-${payload.new.id}`);
                     if(el) el.remove();
-                    // Se ficou vazio
                     if(document.getElementById('radar-list').children.length === 0) 
                         document.getElementById('radar-empty').classList.remove('hidden');
                 }
@@ -495,12 +486,10 @@
         async function aceitarCorrida(id) {
             if(!confirm("Aceitar corrida?")) return;
 
-            // Tenta pegar a corrida (Atomicidade garantida pelo RLS ou verificação simples aqui)
-            // Atualiza status para 'Em Rota' e define motoboy_id
             const { error } = await sbClient.from('pedidos')
                 .update({ status: 'Em Rota', motoboy_id: userSession.user.id })
                 .eq('id', id)
-                .eq('status', 'Solicitado'); // Garante que ainda está disponível
+                .eq('status', 'Solicitado'); 
 
             if (error) {
                 alert("Ops! Outro entregador foi mais rápido.");
@@ -511,7 +500,6 @@
         }
 
         async function verificarPedidoAtivo() {
-            // Busca pedido 'Em Rota' deste motoboy
             const { data, error } = await sbClient.from('pedidos')
                 .select('*')
                 .eq('motoboy_id', userSession.user.id)
@@ -521,10 +509,9 @@
             if (data) {
                 pedidoAtual = data;
                 renderizarPedidoAtivo(data);
-                navegar('active'); // Força tela ativa
+                navegar('active'); 
             } else {
                 pedidoAtual = null;
-                // Se estava na tela active, volta pro radar
                 if(document.getElementById('nav-active').classList.contains('active')) {
                     navegar('radar');
                 }
@@ -539,7 +526,8 @@
             document.getElementById('active-cliente-nome').innerText = p.nome_destinatario || "Cliente";
             document.getElementById('active-forma').innerText = p.forma_pagamento || "Dinheiro";
         }
-               // --- FINALIZAÇÃO (PIN) ---
+
+        // --- FINALIZAÇÃO (PIN) ---
         function abrirModalPin() { document.getElementById('modal-pin').classList.remove('hidden'); document.getElementById('input-pin').value=''; document.getElementById('input-pin').focus(); }
         function fecharModalPin() { document.getElementById('modal-pin').classList.add('hidden'); }
 
@@ -547,22 +535,17 @@
             const pin = document.getElementById('input-pin').value;
             if(pin.length !== 4) return alert("Digite 4 números.");
 
-            // Verifica PIN no banco (Mais seguro que verificar localmente se possível, ou usa o local se confiável)
-            // Aqui usamos lógica local baseada no objeto carregado, mas validamos a update no banco
             if (pin !== pedidoAtual.pin_entrega) {
                 alert("PIN Incorreto!");
                 return;
             }
 
-            // Atualiza Pedido
             const { error } = await sbClient.from('pedidos')
                 .update({ status: 'Finalizado' })
                 .eq('id', pedidoAtual.id);
 
             if(error) return alert("Erro ao finalizar.");
 
-            // Atualiza Saldo Motoboy (Trigger ou Manual)
-            // Manual aqui para simplicidade de feedback visual
             const saldoAtual = parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ','').replace(',','.'));
             const novoSaldo = saldoAtual + pedidoAtual.valor_frete;
             
@@ -571,16 +554,14 @@
 
             alert("Corrida Finalizada com Sucesso!");
             fecharModalPin();
-            verificarPedidoAtivo(); // Vai limpar e voltar pro Radar
+            verificarPedidoAtivo(); 
         }
 
         async function cancelarCorrida() {
             if(!confirm("Cancelar corrida? Isso afetará sua reputação.")) return;
-            
             await sbClient.from('pedidos')
                 .update({ status: 'Solicitado', motoboy_id: null })
                 .eq('id', pedidoAtual.id);
-                
             verificarPedidoAtivo();
         }
 
