@@ -12,353 +12,213 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* --- ESTILOS GERAIS (TEMA DARK + AMARELO) --- */
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background-color: #111827; /* Gray 900 */
-            color: #e5e7eb; 
-            padding-bottom: 90px; /* Espaço para menu inferior */
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Animações */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; padding-bottom: 90px; -webkit-tap-highlight-color: transparent; }
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .pulse-once { animation: pulseOnce 0.5s ease-in-out; }
-        @keyframes pulseOnce { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
-
-        /* Componentes UI */
-        .btn-action { 
-            background-color: #FBBF24; color: black; font-weight: bold; 
-            transition: all 0.2s; border-radius: 12px; text-transform: uppercase;
-        }
+        .btn-action { background-color: #FBBF24; color: black; font-weight: bold; transition: all 0.2s; border-radius: 12px; text-transform: uppercase; }
         .btn-action:hover { background-color: #F59E0B; transform: scale(1.02); }
-        .btn-action:active { transform: scale(0.95); }
-        .btn-action:disabled { background-color: #4B5563; color: #9CA3AF; cursor: not-allowed; transform: none; }
-
+        .btn-action:disabled { background-color: #4B5563; color: #9CA3AF; cursor: not-allowed; }
         .dark-card { background-color: #1F2937; border: 1px solid #374151; border-radius: 16px; overflow: hidden; }
-        
-        /* Inputs Formuário */
-        .input-dark { 
-            background-color: #111827; border: 1px solid #4b5563; color: white; 
-            padding: 14px; border-radius: 10px; width: 100%; outline: none; transition: 0.3s; 
-        }
+        .input-dark { background-color: #111827; border: 1px solid #4b5563; color: white; padding: 14px; border-radius: 10px; width: 100%; outline: none; }
         .input-dark:focus { border-color: #FBBF24; }
-        .input-error { border-color: #EF4444 !important; }
-        .msg-error { color: #EF4444; font-size: 11px; margin-top: 4px; display: none; }
-        
-        /* Botões de GPS/Zap */
-        .btn-tool { 
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; transition: 0.2s;
-        }
-        .btn-tool:active { transform: scale(0.95); }
-
-        /* Menu Inferior Glassmorphism */
-        .bottom-nav { 
-            position: fixed; bottom: 0; left: 0; right: 0; 
-            background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(10px);
-            border-top: 1px solid #374151; 
-            display: flex; justify-content: space-around; align-items: center;
-            padding: 12px 0; z-index: 50; max-width: 28rem; margin: 0 auto;
-        }
-        .nav-item { 
-            display: flex; flex-direction: column; align-items: center; 
-            color: #6B7280; cursor: pointer; flex: 1; transition: 0.2s; font-size: 10px;
-        }
-        .nav-item.active { color: #FBBF24; font-weight: bold; transform: translateY(-2px); }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; }
-
-        /* Layout Desktop */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #374151; display: flex; justify-content: space-around; padding: 12px 0; z-index: 50; max-width: 28rem; margin: 0 auto; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #6B7280; cursor: pointer; flex: 1; font-size: 10px; }
+        .nav-item.active { color: #FBBF24; font-weight: bold; }
         .app-container { width: 100%; min-height: 100vh; }
-        @media (min-width: 768px) { 
-            .app-container { max-width: 28rem; margin: 0 auto; border-radius: 1.5rem; box-shadow: 0 0 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; height: 95vh; margin-top: 2vh; border: 1px solid #374151; }
-            body { display: flex; justify-content: center; background-color: #000; overflow: hidden; }
-            .bottom-nav { border-radius: 0 0 1.5rem 1.5rem; bottom: auto; top: auto; position: absolute; bottom: 0; }
-        }
-
-        /* Helpers */
-        .section-title { font-size: 12px; color: #FBBF24; font-weight: bold; text-transform: uppercase; margin: 20px 0 8px 0; letter-spacing: 1px; }
+        @media (min-width: 768px) { .app-container { max-width: 28rem; margin: 0 auto; border: 1px solid #374151; height: 95vh; margin-top: 2vh; border-radius: 1.5rem; position: relative; overflow-y: auto; } body { display: flex; justify-content: center; background-color: #000; } .bottom-nav { position: absolute; } }
         .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #FBBF24; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="app-container relative overflow-y-auto custom-scroll">
+    <div class="app-container relative overflow-y-auto">
         
         <div id="global-loading" class="absolute inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100]">
             <div class="spinner w-10 h-10 border-4 mb-4"></div>
-            <p class="text-gray-400 text-sm font-bold animate-pulse">Carregando Sistema...</p>
+            <p id="loading-msg" class="text-gray-400 text-sm font-bold animate-pulse">Iniciando Sistema...</p>
+            <button onclick="forceReset()" class="mt-8 text-xs text-red-500 underline opacity-50">Demorando muito? Toque aqui.</button>
         </div>
 
         <div id="screen-welcome" class="hidden min-h-full flex flex-col justify-center p-8 text-center fade-in">
-            <div class="mb-10">
-                <div class="inline-flex p-5 rounded-full bg-yellow-500 text-black mb-4 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
-                    <i class="fas fa-motorcycle text-4xl"></i>
-                </div>
-                <h1 class="text-3xl font-bold text-white mb-1">Drop Entregas</h1>
-                <p class="text-gray-400 text-sm">App do Parceiro</p>
-            </div>
-            
+            <div class="mb-10"><div class="inline-flex p-5 rounded-full bg-yellow-500 text-black mb-4"><i class="fas fa-motorcycle text-4xl"></i></div><h1 class="text-3xl font-bold text-white">Drop Entregas</h1><p class="text-gray-400 text-sm">App do Parceiro</p></div>
             <div class="space-y-4 w-full">
                 <input type="email" id="log-email" class="input-dark text-center" placeholder="Seu E-mail">
                 <input type="password" id="log-senha" class="input-dark text-center" placeholder="Sua Senha">
-                <button onclick="fazerLogin()" id="btn-login" class="w-full btn-action py-4 text-lg shadow-lg">ENTRAR</button>
-                <p onclick="showScreen('cadastro')" class="text-gray-500 text-xs mt-6 cursor-pointer underline hover:text-yellow-500 transition">Quero ser um parceiro</p>
+                <button onclick="fazerLogin()" id="btn-login" class="w-full btn-action py-4 text-lg">ENTRAR</button>
+                <p onclick="showScreen('cadastro')" class="text-gray-500 text-xs mt-6 cursor-pointer underline">Quero ser um parceiro</p>
             </div>
         </div>
 
-        <div id="screen-pending" class="hidden min-h-full flex flex-col justify-center p-8 text-center fade-in bg-gray-900 z-50 absolute inset-0">
+        <div id="screen-pending" class="hidden min-h-full flex flex-col justify-center p-8 text-center fade-in bg-gray-900 absolute inset-0 z-50">
             <div class="mb-6 text-yellow-500 animate-pulse"><i class="fas fa-clock text-7xl"></i></div>
             <h2 class="text-2xl font-bold text-white mb-2">Cadastro em Análise</h2>
-            <p class="text-gray-400 text-sm mb-8 leading-relaxed">Recebemos seus dados. Nossa equipe está validando sua documentação. Você receberá o acesso assim que for aprovado.</p>
-            
-            <div class="bg-gray-800 p-4 rounded-xl mb-8 border border-gray-700">
-                <p class="text-xs text-gray-500 uppercase font-bold mb-1">STATUS ATUAL</p>
-                <p class="text-yellow-400 font-bold text-lg tracking-widest">PENDENTE</p>
-            </div>
-            <button onclick="fazerLogout()" class="text-gray-500 underline text-sm hover:text-white">Sair da conta</button>
+            <p class="text-gray-400 text-sm mb-8">Estamos verificando seus dados. Tente entrar novamente mais tarde.</p>
+            <button onclick="fazerLogout()" class="text-gray-500 underline text-sm">Sair</button>
         </div>
 
         <div id="screen-cadastro" class="hidden p-6 pb-20 fade-in bg-gray-900 absolute inset-0 overflow-y-auto z-50">
-            <div class="flex items-center mb-6 pt-2">
-                <button onclick="showScreen('welcome')" class="text-gray-400 hover:text-white mr-4"><i class="fas fa-arrow-left text-xl"></i></button>
-                <h2 class="text-xl font-bold text-white">Novo Parceiro</h2>
-            </div>
-
-            <p class="section-title">Dados Pessoais</p>
+            <button onclick="showScreen('welcome')" class="text-gray-400 mb-6"><i class="fas fa-arrow-left text-xl"></i> Voltar</button>
+            <h2 class="text-xl font-bold text-white mb-4">Novo Parceiro</h2>
             <div class="space-y-4">
-                <div><input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo*"><p id="msg-nome" class="msg-error">Obrigatório.</p></div>
-                <div><input type="text" id="cad-cpf" class="input-dark" placeholder="CPF (000.000.000-00)*"><p id="msg-cpf" class="msg-error">Inválido.</p></div>
-                <div><input type="text" id="cad-zap" class="input-dark" placeholder="WhatsApp (DDD+9...)*"><p id="msg-zap" class="msg-error">Inválido.</p></div>
-            </div>
-
-            <p class="section-title">Moto</p>
-            <div class="space-y-4">
+                <input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo*">
+                <input type="text" id="cad-cpf" class="input-dark" placeholder="CPF (Apenas números)*">
+                <input type="text" id="cad-zap" class="input-dark" placeholder="WhatsApp (DDD+9...)*">
                 <div class="grid grid-cols-2 gap-3">
-                    <div><input type="text" id="moto-placa" class="input-dark uppercase text-center font-bold" placeholder="PLACA*"><p id="msg-placa" class="msg-error">Inválida.</p></div>
-                    <div><input type="text" id="moto-modelo" class="input-dark" placeholder="Modelo/Ano*"></div>
+                    <input type="text" id="moto-placa" class="input-dark uppercase text-center font-bold" placeholder="PLACA*">
+                    <input type="text" id="moto-modelo" class="input-dark" placeholder="Modelo Moto*">
                 </div>
-                <div><input type="text" id="moto-cor" class="input-dark" placeholder="Cor da Moto*"></div>
+                <input type="email" id="cad-email" class="input-dark" placeholder="E-mail de Login*">
+                <input type="password" id="cad-senha" class="input-dark" placeholder="Senha (Min 6)*">
+                <button onclick="enviarCadastro()" id="btn-cadastrar" class="w-full btn-action py-4 mt-4">ENVIAR CADASTRO</button>
             </div>
-
-            <p class="section-title">Acesso</p>
-            <div class="space-y-4">
-                <div><input type="email" id="cad-email" class="input-dark" placeholder="E-mail de Login*"><p id="msg-email" class="msg-error">Inválido.</p></div>
-                <div><input type="password" id="cad-senha" class="input-dark" placeholder="Senha (Min 6 dígitos)*"><p id="msg-senha" class="msg-error">Mínimo 6 caracteres.</p></div>
-            </div>
-
-            <button onclick="enviarCadastro()" id="btn-cadastrar" class="w-full btn-action py-4 rounded-xl shadow-lg mt-8 text-lg">ENVIAR SOLICITAÇÃO</button>
         </div>
 
-
-        <div id="app-header" class="hidden p-5 flex justify-between items-center bg-gray-900 border-b border-gray-800 sticky top-0 z-40 shadow-md">
-            <div>
-                <h1 class="text-lg font-bold text-white">Drop <span class="text-yellow-500">Motoboy</span></h1>
-                <div class="flex items-center gap-2 mt-1">
-                    <span id="status-dot" class="w-2 h-2 rounded-full bg-gray-500"></span>
-                    <p class="text-xs text-gray-400" id="status-text">Conectando...</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="text-right">
-                    <p class="text-[10px] text-gray-500 uppercase font-bold">Saldo</p>
-                    <p class="text-sm font-bold text-green-400" id="header-saldo">R$ 0,00</p>
-                </div>
-                <button onclick="fazerLogout()" class="bg-gray-800 p-2 w-8 h-8 rounded-full text-gray-400 flex items-center justify-center hover:bg-gray-700 hover:text-red-400"><i class="fas fa-power-off text-xs"></i></button>
-            </div>
+        <div id="app-header" class="hidden p-5 flex justify-between items-center bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
+            <div><h1 class="text-lg font-bold text-white">Drop <span class="text-yellow-500">Motoboy</span></h1><p class="text-xs text-green-500 animate-pulse">● Online</p></div>
+            <div class="text-right"><p class="text-[10px] text-gray-500">Saldo</p><p class="text-sm font-bold text-green-400" id="header-saldo">R$ 0,00</p></div>
         </div>
 
         <div id="screen-radar" class="hidden p-4 pb-24 fade-in">
-            <div id="radar-empty" class="hidden flex flex-col items-center justify-center py-20 text-center opacity-50">
-                <div class="relative">
-                    <div class="absolute inset-0 bg-yellow-500 blur-xl opacity-20 rounded-full animate-pulse"></div>
-                    <i class="fas fa-satellite-dish text-6xl mb-4 text-gray-600 relative z-10"></i>
-                </div>
-                <p class="text-sm font-bold text-gray-400">Procurando pedidos...</p>
-                <p class="text-xs text-gray-600 mt-2">Fique atento, novas corridas aparecerão aqui.</p>
+            <div id="radar-empty" class="hidden py-20 text-center opacity-50">
+                <i class="fas fa-satellite-dish text-6xl mb-4 text-gray-600 animate-pulse"></i>
+                <p class="text-sm text-gray-400">Procurando pedidos...</p>
             </div>
-            
             <div id="radar-list" class="space-y-4"></div>
         </div>
 
         <div id="screen-active" class="hidden p-4 pb-24 fade-in">
-            
-            <div class="bg-green-500/10 border border-green-500/30 p-4 rounded-xl flex items-center justify-between mb-4 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                <div class="flex items-center gap-3">
-                    <div class="bg-green-500 text-black w-10 h-10 rounded-full flex items-center justify-center font-bold animate-pulse text-lg"><i class="fas fa-motorcycle"></i></div>
-                    <div>
-                        <p class="text-sm font-bold text-green-400">EM ROTA</p>
-                        <p class="text-xs text-green-300/70">Pedido #<span id="active-id">0000</span></p>
-                    </div>
-                </div>
+            <div class="bg-green-500/10 border border-green-500/30 p-4 rounded-xl flex justify-between mb-4">
+                <div><p class="text-sm font-bold text-green-400">EM ROTA</p><p class="text-xs text-green-300">Pedido #<span id="active-id">...</span></p></div>
                 <p class="text-2xl font-bold text-white">R$ <span id="active-valor">0,00</span></p>
             </div>
-
-            <div class="dark-card p-5 relative mb-4">
-                <div class="absolute left-6 top-8 bottom-12 w-0.5 bg-gray-700 z-0"></div>
-                
-                <div class="flex gap-4 mb-8 relative z-10">
-                    <div class="w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-800 shadow-[0_0_10px_#3B82F6] shrink-0 mt-1"></div>
-                    <div class="flex-1">
-                        <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">COLETA (LOJA)</p>
-                        <p class="text-base font-bold text-gray-200 leading-tight mb-2" id="active-origem">...</p>
-                        <div class="flex gap-2">
-                            <button onclick="abrirGps('origem')" class="btn-tool bg-gray-700 text-white hover:bg-gray-600"><i class="fas fa-location-arrow"></i> GPS</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex gap-4 relative z-10">
-                    <div class="w-4 h-4 rounded-full bg-yellow-500 border-2 border-gray-800 shadow-[0_0_10px_#F59E0B] shrink-0 mt-1"></div>
-                    <div class="flex-1">
-                        <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">ENTREGA (CLIENTE)</p>
-                        <p class="text-base font-bold text-gray-200 leading-tight mb-1" id="active-destino">...</p>
-                        <p class="text-xs text-gray-400 mb-3" id="active-cliente-nome">...</p>
-                        
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="abrirGps('destino')" class="btn-tool bg-gray-700 text-white hover:bg-gray-600"><i class="fas fa-location-arrow"></i> GPS</button>
-                            <button onclick="abrirZap()" class="btn-tool bg-green-600 text-white hover:bg-green-500"><i class="fab fa-whatsapp text-lg"></i> Contatar</button>
-                        </div>
-                    </div>
+            <div class="dark-card p-5 mb-4">
+                <p class="text-xs text-gray-500 font-bold mb-1">RETIRADA</p>
+                <p class="text-white font-bold mb-3" id="active-origem">...</p>
+                <p class="text-xs text-gray-500 font-bold mb-1">ENTREGA</p>
+                <p class="text-white font-bold mb-3" id="active-destino">...</p>
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <button onclick="abrirGps('destino')" class="btn-action bg-gray-700 text-white hover:bg-gray-600 py-2 text-xs">GPS</button>
+                    <button onclick="abrirZap()" class="btn-action bg-green-600 text-white hover:bg-green-500 py-2 text-xs">WhatsApp</button>
                 </div>
             </div>
-
-            <div class="dark-card p-4 flex justify-between items-center mb-6">
-                <div>
-                    <p class="text-xs text-gray-500 uppercase font-bold">Cobrar do Cliente</p>
-                    <p class="text-white font-bold text-lg" id="active-forma">...</p>
-                </div>
-                <div class="text-right">
-                   <p class="text-[10px] text-yellow-500 uppercase font-bold border border-yellow-500/30 px-2 py-1 rounded">Verificar Valor com Loja</p>
-                </div>
+            <div class="dark-card p-4 flex justify-between mb-4">
+                <p class="text-xs text-gray-500">Cobrar:</p>
+                <p class="text-white font-bold" id="active-forma">...</p>
             </div>
-
-            <button onclick="abrirModalPin()" class="w-full btn-action py-4 text-lg shadow-[0_0_20px_rgba(251,191,36,0.2)] mb-3">
-                <i class="fas fa-check-circle mr-2"></i> FINALIZAR ENTREGA
-            </button>
-            <button onclick="cancelarCorrida()" class="w-full text-center text-xs text-red-500 py-2 opacity-60 hover:opacity-100">Cancelar Corrida (Emergência)</button>
+            <button onclick="abrirModalPin()" class="w-full btn-action py-4 mb-2">FINALIZAR</button>
+            <button onclick="cancelarCorrida()" class="w-full text-red-500 text-xs py-2">Cancelar Corrida</button>
         </div>
 
-        <div id="screen-extract" class="hidden p-4 pb-24 fade-in">
-            <h2 class="text-xl font-bold text-white mb-4">Histórico</h2>
-            <div id="history-list" class="space-y-3"></div>
-        </div>
-
-        <div id="modal-pin" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 fade-in">
+        <div id="modal-pin" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6">
             <div class="bg-gray-800 w-full max-w-xs p-6 rounded-2xl border border-gray-700 text-center relative">
-                <button onclick="fecharModalPin()" class="absolute top-3 right-3 text-gray-500 p-2"><i class="fas fa-times"></i></button>
-                <div class="w-12 h-12 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center mx-auto mb-3"><i class="fas fa-lock text-xl"></i></div>
-                <h3 class="text-lg font-bold text-white mb-1">Validar Entrega</h3>
-                <p class="text-xs text-gray-400 mb-6">Peça o PIN de 4 dígitos ao cliente</p>
-                
-                <input type="tel" id="input-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-xl p-4 text-center text-3xl font-bold tracking-[0.5em] text-white mb-6 focus:border-yellow-500 outline-none placeholder-gray-700" placeholder="0000">
-                
-                <button onclick="validarPin()" class="w-full btn-action py-3 rounded-xl">CONFIRMAR</button>
+                <button onclick="document.getElementById('modal-pin').classList.add('hidden')" class="absolute top-2 right-2 text-gray-500 p-2"><i class="fas fa-times"></i></button>
+                <h3 class="text-lg font-bold text-white mb-4">Validar Entrega</h3>
+                <input type="tel" id="input-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-xl p-4 text-center text-3xl font-bold text-white mb-6" placeholder="0000">
+                <button onclick="validarPin()" class="w-full btn-action py-3">CONFIRMAR</button>
             </div>
         </div>
 
         <div id="bottom-menu" class="hidden bottom-nav">
-            <div class="nav-item active" id="nav-radar" onclick="navegar('radar')">
-                <i class="fas fa-map-marked-alt"></i><span>Radar</span>
-            </div>
-            <div class="nav-item" id="nav-active" onclick="navegar('active')">
-                <i class="fas fa-box"></i><span>Corrida</span>
-            </div>
-            <div class="nav-item" id="nav-extract" onclick="carregarExtrato(); navegar('extract')">
-                <i class="fas fa-wallet"></i><span>Ganhos</span>
-            </div>
+            <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt text-xl mb-1"></i>Radar</div>
+            <div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box text-xl mb-1"></i>Corrida</div>
+            <div class="nav-item" onclick="alert('Histórico em breve')"><i class="fas fa-wallet text-xl mb-1"></i>Ganhos</div>
         </div>
-
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO SUPABASE ---
-        // ATUALIZADO COM SUA CHAVE CORRETA
         const SUPABASE_URL = 'https://ofpnnijkhgsjarixoyhg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcG5uaWpraGdzamFyaXhveWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjUyNzYsImV4cCI6MjA4MDY0MTI3Nn0.dNOIIETmTz3l1HvhuT-ihAiymJqiaYZnklzzBzDGCFU';
         
-        let sbClient = null;
+        let sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let userSession = null;
         let pedidoAtual = null;
 
-        // MÁSCARAS
-        $(document).ready(function(){ 
-            $('#cad-cpf').mask('000.000.000-00');
-            $('#cad-zap').mask('(00) 00000-0000');
-            $('#moto-placa').on('input', function() { this.value = this.value.toUpperCase(); });
-        });
+        // Máscaras
+        $(document).ready(function(){ $('#cad-cpf').mask('000.000.000-00'); $('#cad-zap').mask('(00) 00000-0000'); });
 
-        // --- INICIALIZAÇÃO ---
         window.onload = async function() {
-            try {
-                // Instancia o cliente com a nova chave
-                sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                
-                const { data: { session } } = await sbClient.auth.getSession();
+            setLoading(true, "Conectando...");
+            
+            // Timeout de segurança: Se travar por 8s, libera a tela
+            setTimeout(() => {
+                if(document.getElementById('global-loading').style.display !== 'none'){
+                    console.log("Forçando fim do loading por timeout");
+                    if(!userSession) showScreen('welcome');
+                }
+            }, 8000);
 
-                if (session) { 
-                    userSession = session; 
-                    verificarEstadoUsuario(); 
-                } else { 
+            try {
+                const { data: { session }, error } = await sbClient.auth.getSession();
+                if (error) throw error;
+
+                if (session) {
+                    userSession = session;
+                    setLoading(true, "Verificando Perfil...");
+                    verificarPerfil();
+                } else {
                     showScreen('welcome');
-                    document.getElementById('global-loading').style.display = 'none';
                 }
             } catch(e) {
                 console.error(e);
-                alert("Erro ao conectar com servidor.");
-                document.getElementById('global-loading').style.display = 'none';
                 showScreen('welcome');
             }
         };
 
-        // --- SISTEMA DE NAVEGAÇÃO ---
-        function showScreen(id) {
-            ['welcome', 'cadastro', 'pending', 'radar', 'active', 'extract'].forEach(s => document.getElementById('screen-'+s).classList.add('hidden'));
-            document.getElementById('screen-'+id).classList.remove('hidden');
+        function setLoading(state, msg = "Carregando...") {
+            const el = document.getElementById('global-loading');
+            const txt = document.getElementById('loading-msg');
+            if(state) { el.style.display = 'flex'; txt.innerText = msg; }
+            else { el.style.display = 'none'; }
+        }
 
-            const isApp = ['radar', 'active', 'extract'].includes(id);
-            const menu = document.getElementById('bottom-menu');
-            const header = document.getElementById('app-header');
-
-            if (isApp) {
-                menu.classList.remove('hidden'); menu.classList.add('flex');
-                header.classList.remove('hidden'); header.classList.add('flex');
-            } else {
-                menu.classList.add('hidden'); menu.classList.remove('flex');
-                header.classList.add('hidden'); header.classList.remove('flex');
+        function forceReset() {
+            if(confirm("Reiniciar o aplicativo?")) {
+                sbClient.auth.signOut();
+                location.reload();
             }
+        }
 
-            document.getElementById('global-loading').style.display = 'none';
+        function showScreen(id) {
+            ['welcome', 'cadastro', 'pending', 'radar', 'active'].forEach(s => document.getElementById('screen-'+s).classList.add('hidden'));
+            document.getElementById('screen-'+id).classList.remove('hidden');
+            
+            const isApp = ['radar', 'active'].includes(id);
+            document.getElementById('bottom-menu').classList.toggle('hidden', !isApp);
+            document.getElementById('bottom-menu').classList.toggle('flex', isApp);
+            document.getElementById('app-header').classList.toggle('hidden', !isApp);
+            document.getElementById('app-header').classList.toggle('flex', isApp);
+            
+            setLoading(false);
         }
 
         function navegar(tab) {
+            if(tab === 'radar' && pedidoAtual) tab = 'active';
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-'+tab).classList.add('active');
-            if(tab === 'radar' && pedidoAtual) { navegar('active'); return; }
             showScreen(tab);
         }
 
-       // --- LÓGICA DE USUÁRIO (LOGIN/APROVAÇÃO) ---
-        async function verificarEstadoUsuario() {
-            try {
-                const { data: perfil, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-                
-                if (error || !perfil) {
-                    sbClient.auth.signOut(); 
-                    location.reload(); 
-                    return;
-                }
+        // --- AUTH E CADASTRO OTIMIZADO ---
+        async function verificarPerfil() {
+            // Verifica tabela motoboys
+            const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
+            
+            if (!data) {
+                // Se não achou perfil, força logout para evitar loop
+                console.warn("Usuário logado mas sem perfil na tabela motoboys");
+                sbClient.auth.signOut();
+                showScreen('welcome');
+                return;
+            }
 
-                document.getElementById('header-saldo').innerText = `R$ ${(perfil.saldo || 0).toFixed(2)}`;
+            document.getElementById('header-saldo').innerText = `R$ ${(data.saldo || 0).toFixed(2)}`;
 
-                if (perfil.status !== 'Aprovado') {
-                    showScreen('pending');
-                } else {
-                    iniciarOperacao();
-                }
-            } catch(e) { console.error(e); showScreen('welcome'); }
+            if (data.status !== 'Aprovado') {
+                showScreen('pending');
+            } else {
+                iniciarApp();
+            }
         }
 
         async function fazerLogin() {
@@ -367,10 +227,10 @@
             const btn = document.getElementById('btn-login');
 
             if(!email || !senha) return alert("Preencha tudo.");
-            btn.innerText = "..."; btn.disabled = true;
+            
+            btn.innerText = "Entrando..."; btn.disabled = true;
 
             const { data, error } = await sbClient.auth.signInWithPassword({ email, password: senha });
-
             if (error) {
                 alert("Erro: " + error.message);
                 btn.innerText = "ENTRAR"; btn.disabled = false;
@@ -378,8 +238,6 @@
                 location.reload();
             }
         }
-
-        function fazerLogout() { sbClient.auth.signOut(); location.reload(); }
 
         async function enviarCadastro() {
             const nome = document.getElementById('cad-nome').value;
@@ -390,219 +248,132 @@
             const email = document.getElementById('cad-email').value;
             const senha = document.getElementById('cad-senha').value;
 
-            if(!nome || !cpf || !zap || !placa || !email || !senha) return alert("Preencha todos os campos obrigatórios.");
-            if(senha.length < 6) return alert("Senha muito curta.");
-
+            if(!nome || !cpf || !zap || !placa || !email || !senha) return alert("Preencha todos os campos.");
+            
             const btn = document.getElementById('btn-cadastrar');
-            btn.innerText = "Enviando..."; btn.disabled = true;
+            btn.innerText = "Cadastrando..."; btn.disabled = true;
 
-            const metaData = { tipo_usuario: 'motoboy', nome, cpf, whatsapp: zap, placa, modelo, status: 'Pendente' };
-
-            const { error } = await sbClient.auth.signUp({
-                email, password: senha, options: { data: metaData }
+            // 1. Cria usuário Auth
+            const { data: authData, error: authError } = await sbClient.auth.signUp({
+                email: email, password: senha
             });
 
-            if(error) {
-                alert("Erro: " + error.message);
-                btn.innerText = "ENVIAR SOLICITAÇÃO"; btn.disabled = false;
-            } else {
-                alert("Cadastro enviado! Faça login.");
-                location.reload();
+            if(authError) {
+                alert("Erro Auth: " + authError.message);
+                btn.innerText = "Tentar Novamente"; btn.disabled = false;
+                return;
+            }
+
+            if(authData.user) {
+                // 2. INSERÇÃO MANUAL NA TABELA (Sem depender de Trigger)
+                const { error: dbError } = await sbClient.from('motoboys').insert({
+                    id: authData.user.id, // Vínculo importante!
+                    nome: nome,
+                    cpf: cpf,
+                    whatsapp: zap,
+                    placa: placa,
+                    modelo: modelo,
+                    status: 'Pendente',
+                    saldo: 0
+                });
+
+                if(dbError) {
+                    console.error("Erro ao salvar dados:", dbError);
+                    alert("Conta criada, mas houve erro ao salvar dados do perfil. Entre em contato.");
+                } else {
+                    alert("Cadastro enviado! Aguarde aprovação.");
+                    location.reload();
+                }
             }
         }
 
-        // --- OPERAÇÃO (CORE) ---
-        function iniciarOperacao() {
-            document.getElementById('status-dot').classList.remove('bg-gray-500');
-            document.getElementById('status-dot').classList.add('bg-green-500', 'animate-pulse');
-            document.getElementById('status-text').innerText = "Online";
+        function fazerLogout() { sbClient.auth.signOut(); location.reload(); }
 
-            verificarPedidoAtivo(); 
-            carregarRadar(); 
-            inscreverRealtime(); 
+        // --- APP ---
+        function iniciarApp() {
+            verificarPedidoAtivo();
+            carregarRadar();
+            
+            // Realtime
+            sbClient.channel('pedidos-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
+                carregarRadar();
+                if(pedidoAtual) verificarPedidoAtivo(); // Atualiza se status mudar
+            })
+            .subscribe();
         }
 
-        // --- RADAR ---
         async function carregarRadar() {
-            const { data } = await sbClient.from('pedidos')
-                .select('*')
-                .eq('status', 'Solicitado')
-                .order('created_at', { ascending: false });
-
+            const { data } = await sbClient.from('pedidos').select('*').eq('status', 'Solicitado').order('created_at', {ascending:false});
             const list = document.getElementById('radar-list');
             list.innerHTML = '';
-
-            if (data && data.length > 0) {
+            
+            if(data && data.length > 0) {
                 document.getElementById('radar-empty').classList.add('hidden');
-                data.forEach(p => adicionarCardRadar(p));
+                data.forEach(p => {
+                    list.innerHTML += `
+                        <div class="dark-card p-4 border-l-4 border-yellow-500 relative">
+                            <div class="flex justify-between mb-2">
+                                <span class="bg-gray-700 text-xs px-2 py-1 rounded">Retirada</span>
+                                <span class="text-green-400 font-bold">R$ ${p.valor_frete}</span>
+                            </div>
+                            <h3 class="font-bold text-white mb-1">${p.origem}</h3>
+                            <p class="text-xs text-gray-400 mb-3">Entrega: ${p.destino}</p>
+                            <button onclick="aceitarCorrida(${p.id})" class="w-full bg-yellow-500 text-black font-bold py-2 rounded">ACEITAR</button>
+                        </div>`;
+                });
             } else {
                 document.getElementById('radar-empty').classList.remove('hidden');
             }
         }
 
-        function adicionarCardRadar(p) {
-            const list = document.getElementById('radar-list');
-            const card = document.createElement('div');
-            card.id = `card-${p.id}`;
-            card.className = "dark-card p-4 border-l-4 border-yellow-500 pulse-once relative";
-            card.innerHTML = `
-                <div class="flex justify-between items-start mb-2">
-                    <span class="bg-gray-700 text-xs px-2 py-1 rounded text-gray-300"><i class="fas fa-store mr-1"></i> Retirada</span>
-                    <span class="text-green-400 font-bold text-lg">R$ ${parseFloat(p.valor_frete).toFixed(2)}</span>
-                </div>
-                <h3 class="font-bold text-white text-sm mb-1 line-clamp-1">${p.origem}</h3>
-                
-                <div class="my-2 border-l border-gray-600 pl-3 ml-1">
-                    <p class="text-xs text-gray-500">Entrega para Cliente</p>
-                    <p class="text-gray-300 text-sm line-clamp-1">${p.destino}</p>
-                </div>
-
-                <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-700">
-                    <span class="text-xs text-yellow-500 font-bold">${p.forma_pagamento || 'Dinheiro'}</span>
-                    <button onclick="aceitarCorrida(${p.id})" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 px-6 rounded-lg text-sm shadow-lg transition">ACEITAR</button>
-                </div>
-            `;
-            list.prepend(card);
-            document.getElementById('radar-empty').classList.add('hidden');
-        }
-
-        function inscreverRealtime() {
-            sbClient.channel('tabela-pedidos')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, payload => {
-                if(payload.new.status === 'Solicitado') adicionarCardRadar(payload.new);
-            })
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos' }, payload => {
-                if(payload.new.status !== 'Solicitado') {
-                    const el = document.getElementById(`card-${payload.new.id}`);
-                    if(el) el.remove();
-                    if(document.getElementById('radar-list').children.length === 0) 
-                        document.getElementById('radar-empty').classList.remove('hidden');
-                }
-            })
-            .subscribe();
-        }
-
-        // --- AÇÕES DE CORRIDA ---
         async function aceitarCorrida(id) {
             if(!confirm("Aceitar corrida?")) return;
-
-            const { error } = await sbClient.from('pedidos')
-                .update({ status: 'Em Rota', motoboy_id: userSession.user.id })
-                .eq('id', id)
-                .eq('status', 'Solicitado'); 
-
-            if (error) {
-                alert("Ops! Outro entregador foi mais rápido.");
-                carregarRadar();
-            } else {
-                verificarPedidoAtivo();
-            }
+            const { error } = await sbClient.from('pedidos').update({ status: 'Em Rota', motoboy_id: userSession.user.id }).eq('id', id).eq('status', 'Solicitado');
+            if(error) alert("Erro: " + error.message);
+            else verificarPedidoAtivo();
         }
 
         async function verificarPedidoAtivo() {
-            const { data, error } = await sbClient.from('pedidos')
-                .select('*')
-                .eq('motoboy_id', userSession.user.id)
-                .eq('status', 'Em Rota')
-                .single();
-
-            if (data) {
+            const { data } = await sbClient.from('pedidos').select('*').eq('motoboy_id', userSession.user.id).eq('status', 'Em Rota').single();
+            if(data) {
                 pedidoAtual = data;
-                renderizarPedidoAtivo(data);
-                navegar('active'); 
+                document.getElementById('active-id').innerText = data.id;
+                document.getElementById('active-valor').innerText = data.valor_frete.toFixed(2);
+                document.getElementById('active-origem').innerText = data.origem;
+                document.getElementById('active-destino').innerText = data.destino;
+                document.getElementById('active-forma').innerText = data.forma_pagamento;
+                navegar('active');
             } else {
                 pedidoAtual = null;
-                if(document.getElementById('nav-active').classList.contains('active')) {
-                    navegar('radar');
-                }
+                if(document.getElementById('screen-active').style.display !== 'none') navegar('radar');
             }
         }
 
-        function renderizarPedidoAtivo(p) {
-            document.getElementById('active-id').innerText = p.id;
-            document.getElementById('active-valor').innerText = p.valor_frete.toFixed(2);
-            document.getElementById('active-origem').innerText = p.origem;
-            document.getElementById('active-destino').innerText = p.destino;
-            document.getElementById('active-cliente-nome').innerText = p.nome_destinatario || "Cliente";
-            document.getElementById('active-forma').innerText = p.forma_pagamento || "Dinheiro";
-        }
-
-        // --- FINALIZAÇÃO (PIN) ---
-        function abrirModalPin() { document.getElementById('modal-pin').classList.remove('hidden'); document.getElementById('input-pin').value=''; document.getElementById('input-pin').focus(); }
-        function fecharModalPin() { document.getElementById('modal-pin').classList.add('hidden'); }
-
+        function abrirModalPin() { document.getElementById('modal-pin').classList.remove('hidden'); }
+        
         async function validarPin() {
             const pin = document.getElementById('input-pin').value;
-            if(pin.length !== 4) return alert("Digite 4 números.");
-
-            if (pin !== pedidoAtual.pin_entrega) {
-                alert("PIN Incorreto!");
-                return;
-            }
-
-            const { error } = await sbClient.from('pedidos')
-                .update({ status: 'Finalizado' })
-                .eq('id', pedidoAtual.id);
-
-            if(error) return alert("Erro ao finalizar.");
-
-            const saldoAtual = parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ','').replace(',','.'));
-            const novoSaldo = saldoAtual + pedidoAtual.valor_frete;
+            if(pin != pedidoAtual.pin_entrega) return alert("PIN Incorreto");
             
+            await sbClient.from('pedidos').update({ status: 'Finalizado' }).eq('id', pedidoAtual.id);
+            // Atualiza saldo simples (ideal usar procedure segura no futuro)
+            const novoSaldo = parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ','').replace(',','.')) + pedidoAtual.valor_frete;
             await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
-            document.getElementById('header-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
-
-            alert("Corrida Finalizada com Sucesso!");
-            fecharModalPin();
-            verificarPedidoAtivo(); 
+            
+            alert("Finalizado!");
+            document.getElementById('modal-pin').classList.add('hidden');
+            verificarPerfil(); // Atualiza saldo e tela
         }
 
         async function cancelarCorrida() {
-            if(!confirm("Cancelar corrida? Isso afetará sua reputação.")) return;
-            await sbClient.from('pedidos')
-                .update({ status: 'Solicitado', motoboy_id: null })
-                .eq('id', pedidoAtual.id);
+            if(!confirm("Cancelar?")) return;
+            await sbClient.from('pedidos').update({ status: 'Solicitado', motoboy_id: null }).eq('id', pedidoAtual.id);
             verificarPedidoAtivo();
         }
-
-        // --- UTILITÁRIOS ---
-        function abrirGps(tipo) {
-            const end = tipo === 'origem' ? pedidoAtual.origem : pedidoAtual.destino;
-            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(end)}`, '_blank');
-        }
-        function abrirZap() {
-            if(!pedidoAtual.telefone_destinatario) return alert("Sem telefone.");
-            let tel = pedidoAtual.telefone_destinatario.replace(/\D/g,'');
-            if(!tel.startsWith('55')) tel = '55'+tel;
-            window.open(`https://wa.me/${tel}`, '_blank');
-        }
-
-        async function carregarExtrato() {
-            const div = document.getElementById('history-list');
-            div.innerHTML = '<div class="spinner mx-auto"></div>';
-            
-            const { data } = await sbClient.from('pedidos')
-                .select('*')
-                .eq('motoboy_id', userSession.user.id)
-                .eq('status', 'Finalizado')
-                .order('created_at', {ascending:false})
-                .limit(10);
-            
-            div.innerHTML = '';
-            if(!data.length) div.innerHTML = '<p class="text-gray-500 text-sm text-center">Nenhuma corrida recente.</p>';
-            
-            data.forEach(p => {
-                div.innerHTML += `
-                    <div class="dark-card p-3 flex justify-between items-center">
-                        <div>
-                            <p class="text-sm text-white font-bold">${p.destino}</p>
-                            <p class="text-xs text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p>
-                        </div>
-                        <span class="text-green-400 font-bold">+ R$ ${p.valor_frete.toFixed(2)}</span>
-                    </div>
-                `;
-            });
-        }
+        
+        function abrirGps(t) { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t==='origem'?pedidoAtual.origem:pedidoAtual.destino)}`, '_blank'); }
+        function abrirZap() { window.open(`https://wa.me/55${pedidoAtual.telefone_destinatario.replace(/\D/g,'')}`, '_blank'); }
     </script>
 </body>
 </html>
