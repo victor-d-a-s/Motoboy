@@ -124,31 +124,32 @@
             document.getElementById('btn-cadastrar').innerText = "Enviando...";
             const { data: authData, error } = await sbClient.auth.signUp({ email, password: senha });
             if(error) return alert(error.message);
+            // Salva na tabela motoboys (com ID do Auth)
             await sbClient.from('motoboys').insert({ id: authData.user.id, nome: nome, status: 'Pendente' });
+            // Salva TAMBÉM na tabela profiles (para o Cliente conseguir ver os dados do motoboy no modal "Ver Motoboy")
+            await sbClient.from('profiles').insert({ id: authData.user.id, responsavel: nome, funcao: 'motoboy', modelo_moto: document.getElementById('moto-modelo').value, placa_moto: document.getElementById('moto-placa').value, whatsapp_responsavel: document.getElementById('cad-zap').value });
             alert("Cadastro enviado!"); location.reload();
         }
 
         function fazerLogout() { sbClient.auth.signOut(); location.reload(); }
 
-       // --- SISTEMA EM TEMPO REAL ---
+        // --- SISTEMA EM TEMPO REAL ---
         function iniciarApp() {
             verificarPedidoAtivo();
             carregarRadar();
             
-            // ESCUTA TUDO O QUE ACONTECE NA TABELA PEDIDOS
+            // ATENÇÃO: Escuta a tabela 'pedidos' e filtra pelo status 'solicitado' (minúsculo)
             sbClient.channel('radar-realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, payload => {
-                // Se um novo pedido foi criado, atualiza o radar
                 carregarRadar();
-                
-                // Se o pedido atual mudou de status (ex: Cliente cancelou), atualiza a tela
                 if(pedidoAtual && payload.new.id === pedidoAtual.id) verificarPedidoAtivo();
             })
             .subscribe();
         }
 
         async function carregarRadar() {
-            const { data } = await sbClient.from('pedidos').select('*').eq('status', 'Solicitado').order('created_at', {ascending:false});
+            // CORREÇÃO: Busca 'solicitado' (minúsculo) para bater com o cliente
+            const { data } = await sbClient.from('pedidos').select('*').eq('status', 'solicitado').order('created_at', {ascending:false});
             const list = document.getElementById('radar-list'); list.innerHTML = '';
             if(data && data.length > 0) {
                 document.getElementById('radar-empty').classList.add('hidden');
@@ -160,12 +161,14 @@
 
         async function aceitarCorrida(id) {
             if(!confirm("Aceitar corrida?")) return;
-            const { error } = await sbClient.from('pedidos').update({ status: 'Em Rota', motoboy_id: userSession.user.id }).eq('id', id).eq('status', 'Solicitado');
+            // CORREÇÃO: Grava em 'entregador_id' e muda status para 'em_rota' (minúsculo)
+            const { error } = await sbClient.from('pedidos').update({ status: 'em_rota', entregador_id: userSession.user.id }).eq('id', id).eq('status', 'solicitado');
             if(error) alert("Outro motoboy já pegou!"); else verificarPedidoAtivo();
         }
 
         async function verificarPedidoAtivo() {
-            const { data } = await sbClient.from('pedidos').select('*').eq('motoboy_id', userSession.user.id).eq('status', 'Em Rota').single();
+            // CORREÇÃO: Busca por 'entregador_id' e 'em_rota'
+            const { data } = await sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).eq('status', 'em_rota').single();
             if(data) {
                 pedidoAtual = data;
                 document.getElementById('active-id').innerText = data.id; document.getElementById('active-valor').innerText = data.valor_frete.toFixed(2);
@@ -178,14 +181,15 @@
         async function validarPin() {
             const pin = document.getElementById('input-pin').value;
             if(pin != pedidoAtual.pin_entrega) return alert("PIN Incorreto");
-            await sbClient.from('pedidos').update({ status: 'Finalizado' }).eq('id', pedidoAtual.id);
+            // CORREÇÃO: Muda status para 'concluido' (minúsculo)
+            await sbClient.from('pedidos').update({ status: 'concluido' }).eq('id', pedidoAtual.id);
             const novoSaldo = parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ','')) + pedidoAtual.valor_frete;
             await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
             alert("Sucesso!"); document.getElementById('modal-pin').classList.add('hidden'); verificarPerfil();
         }
 
-        async function cancelarCorrida() { if(!confirm("Cancelar?")) return; await sbClient.from('pedidos').update({ status: 'Solicitado', motoboy_id: null }).eq('id', pedidoAtual.id); verificarPedidoAtivo(); }
-        async function carregarExtrato() { const div = document.getElementById('history-list'); div.innerHTML = '<div class="spinner mx-auto"></div>'; const { data } = await sbClient.from('pedidos').select('*').eq('motoboy_id', userSession.user.id).eq('status', 'Finalizado').order('created_at', {ascending:false}).limit(10); div.innerHTML = ''; data.forEach(p => div.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-xs text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${p.valor_frete.toFixed(2)}</p></div>`); }
+        async function cancelarCorrida() { if(!confirm("Cancelar?")) return; await sbClient.from('pedidos').update({ status: 'solicitado', entregador_id: null }).eq('id', pedidoAtual.id); verificarPedidoAtivo(); }
+        async function carregarExtrato() { const div = document.getElementById('history-list'); div.innerHTML = '<div class="spinner mx-auto"></div>'; const { data } = await sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).eq('status', 'concluido').order('created_at', {ascending:false}).limit(10); div.innerHTML = ''; data.forEach(p => div.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-xs text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${p.valor_frete.toFixed(2)}</p></div>`); }
         function abrirGps(t) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(t==='origem'?pedidoAtual.origem:pedidoAtual.destino)}`, '_blank'); }
         function abrirZap() { window.open(`https://wa.me/55${pedidoAtual.telefone_destinatario.replace(/\D/g,'')}`, '_blank'); }
         function abrirModalPin() { document.getElementById('modal-pin').classList.remove('hidden'); }
