@@ -22,11 +22,14 @@
         .btn-action:disabled { background-color: #4B5563; color: #9CA3AF; cursor: not-allowed; }
         
         .dark-card { background-color: #1F2937; border: 1px solid #374151; border-radius: 16px; overflow: hidden; }
-        .input-dark { background-color: #111827; border: 1px solid #4b5563; color: white; padding: 14px; padding-left: 45px; border-radius: 10px; width: 100%; outline: none; transition: 0.3s; }
-        .input-dark:focus { border-color: #FBBF24; }
-        .input-icon { position: absolute; left: 15px; top: 15px; color: #6B7280; }
-        .input-group { position: relative; margin-bottom: 12px; }
         
+        /* Inputs Estilizados */
+        .input-group { position: relative; margin-bottom: 12px; }
+        .input-icon { position: absolute; left: 16px; top: 16px; color: #6B7280; z-index: 10; font-size: 14px; }
+        .input-dark { background-color: #111827; border: 1px solid #4b5563; color: white; padding: 14px 14px 14px 45px; border-radius: 12px; width: 100%; outline: none; transition: 0.3s; font-size: 14px; }
+        .input-dark:focus { border-color: #FBBF24; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.1); }
+        .input-dark[readonly] { background-color: #1f2937; color: #9ca3af; border-color: #374151; }
+
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #374151; display: flex; justify-content: space-around; padding: 12px 0; z-index: 50; max-width: 28rem; margin: 0 auto; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #6B7280; cursor: pointer; flex: 1; font-size: 10px; transition: 0.2s; }
         .nav-item.active { color: #FBBF24; font-weight: bold; transform: translateY(-2px); }
@@ -60,9 +63,9 @@
 
         <div id="screen-pending" class="hidden min-h-full flex flex-col justify-center p-8 text-center fade-in bg-gray-900 absolute inset-0 z-50">
             <div class="mb-6 text-yellow-500 animate-pulse"><i class="fas fa-clock text-7xl"></i></div>
-            <h2 class="text-2xl font-bold text-white mb-2">Análise Pendente</h2>
-            <p class="text-gray-400 text-sm mb-8 leading-relaxed">Seu cadastro foi enviado com sucesso. Aguarde a aprovação da central para começar a rodar.</p>
-            <button onclick="fazerLogout()" class="text-gray-500 underline text-sm hover:text-white">Sair da conta</button>
+            <h2 class="text-2xl font-bold text-white mb-2">Cadastro em Análise</h2>
+            <p class="text-gray-400 text-sm mb-8 leading-relaxed">Estamos verificando seus dados. Tente entrar novamente mais tarde.</p>
+            <button onclick="fazerLogout()" class="text-gray-500 underline text-sm hover:text-white">Sair</button>
         </div>
 
         <div id="screen-cadastro" class="hidden p-6 pb-20 fade-in bg-gray-900 absolute inset-0 overflow-y-auto z-50">
@@ -71,26 +74,28 @@
                 <h2 class="text-xl font-bold text-white">Novo Parceiro</h2>
             </div>
             
-            <p class="text-xs font-bold text-yellow-500 uppercase mb-3 ml-1">Dados Pessoais</p>
-            <div class="space-y-2">
+            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">DADOS PESSOAIS</p>
+            <div class="space-y-3 mb-6">
                 <div class="input-group"><i class="fas fa-user input-icon"></i><input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo"></div>
                 <div class="input-group"><i class="fas fa-id-card input-icon"></i><input type="text" id="cad-cpf" class="input-dark" placeholder="CPF (Somente números)"></div>
                 <div class="input-group"><i class="fab fa-whatsapp input-icon"></i><input type="text" id="cad-zap" class="input-dark" placeholder="WhatsApp (DDD+9...)"></div>
             </div>
 
-            <p class="text-xs font-bold text-yellow-500 uppercase mb-3 ml-1 mt-6">Veículo</p>
-            <div class="space-y-2">
+            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">VEÍCULO</p>
+            <div class="space-y-3 mb-6">
                 <div class="input-group"><i class="fas fa-motorcycle input-icon"></i><input type="text" id="moto-modelo" class="input-dark" placeholder="Modelo (Ex: Titan 160)"></div>
                 <div class="input-group"><i class="fas fa-credit-card input-icon"></i><input type="text" id="moto-placa" class="input-dark uppercase font-bold" placeholder="PLACA"></div>
             </div>
 
-            <p class="text-xs font-bold text-yellow-500 uppercase mb-3 ml-1 mt-6">Acesso</p>
-            <div class="space-y-2">
-                <div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="cad-email" class="input-dark" placeholder="E-mail"></div>
+            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">ACESSO</p>
+            <div class="space-y-3 mb-8">
+                <div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="cad-email" class="input-dark" placeholder="E-mail de Login"></div>
                 <div class="input-group"><i class="fas fa-lock input-icon"></i><input type="password" id="cad-senha" class="input-dark" placeholder="Senha (Min 6 dígitos)"></div>
             </div>
 
-            <button onclick="enviarCadastro()" id="btn-cadastrar" class="w-full btn-action py-4 mt-8 shadow-lg">ENVIAR CADASTRO</button>
+            <button onclick="enviarCadastro()" id="btn-cadastrar" class="w-full btn-action py-4 shadow-lg flex items-center justify-center gap-2">
+                <span>ENVIAR CADASTRO</span> <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
 
         <div id="app-header" class="hidden p-5 flex justify-between items-center bg-gray-900 border-b border-gray-800 sticky top-0 z-40 shadow-lg">
@@ -104,14 +109,26 @@
         </div>
 
         <div id="screen-active" class="hidden p-4 pb-24 fade-in">
-            <div class="bg-green-500/10 border border-green-500/30 p-4 rounded-xl flex justify-between mb-4"><div class="flex items-center gap-3"><div class="bg-green-500 text-black w-10 h-10 rounded-full flex items-center justify-center font-bold animate-pulse text-lg"><i class="fas fa-motorcycle"></i></div><div><p class="text-sm font-bold text-green-400">EM ROTA</p><p class="text-xs text-green-300">Pedido #<span id="active-id">...</span></p></div></div><p class="text-2xl font-bold text-white">R$ <span id="active-valor">0,00</span></p></div>
+            <div class="bg-green-500/10 border border-green-500/30 p-4 rounded-xl flex justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-green-500 text-black w-10 h-10 rounded-full flex items-center justify-center font-bold animate-pulse text-lg"><i class="fas fa-motorcycle"></i></div>
+                    <div>
+                        <p class="text-sm font-bold text-green-400 uppercase">RETIRAR (EM ROTA)</p>
+                        <p class="text-xs text-green-300">Pedido #<span id="active-id">...</span></p>
+                    </div>
+                </div>
+                <p class="text-2xl font-bold text-white">R$ <span id="active-valor">0,00</span></p>
+            </div>
+            
             <div class="dark-card p-5 mb-4 relative">
                 <div class="absolute left-6 top-10 bottom-16 w-0.5 bg-gray-700"></div>
                 <div class="flex gap-4 mb-8 relative z-10"><div class="w-3 h-3 rounded-full bg-blue-500 mt-1.5 shadow-[0_0_8px_#3B82F6]"></div><div class="flex-1"><p class="text-[10px] text-gray-500 font-bold">RETIRADA</p><p class="text-white font-bold mb-2 leading-tight" id="active-origem">...</p><div class="flex gap-2"><button onclick="abrirGps('origem')" class="px-3 py-2 bg-gray-700 rounded-lg text-xs font-bold hover:bg-gray-600 flex items-center gap-2"><i class="fas fa-location-arrow"></i> GPS</button><button onclick="copiarTexto('origem')" class="btn-copy"><i class="far fa-copy"></i></button></div></div></div>
                 <div class="flex gap-4 relative z-10"><div class="w-3 h-3 rounded-full bg-yellow-500 mt-1.5 shadow-[0_0_8px_#F59E0B]"></div><div class="flex-1"><p class="text-[10px] text-gray-500 font-bold">ENTREGA</p><p class="text-white font-bold mb-1 leading-tight" id="active-destino">...</p><p class="text-xs text-gray-400 mb-2" id="active-cliente-nome">...</p><div class="flex gap-2 mb-2"><button onclick="abrirGps('destino')" class="px-3 py-2 bg-gray-700 rounded-lg text-xs font-bold hover:bg-gray-600 flex items-center gap-2"><i class="fas fa-location-arrow"></i> GPS</button><button onclick="copiarTexto('destino')" class="btn-copy"><i class="far fa-copy"></i></button></div><button onclick="abrirZap()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-lg"></i> Chamar Cliente</button></div></div>
             </div>
             <div class="dark-card p-4 flex justify-between mb-4 items-center"><div><p class="text-xs text-gray-500">Cobrar do Cliente:</p><p class="text-white font-bold text-lg" id="active-forma">...</p></div><div class="text-right"><p class="text-[10px] text-yellow-500 border border-yellow-500/30 px-2 py-1 rounded">Confirme valor na loja</p></div></div>
-            <button onclick="abrirModalPin()" class="w-full btn-action py-4 mb-3 shadow-[0_0_20px_rgba(251,191,36,0.2)]">FINALIZAR ENTREGA</button><button onclick="cancelarCorrida()" class="w-full text-red-500 text-xs py-2 opacity-50 hover:opacity-100">Cancelar Corrida</button>
+            
+            <button onclick="abrirModalPin()" class="w-full btn-action py-4 mb-3 shadow-[0_0_20px_rgba(251,191,36,0.2)]">FINALIZAR ENTREGA</button>
+            <button onclick="cancelarCorrida()" class="w-full text-red-500 text-xs py-2 opacity-50 hover:opacity-100">Cancelar Corrida</button>
         </div>
 
         <div id="modal-pin" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 fade-in"><div class="bg-gray-800 w-full max-w-xs p-6 rounded-2xl border border-gray-700 text-center relative"><button onclick="document.getElementById('modal-pin').classList.add('hidden')" class="absolute top-2 right-2 text-gray-500 p-2"><i class="fas fa-times"></i></button><div class="w-12 h-12 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center mx-auto mb-3"><i class="fas fa-lock text-xl"></i></div><h3 class="text-lg font-bold text-white mb-1">Validar Entrega</h3><p class="text-xs text-gray-400 mb-6">Peça o PIN de 4 dígitos ao cliente</p><input type="tel" id="input-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-xl p-4 text-center text-3xl font-bold text-white mb-6 focus:border-yellow-500 outline-none" placeholder="0000"><button onclick="validarPin()" class="w-full btn-action py-3 rounded-xl">CONFIRMAR</button></div></div>
@@ -121,20 +138,20 @@
         <div id="screen-perfil" class="hidden p-4 pb-24 fade-in">
             <h2 class="text-xl font-bold text-white mb-4">Meu Perfil</h2>
             <div class="dark-card p-5 space-y-4">
-                <div><p class="text-xs text-gray-500 uppercase font-bold">Nome (Fixo)</p><input type="text" id="perf-nome" class="input-dark bg-gray-800 text-gray-400" readonly></div>
-                <div><p class="text-xs text-gray-500 uppercase font-bold">CPF (Fixo)</p><input type="text" id="perf-cpf" class="input-dark bg-gray-800 text-gray-400" readonly></div>
+                <div><p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Nome (Fixo)</p><div class="input-group"><i class="fas fa-user input-icon"></i><input type="text" id="perf-nome" class="input-dark bg-gray-800 text-gray-400" readonly></div></div>
+                <div><p class="text-[10px] text-gray-500 uppercase font-bold mb-1">CPF (Fixo)</p><div class="input-group"><i class="fas fa-id-card input-icon"></i><input type="text" id="perf-cpf" class="input-dark bg-gray-800 text-gray-400" readonly></div></div>
                 
-                <div class="h-px bg-gray-700 my-4"></div>
+                <div class="h-px bg-gray-700 my-2"></div>
                 
-                <div><p class="text-xs text-gray-500 uppercase font-bold text-yellow-500">WhatsApp</p><input type="text" id="perf-zap" class="input-dark"></div>
-                <div><p class="text-xs text-gray-500 uppercase font-bold text-yellow-500">Modelo Moto</p><input type="text" id="perf-modelo" class="input-dark"></div>
-                <div><p class="text-xs text-gray-500 uppercase font-bold text-yellow-500">Placa</p><input type="text" id="perf-placa" class="input-dark uppercase font-bold"></div>
+                <div><p class="text-[10px] text-yellow-500 uppercase font-bold mb-1">WhatsApp</p><div class="input-group"><i class="fab fa-whatsapp input-icon"></i><input type="text" id="perf-zap" class="input-dark"></div></div>
+                <div><p class="text-[10px] text-yellow-500 uppercase font-bold mb-1">Modelo Moto</p><div class="input-group"><i class="fas fa-motorcycle input-icon"></i><input type="text" id="perf-modelo" class="input-dark"></div></div>
+                <div><p class="text-[10px] text-yellow-500 uppercase font-bold mb-1">Placa</p><div class="input-group"><i class="fas fa-credit-card input-icon"></i><input type="text" id="perf-placa" class="input-dark uppercase font-bold"></div></div>
                 
-                <button onclick="atualizarDados()" id="btn-update-perf" class="w-full btn-action py-3 mt-4">Salvar Alterações</button>
+                <button onclick="atualizarDados()" id="btn-update-perf" class="w-full btn-action py-3 mt-2 shadow-lg">Salvar Alterações</button>
             </div>
 
-            <button onclick="fazerLogout()" class="w-full bg-red-900/50 border border-red-800 text-red-400 font-bold py-4 rounded-xl mt-6 hover:bg-red-900 transition">
-                <i class="fas fa-sign-out-alt mr-2"></i> SAIR DA CONTA
+            <button onclick="fazerLogout()" class="w-full bg-red-900/40 border border-red-800/50 text-red-400 font-bold py-4 rounded-xl mt-8 hover:bg-red-900/60 transition shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> SAIR DA CONTA
             </button>
         </div>
 
@@ -221,9 +238,7 @@
             const btn = document.getElementById('btn-update-perf');
             btn.innerText = "Salvando..."; btn.disabled = true;
 
-            // Atualiza na tabela motoboys (para o app)
             await sbClient.from('motoboys').update(updates).eq('id', userSession.user.id);
-            // Atualiza na tabela profiles (para o cliente ver)
             await sbClient.from('profiles').update({
                 whatsapp_responsavel: updates.whatsapp,
                 modelo_moto: updates.modelo,
@@ -283,7 +298,8 @@
             if(data && data.length > 0) {
                 document.getElementById('radar-empty').classList.add('hidden');
                 data.forEach(p => {
-                    list.innerHTML += `<div class="dark-card p-4 border-l-4 border-yellow-500 relative pulse-once"><div class="flex justify-between mb-2"><span class="bg-gray-700 text-xs px-2 py-1 rounded text-gray-300">Retirada</span><span class="text-green-400 font-bold text-lg">R$ ${p.valor_frete}</span></div><h3 class="font-bold text-white text-sm mb-1">${p.origem}</h3><div class="pl-3 ml-1 border-l border-gray-600 my-2"><p class="text-xs text-gray-500">Entrega</p><p class="text-gray-300 text-sm line-clamp-1">${p.destino}</p></div><button onclick="aceitarCorrida(${p.id})" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl mt-2 transition shadow-lg">ACEITAR CORRIDA</button></div>`;
+                    // BOTÃO ATUALIZADO PARA "ACEITAR (A CAMINHO)"
+                    list.innerHTML += `<div class="dark-card p-4 border-l-4 border-yellow-500 relative pulse-once"><div class="flex justify-between mb-2"><span class="bg-gray-700 text-xs px-2 py-1 rounded text-gray-300">Retirada</span><span class="text-green-400 font-bold text-lg">R$ ${p.valor_frete}</span></div><h3 class="font-bold text-white text-sm mb-1">${p.origem}</h3><div class="pl-3 ml-1 border-l border-gray-600 my-2"><p class="text-xs text-gray-500">Entrega</p><p class="text-gray-300 text-sm line-clamp-1">${p.destino}</p></div><button onclick="aceitarCorrida(${p.id})" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl mt-2 transition shadow-lg">ACEITAR (A CAMINHO)</button></div>`;
                 });
             } else { document.getElementById('radar-empty').classList.remove('hidden'); }
         }
