@@ -16,8 +16,11 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .pulse-once { animation: pulseOnce 0.5s ease-in-out; }
         @keyframes pulseOnce { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        
         .btn-action { background-color: #FBBF24; color: black; font-weight: bold; transition: all 0.2s; border-radius: 12px; text-transform: uppercase; }
         .btn-action:hover { background-color: #F59E0B; transform: scale(1.02); }
+        .btn-action:disabled { background-color: #4B5563; color: #9CA3AF; cursor: not-allowed; }
+        
         .dark-card { background-color: #1F2937; border: 1px solid #374151; border-radius: 16px; overflow: hidden; }
         .input-group { position: relative; margin-bottom: 12px; }
         .input-icon { position: absolute; left: 16px; top: 16px; color: #6B7280; z-index: 10; font-size: 14px; }
@@ -46,7 +49,7 @@
 </head>
 <body>
     <div class="app-container relative overflow-y-auto">
-        <div id="global-loading" class="absolute inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100]"><div class="spinner w-10 h-10 border-4 mb-4"></div><p class="text-gray-400 text-sm font-bold animate-pulse">Carregando...</p></div>
+        <div id="global-loading" class="absolute inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100]"><div class="spinner w-10 h-10 border-4 mb-4"></div><p class="text-gray-400 text-sm font-bold animate-pulse">Iniciando...</p></div>
 
         <div id="screen-welcome" class="hidden min-h-full flex flex-col justify-center p-8 text-center fade-in">
             <div class="mb-10"><div class="inline-flex p-5 rounded-full bg-yellow-500 text-black mb-4"><i class="fas fa-motorcycle text-4xl"></i></div><h1 class="text-3xl font-bold text-white">Drop Entregas</h1><p class="text-gray-400 text-sm">App do Parceiro</p></div>
@@ -160,6 +163,16 @@
         let userSession = null, pedidoAtual = null, appConfig = null, isOnline = false, saldoAtual = 0;
         const INACTIVITY_TIME = 30*60*1000; let inactivityTimer;
 
+        // Auto-Force Login screen if nothing happens in 3s (Anti-Freeze)
+        setTimeout(() => { 
+            const loading = document.getElementById('global-loading');
+            if (loading && loading.style.display !== 'none' && !userSession) {
+                // Se ainda estiver carregando e sem sessão após 3s, força tela de boas-vindas
+                console.warn("Forçando tela de boas-vindas por timeout.");
+                showScreen('welcome');
+            }
+        }, 3000);
+
         function iniciarMonitoramento() { ['click','mousemove','keypress','scroll','touchstart'].forEach(e=>document.addEventListener(e,resetTimer,true)); resetTimer(); }
         function resetTimer() { clearTimeout(inactivityTimer); if(userSession) inactivityTimer = setTimeout(async()=>{alert("Inatividade.");await fazerLogout();},INACTIVITY_TIME); }
 
@@ -167,8 +180,23 @@
 
         window.onload = async function() {
             setLoading(true);
-            setTimeout(()=>{if(document.getElementById('global-loading').style.display!=='none'&&!userSession)showScreen('welcome');},6000);
-            try{ const{data}=await sbClient.from('app_config').select('*').single(); appConfig=data||{taxa_app_percent:10}; const{data:{session}}=await sbClient.auth.getSession(); if(session){userSession=session;verificarPerfil();}else showScreen('welcome'); }catch(e){showScreen('welcome');}
+            try {
+                // Tenta carregar config (pode falhar se tabela nao existir, nao tem problema)
+                const { data } = await sbClient.from('app_config').select('*').single();
+                appConfig = data || { taxa_app_percent: 10 };
+                
+                // Verifica sessão
+                const { data: { session } } = await sbClient.auth.getSession();
+                if (session) { 
+                    userSession = session; 
+                    verificarPerfil(); 
+                } else { 
+                    showScreen('welcome'); 
+                }
+            } catch(e) {
+                console.error("Erro inicialização:", e);
+                showScreen('welcome'); // Fallback seguro
+            }
         };
 
         function setLoading(s){document.getElementById('global-loading').style.display=s?'flex':'none';}
@@ -189,12 +217,31 @@
 
         async function verificarPerfil() {
             const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            if (error || !data) { alert("Erro perfil."); sbClient.auth.signOut(); showScreen('welcome'); return; }
+            // Se não achar o perfil, limpa e vai pro welcome para evitar loop
+            if (error || !data) { 
+                console.warn("Perfil não encontrado. Resetando.");
+                sbClient.auth.signOut(); 
+                localStorage.clear();
+                showScreen('welcome'); 
+                return; 
+            }
+            
             saldoAtual = data.saldo || 0;
             document.getElementById('header-saldo').innerText = `R$ ${saldoAtual.toFixed(2)}`;
             document.getElementById('saque-saldo').innerText = `R$ ${saldoAtual.toFixed(2)}`;
             
-            document.getElementById('perf-nome').value = data.nome||''; document.getElementById('perf-cpf').value = data.cpf||''; document.getElementById('perf-idade').value = (data.idade||'')+' anos'; document.getElementById('perf-zap').value = data.whatsapp||''; document.getElementById('perf-cep').value = data.cep||''; document.getElementById('perf-rua').value = data.rua||''; document.getElementById('perf-num').value = data.numero||''; document.getElementById('perf-comp').value = data.complemento||''; document.getElementById('perf-modelo').value = data.modelo||''; document.getElementById('perf-cor').value = data.cor_moto||''; document.getElementById('perf-placa').value = data.placa||'';
+            // Preenchimento seguro dos campos (evita null)
+            document.getElementById('perf-nome').value = data.nome||'';
+            document.getElementById('perf-cpf').value = data.cpf||'';
+            document.getElementById('perf-idade').value = (data.idade||'')+' anos';
+            document.getElementById('perf-zap').value = data.whatsapp||'';
+            document.getElementById('perf-cep').value = data.cep||'';
+            document.getElementById('perf-rua').value = data.rua||'';
+            document.getElementById('perf-num').value = data.numero||'';
+            document.getElementById('perf-comp').value = data.complemento||'';
+            document.getElementById('perf-modelo').value = data.modelo||'';
+            document.getElementById('perf-cor').value = data.cor_moto||'';
+            document.getElementById('perf-placa').value = data.placa||'';
 
             iniciarMonitoramento();
             if (data.status !== 'Aprovado') showScreen('pending'); else iniciarApp();
@@ -215,8 +262,8 @@
             if(ini && fim) query = query.gte('created_at', ini).lte('created_at', fim + 'T23:59:59');
             const { data } = await query;
             div.innerHTML = ''; 
-            if(!data.length) div.innerHTML = '<p class="text-center text-gray-500 py-4">Sem ganhos no período.</p>';
-            data.forEach(p => { const liq = calcularLiquido(p.valor_frete, p.taxa_app_aplicada); div.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-xs text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${liq.toFixed(2)}</p></div>`; }); 
+            if(!data || !data.length) div.innerHTML = '<p class="text-center text-gray-500 py-4">Sem ganhos no período.</p>';
+            else data.forEach(p => { const liq = calcularLiquido(p.valor_frete, p.taxa_app_aplicada); div.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-xs text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${liq.toFixed(2)}</p></div>`; }); 
         }
 
         function solicitarSaque() {
