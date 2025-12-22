@@ -3,294 +3,515 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Drop Entregas - Parceiro</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#111827">
+    <title>Drop Entregas</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; padding-bottom: 90px; -webkit-tap-highlight-color: transparent; }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .pulse-once { animation: pulseOnce 0.5s ease-in-out; }
-        @keyframes pulseOnce { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        /* Otimizações de App Nativo */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #111827; 
+            color: #e5e7eb; 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none; /* Previne seleção de texto */
+            touch-action: manipulation; /* Melhora resposta do toque */
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Transições Suaves */
+        .screen { display: none; opacity: 0; transition: opacity 0.2s ease-in-out; }
+        .screen.active { display: block; opacity: 1; }
         
-        .btn-action { background-color: #FBBF24; color: black; font-weight: bold; transition: all 0.2s; border-radius: 12px; text-transform: uppercase; }
-        .btn-action:hover { background-color: #F59E0B; transform: scale(1.02); }
-        .btn-action:disabled { background-color: #4B5563; color: #9CA3AF; cursor: not-allowed; }
-        
-        .dark-card { background-color: #1F2937; border: 1px solid #374151; border-radius: 16px; overflow: hidden; }
+        /* Inputs e Cards */
+        .dark-card { background-color: #1F2937; border: 1px solid #374151; border-radius: 16px; }
         .input-group { position: relative; margin-bottom: 12px; }
-        .input-icon { position: absolute; left: 16px; top: 16px; color: #6B7280; z-index: 10; font-size: 14px; }
-        .input-dark { background-color: #111827; border: 1px solid #4b5563; color: white; padding: 14px 14px 14px 45px; border-radius: 12px; width: 100%; outline: none; transition: 0.3s; font-size: 14px; }
+        .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9CA3AF; z-index: 10; font-size: 16px; }
+        .input-dark { 
+            background-color: #111827; border: 1px solid #374151; color: white; 
+            padding: 16px 16px 16px 48px; border-radius: 12px; width: 100%; 
+            outline: none; font-size: 15px; appearance: none;
+        }
         .input-dark:focus { border-color: #FBBF24; }
-        .input-dark[readonly] { background-color: #1f2937; color: #9ca3af; border-color: #374151; }
-        .input-dark[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+
+        /* Botões */
+        .btn-action { 
+            background-color: #FBBF24; color: #111827; font-weight: 700; 
+            transition: transform 0.1s; border-radius: 12px; text-transform: uppercase; 
+            font-size: 15px; letter-spacing: 0.5px;
+        }
+        .btn-action:active { transform: scale(0.97); }
+
+        /* Switch Toggle */
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ef4444; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #374151; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         input:checked + .slider { background-color: #10B981; }
-        input:checked + .slider:before { transform: translateX(20px); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #374151; display: flex; justify-content: space-around; padding: 12px 0; z-index: 50; max-width: 28rem; margin: 0 auto; }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Bottom Nav */
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(12px); 
+            border-top: 1px solid #374151; display: flex; justify-content: space-around; 
+            padding: 10px 0 calc(10px + env(safe-area-inset-bottom)) 0; 
+            z-index: 50; max-width: 28rem; margin: 0 auto; 
+        }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #6B7280; cursor: pointer; flex: 1; font-size: 10px; transition: 0.2s; }
-        .nav-item.active { color: #FBBF24; font-weight: bold; transform: translateY(-2px); }
-        .app-container { width: 100%; min-height: 100vh; }
-        @media (min-width: 768px) { .app-container { max-width: 28rem; margin: 0 auto; border: 1px solid #374151; height: 95vh; margin-top: 2vh; border-radius: 1.5rem; position: relative; overflow-y: auto; } body { display: flex; justify-content: center; background-color: #000; } .bottom-nav { position: absolute; } }
-        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #FBBF24; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .timeline-line { position: absolute; left: 22px; top: 30px; bottom: 40px; width: 2px; background: repeating-linear-gradient(to bottom, #4B5563 0, #4B5563 6px, transparent 6px, transparent 10px); z-index: 0; }
-        .btn-copy-sm { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #1F2937; border: 1px solid #374151; border-radius: 8px; color: #9CA3AF; }
-        .btn-gps-sm { background: #374151; color: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-        .chk-container { display: flex; flex-wrap: wrap; gap: 8px; } .chk-item { position: relative; } .chk-item input { position: absolute; opacity: 0; width: 0; height: 0; } .chk-label { display: block; padding: 8px 12px; background: #374151; border-radius: 8px; font-size: 12px; color: #D1D5DB; cursor: pointer; border: 1px solid #4B5563; transition: 0.2s; } .chk-item input:checked + .chk-label { background: #FBBF24; color: black; border-color: #F59E0B; font-weight: bold; }
+        .nav-item.active { color: #FBBF24; transform: translateY(-2px); }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; }
+
+        /* App Container */
+        .app-container { width: 100%; min-height: 100vh; position: relative; padding-bottom: 100px; }
+        @media (min-width: 768px) { 
+            .app-container { max-width: 28rem; margin: 0 auto; border-left: 1px solid #374151; border-right: 1px solid #374151; min-height: 100vh; background: #111827; } 
+            body { background-color: #000; display: flex; justify-content: center; } 
+        }
+
+        /* Toast Notification (Substituto do Alert) */
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; width: 90%; max-width: 350px; text-align: center; }
+        .toast { background: rgba(255, 255, 255, 0.95); color: #1f2937; padding: 12px 20px; border-radius: 50px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); opacity: 0; transform: translateY(-20px); transition: all 0.3s ease; margin-bottom: 10px; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        
+        /* Spinner Moderno */
+        .loader { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: #FBBF24; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="app-container relative overflow-y-auto">
-        <div id="global-loading" class="absolute inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100]"><div class="spinner w-10 h-10 border-4 mb-4"></div><p class="text-gray-400 text-sm font-bold animate-pulse">Iniciando...</p></div>
 
-        <div id="screen-welcome" class="hidden min-h-full flex flex-col justify-center p-8 text-center fade-in">
-            <div class="mb-10"><div class="inline-flex p-5 rounded-full bg-yellow-500 text-black mb-4"><i class="fas fa-motorcycle text-4xl"></i></div><h1 class="text-3xl font-bold text-white">Drop Entregas</h1><p class="text-gray-400 text-sm">App do Parceiro</p></div>
-            <div class="space-y-4 w-full">
-                <div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="log-email" class="input-dark" placeholder="Seu E-mail"></div>
-                <div class="input-group"><i class="fas fa-lock input-icon"></i><input type="password" id="log-senha" class="input-dark" placeholder="Sua Senha"></div>
-                <button onclick="fazerLogin()" id="btn-login" class="w-full btn-action py-4 text-lg shadow-lg">ENTRAR</button>
-                <p onclick="showScreen('cadastro')" class="text-gray-500 text-xs mt-6 cursor-pointer underline hover:text-yellow-500">Quero me cadastrar</p>
-            </div>
-        </div>
+    <div id="toast-container"></div>
 
-        <div id="screen-pending" class="hidden min-h-full flex flex-col justify-center p-8 text-center fade-in bg-gray-900 absolute inset-0 z-50">
-            <div class="mb-6 text-yellow-500 animate-pulse"><i class="fas fa-clock text-7xl"></i></div><h2 class="text-2xl font-bold text-white mb-2">Cadastro em Análise</h2><p class="text-gray-400 text-sm mb-8 leading-relaxed">Aguarde a aprovação da central.</p><button onclick="fazerLogout()" class="text-gray-500 underline text-sm hover:text-white">Sair da conta</button>
-        </div>
-
-        <div id="screen-cadastro" class="hidden p-6 pb-20 fade-in bg-gray-900 absolute inset-0 overflow-y-auto z-50">
-            <div class="flex items-center mb-6 pt-2"><button onclick="showScreen('welcome')" class="text-gray-400 hover:text-white mr-4"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white">Novo Parceiro</h2></div>
-            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">DADOS PESSOAIS</p>
-            <div class="space-y-3 mb-6">
-                <div class="input-group"><i class="fas fa-user input-icon"></i><input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo*"></div>
-                <div class="input-group"><i class="fas fa-id-card input-icon"></i><input type="text" id="cad-cpf" class="input-dark" placeholder="CPF*"></div>
-                <div class="flex gap-2"><div class="input-group w-2/3"><i class="fas fa-calendar input-icon"></i><input type="date" id="cad-nasc" class="input-dark text-gray-400" onchange="calcularIdade('cad')"></div><div class="input-group w-1/3"><i class="fas fa-hashtag input-icon"></i><input type="text" id="cad-idade" class="input-dark text-center font-bold" placeholder="Idade" readonly></div></div>
-                <div class="input-group"><i class="fab fa-whatsapp input-icon"></i><input type="text" id="cad-zap" class="input-dark" placeholder="WhatsApp*"></div>
-            </div>
-            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">ENDEREÇO</p>
-            <div class="space-y-3 mb-6">
-                <div class="input-group"><i class="fas fa-map-marker-alt input-icon"></i><input type="text" id="cad-cep" class="input-dark" placeholder="CEP*"></div>
-                <div class="flex gap-2"><div class="input-group w-3/4"><i class="fas fa-road input-icon"></i><input type="text" id="cad-rua" class="input-dark" placeholder="Rua*"></div><div class="input-group w-1/4"><i class="fas fa-home input-icon"></i><input type="text" id="cad-num" class="input-dark" placeholder="Nº*"></div></div>
-                <div class="input-group"><i class="fas fa-info-circle input-icon"></i><input type="text" id="cad-comp" class="input-dark" placeholder="Complemento"></div>
-                <div class="input-group"><i class="fas fa-map-pin input-icon"></i><input type="text" id="cad-ref" class="input-dark" placeholder="Referência*"></div>
-            </div>
-            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">EMERGÊNCIA</p>
-            <div class="space-y-3 mb-6 bg-red-900/10 p-3 rounded-xl border border-red-900/30">
-                <div class="input-group"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="cad-eme-nome" class="input-dark" placeholder="Nome Contato*"></div>
-                <div class="input-group"><i class="fas fa-phone input-icon"></i><input type="text" id="cad-eme-zap" class="input-dark" placeholder="WhatsApp Contato*"></div>
-                <div class="input-group"><i class="fas fa-users input-icon"></i><input type="text" id="cad-eme-parent" class="input-dark" placeholder="Parentesco*"></div>
-            </div>
-            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">VEÍCULO</p>
-            <div class="space-y-3 mb-6">
-                <div class="input-group"><i class="fas fa-motorcycle input-icon"></i><input type="text" id="moto-modelo" class="input-dark" placeholder="Modelo*"></div>
-                <div class="flex gap-2"><div class="input-group w-1/2"><i class="fas fa-palette input-icon"></i><input type="text" id="moto-cor" class="input-dark" placeholder="Cor*"></div><div class="input-group w-1/2"><i class="fas fa-credit-card input-icon"></i><input type="text" id="moto-placa" class="input-dark uppercase font-bold text-center" placeholder="PLACA*"></div></div>
-            </div>
-            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">DISPONIBILIDADE</p>
-            <div class="chk-container mb-8">
-                <div class="chk-item"><input type="checkbox" id="disp-integral" onchange="toggleIntegral()"><label for="disp-integral" class="chk-label">Integral</label></div>
-                <div class="chk-item"><input type="checkbox" id="disp-manha" class="disp-opt"><label for="disp-manha" class="chk-label">Manhã</label></div>
-                <div class="chk-item"><input type="checkbox" id="disp-tarde" class="disp-opt"><label for="disp-tarde" class="chk-label">Tarde</label></div>
-                <div class="chk-item"><input type="checkbox" id="disp-noite" class="disp-opt"><label for="disp-noite" class="chk-label">Noite</label></div>
-                <div class="chk-item"><input type="checkbox" id="disp-extra"><label for="disp-extra" class="chk-label">Renda Extra</label></div>
-            </div>
-            <p class="text-[10px] font-bold text-yellow-500 uppercase mb-3 ml-1 tracking-widest">ACESSO</p>
-            <div class="space-y-3 mb-8"><div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="cad-email" class="input-dark" placeholder="E-mail*"></div><div class="input-group"><i class="fas fa-lock input-icon"></i><input type="password" id="cad-senha" class="input-dark" placeholder="Senha (Min 6)*"></div></div>
-            <button onclick="enviarCadastro()" id="btn-cadastrar" class="w-full btn-action py-4 shadow-lg flex items-center justify-center gap-2"><span>ENVIAR CADASTRO</span> <i class="fas fa-paper-plane"></i></button>
-        </div>
-
-        <div id="app-header" class="hidden p-5 flex justify-between items-center bg-gray-900 border-b border-gray-800 sticky top-0 z-40 shadow-lg">
-            <div>
-                <h1 class="text-lg font-bold text-white">Drop <span class="text-yellow-500">Motoboy</span></h1>
-                <div class="flex items-center gap-2 mt-1"><span id="status-dot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span><p id="status-text" class="text-xs text-red-500 font-bold transition-colors">Radar Inativo</p></div>
-            </div>
-            <div class="flex items-center gap-3">
-                <label class="switch"><input type="checkbox" id="radar-toggle" onchange="toggleRadar()"><span class="slider"></span></label>
-                <div class="text-right border-l border-gray-700 pl-3"><p class="text-[8px] text-gray-500 uppercase">Saldo</p><p class="text-sm font-bold text-green-400" id="header-saldo">R$ 0,00</p></div>
-            </div>
-        </div>
-
-        <div id="screen-radar" class="hidden p-4 pb-24 fade-in">
-            <div id="radar-off-msg" class="flex flex-col items-center justify-center py-20 text-center opacity-50"><i class="fas fa-power-off text-6xl mb-4 text-gray-600"></i><p class="text-lg text-gray-300 font-bold">Você está Offline</p><p class="text-xs text-gray-500 mt-1">Ative o radar para receber corridas.</p></div>
-            <div id="radar-on-content" class="hidden"><div id="radar-empty" class="hidden py-20 text-center opacity-50"><i class="fas fa-satellite-dish text-6xl mb-4 text-green-500 animate-pulse"></i><p class="text-sm text-gray-400 mt-2">Buscando corridas...</p></div><div id="radar-list" class="space-y-4"></div></div>
-        </div>
-
-        <div id="screen-active" class="hidden p-4 pb-24 fade-in">
-            <div id="active-empty" class="flex flex-col items-center justify-center py-20 text-center opacity-50"><i class="fas fa-motorcycle text-6xl mb-4 text-gray-600"></i><p class="text-lg text-gray-300 font-bold">Você está livre</p><p class="text-xs text-gray-500 mt-1">Nenhuma corrida ativa no momento.</p><button onclick="navegar('radar')" class="mt-6 text-yellow-500 border border-yellow-500 px-4 py-2 rounded-lg text-sm">Ir para o Radar</button></div>
-            <div id="active-content" class="hidden">
-                <div class="bg-gray-800 border border-gray-700 p-4 rounded-xl flex justify-between items-center mb-4 shadow-lg"><div class="flex items-center gap-3"><div class="bg-blue-600/20 text-blue-400 w-10 h-10 rounded-full flex items-center justify-center border border-blue-600/30"><i class="fas fa-route"></i></div><div><p class="text-xs text-gray-400 uppercase font-bold">Status Atual</p><p class="text-sm font-bold text-blue-400 animate-pulse">RETIRAR (EM ROTA)</p></div></div><div class="text-right"><p class="text-xs text-gray-400 uppercase font-bold">Seu Ganho</p><p class="text-xl font-bold text-green-400">R$ <span id="active-valor">0,00</span></p></div></div>
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-4 relative overflow-hidden shadow-lg"><div class="timeline-line"></div><div class="relative z-10 flex gap-4 mb-8"><div class="timeline-dot bg-blue-500 border-4 border-gray-800 mt-1 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div><div class="flex-1"><div class="flex justify-between items-start"><div><p class="text-[10px] text-blue-400 font-bold uppercase mb-1">COLETA (LOJA)</p><p class="text-white font-bold text-sm leading-tight" id="active-origem">...</p></div><div class="flex gap-2"><button onclick="copiarTexto('origem')" class="btn-copy-sm"><i class="far fa-copy"></i></button><button onclick="abrirGps('origem')" class="btn-gps-sm"><i class="fas fa-location-arrow"></i> GPS</button></div></div></div></div><div class="relative z-10 flex gap-4"><div class="timeline-dot bg-green-500 border-4 border-gray-800 mt-1 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div><div class="flex-1"><div class="flex justify-between items-start mb-2"><div><p class="text-[10px] text-green-400 font-bold uppercase mb-1">ENTREGA (CLIENTE)</p><p class="text-white font-bold text-sm leading-tight mb-1" id="active-destino">...</p><p class="text-xs text-gray-400 flex items-center gap-1"><i class="fas fa-user"></i> <span id="active-cliente-nome">...</span></p></div><div class="flex gap-2"><button onclick="copiarTexto('destino')" class="btn-copy-sm"><i class="far fa-copy"></i></button><button onclick="abrirGps('destino')" class="btn-gps-sm"><i class="fas fa-location-arrow"></i> GPS</button></div></div><button onclick="abrirZap()" class="w-full bg-green-600/20 border border-green-600/50 text-green-400 hover:bg-green-600 hover:text-white transition py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-lg"></i> Chamar Cliente</button></div></div></div>
-                <div class="bg-gray-800 border border-gray-700 p-4 rounded-xl flex justify-between items-center mb-6"><div><p class="text-xs text-gray-400 uppercase font-bold mb-1">Cobrar do Cliente</p><p class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-hand-holding-usd text-yellow-500"></i> <span id="active-forma">...</span></p></div><div class="text-right"><span class="text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-1 rounded">Confirme na Loja</span></div></div>
-                <button onclick="abrirModalPin()" class="w-full btn-action py-4 mb-3 shadow-[0_0_20px_rgba(251,191,36,0.3)] text-lg tracking-wide">FINALIZAR ENTREGA</button>
-                <button onclick="cancelarCorrida()" class="w-full text-red-500/70 text-xs py-3 hover:text-red-500 transition flex items-center justify-center gap-1"><i class="fas fa-exclamation-triangle"></i> Cancelar Corrida (Emergência)</button>
-            </div>
-        </div>
-
-        <div id="modal-pin" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 fade-in"><div class="bg-gray-800 w-full max-w-xs p-6 rounded-2xl border border-gray-700 text-center relative"><button onclick="document.getElementById('modal-pin').classList.add('hidden')" class="absolute top-2 right-2 text-gray-500 p-2"><i class="fas fa-times"></i></button><div class="w-12 h-12 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center mx-auto mb-3"><i class="fas fa-lock text-xl"></i></div><h3 class="text-lg font-bold text-white mb-1">Validar Entrega</h3><p class="text-xs text-gray-400 mb-6">Peça o PIN de 4 dígitos ao cliente</p><input type="tel" id="input-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-xl p-4 text-center text-3xl font-bold text-white mb-6 focus:border-yellow-500 outline-none" placeholder="0000"><button onclick="validarPin()" class="w-full btn-action py-3 rounded-xl">CONFIRMAR</button></div></div>
+    <div class="app-container">
         
-        <div id="screen-extract" class="hidden p-4 pb-24 fade-in">
-            <h2 class="text-xl font-bold text-white mb-4">Ganhos e Extrato</h2>
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6"><div class="flex justify-between items-end mb-3"><div><p class="text-xs text-gray-400">Saldo Disponível</p><p class="text-2xl font-bold text-green-400" id="saque-saldo">R$ 0,00</p></div><button onclick="solicitarSaque()" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg">SOLICITAR SAQUE</button></div><input type="number" id="valor-saque" class="input-dark text-right" placeholder="Valor do saque (R$)"></div>
-            <div class="flex gap-2 mb-4"><div class="w-1/2"><p class="text-[10px] text-gray-500 mb-1">Data Inicial</p><input type="date" id="filtro-ini" class="input-dark p-2 text-xs h-10"></div><div class="w-1/2"><p class="text-[10px] text-gray-500 mb-1">Data Final</p><input type="date" id="filtro-fim" class="input-dark p-2 text-xs h-10"></div><div class="flex items-end"><button onclick="carregarExtrato()" class="bg-blue-600 h-10 w-10 rounded-lg text-white flex items-center justify-center"><i class="fas fa-search"></i></button></div></div>
+        <div id="splash" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-[60] transition-opacity duration-300">
+            <div class="mb-4 text-yellow-500 text-5xl"><i class="fas fa-motorcycle"></i></div>
+            <div class="loader"></div>
+        </div>
+
+        <div id="screen-welcome" class="screen h-full flex flex-col justify-center p-8 min-h-screen">
+            <div class="mb-12 text-center">
+                <div class="inline-flex p-4 rounded-full bg-yellow-500/10 text-yellow-500 mb-4 border border-yellow-500/20"><i class="fas fa-bolt text-4xl"></i></div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Drop Entregas</h1>
+                <p class="text-gray-500 text-sm mt-1">Parceiro</p>
+            </div>
+            <div class="space-y-4 w-full">
+                <div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="log-email" class="input-dark" placeholder="E-mail"></div>
+                <div class="input-group"><i class="fas fa-lock input-icon"></i><input type="password" id="log-senha" class="input-dark" placeholder="Senha"></div>
+                <button onclick="fazerLogin()" id="btn-login" class="w-full btn-action py-4 shadow-lg flex justify-center items-center gap-2"><span>ENTRAR</span></button>
+                <p onclick="navegar('cadastro')" class="text-gray-500 text-xs mt-6 text-center cursor-pointer p-4">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
+            </div>
+        </div>
+
+        <div id="screen-pending" class="screen h-full flex flex-col justify-center p-8 text-center min-h-screen">
+            <div class="mb-6 text-yellow-500 animate-pulse"><i class="fas fa-clock text-7xl"></i></div>
+            <h2 class="text-2xl font-bold text-white mb-2">Em Análise</h2>
+            <p class="text-gray-400 text-sm mb-8">Estamos validando seu cadastro. Isso geralmente leva algumas horas.</p>
+            <button onclick="fazerLogout()" class="text-gray-500 text-sm p-4">Sair da conta</button>
+        </div>
+
+        <div id="screen-cadastro" class="screen p-6 pb-24">
+            <div class="flex items-center mb-6 pt-4"><button onclick="navegar('welcome')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-4">Criar Conta</h2></div>
+            
+            <div class="space-y-6">
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-yellow-500 uppercase tracking-widest ml-1">Pessoal</p>
+                    <div class="input-group"><i class="fas fa-user input-icon"></i><input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo"></div>
+                    <div class="input-group"><i class="fas fa-id-card input-icon"></i><input type="tel" id="cad-cpf" class="input-dark" placeholder="CPF"></div>
+                    <div class="flex gap-3">
+                        <div class="input-group w-2/3"><i class="fas fa-calendar input-icon"></i><input type="date" id="cad-nasc" class="input-dark text-gray-400" onchange="calcularIdade()"></div>
+                        <div class="input-group w-1/3"><input type="text" id="cad-idade" class="input-dark text-center font-bold" placeholder="Idade" readonly></div>
+                    </div>
+                    <div class="input-group"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="cad-zap" class="input-dark" placeholder="WhatsApp"></div>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-yellow-500 uppercase tracking-widest ml-1">Endereço</p>
+                    <div class="input-group"><i class="fas fa-map-marker-alt input-icon"></i><input type="tel" id="cad-cep" class="input-dark" placeholder="CEP"></div>
+                    <div class="flex gap-3"><div class="input-group w-3/4"><input type="text" id="cad-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="input-group w-1/4"><input type="text" id="cad-num" class="input-dark pl-4" placeholder="Nº"></div></div>
+                    <div class="input-group"><i class="fas fa-info-circle input-icon"></i><input type="text" id="cad-comp" class="input-dark" placeholder="Complemento"></div>
+                    <div class="input-group"><i class="fas fa-map-pin input-icon"></i><input type="text" id="cad-ref" class="input-dark" placeholder="Referência"></div>
+                </div>
+
+                <div class="space-y-3 p-4 bg-gray-800 rounded-xl border border-gray-700">
+                    <p class="text-xs font-bold text-red-400 uppercase tracking-widest ml-1">Emergência</p>
+                    <div class="input-group"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="cad-eme-nome" class="input-dark" placeholder="Nome Contato"></div>
+                    <div class="input-group"><i class="fas fa-phone input-icon"></i><input type="tel" id="cad-eme-zap" class="input-dark" placeholder="WhatsApp Contato"></div>
+                    <div class="input-group"><i class="fas fa-users input-icon"></i><input type="text" id="cad-eme-parent" class="input-dark" placeholder="Parentesco"></div>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-yellow-500 uppercase tracking-widest ml-1">Moto</p>
+                    <div class="input-group"><i class="fas fa-motorcycle input-icon"></i><input type="text" id="moto-modelo" class="input-dark" placeholder="Modelo (Ex: Titan 160)"></div>
+                    <div class="flex gap-3">
+                        <div class="input-group w-1/2"><i class="fas fa-palette input-icon"></i><input type="text" id="moto-cor" class="input-dark" placeholder="Cor"></div>
+                        <div class="input-group w-1/2"><i class="fas fa-credit-card input-icon"></i><input type="text" id="moto-placa" class="input-dark font-bold uppercase text-center" placeholder="PLACA"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-yellow-500 uppercase tracking-widest ml-1">Disponibilidade</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 text-xs text-gray-300 select-none" onclick="toggleDisp(this)">Integral</button>
+                        <button type="button" class="px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 text-xs text-gray-300 select-none" onclick="toggleDisp(this)">Manhã</button>
+                        <button type="button" class="px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 text-xs text-gray-300 select-none" onclick="toggleDisp(this)">Tarde</button>
+                        <button type="button" class="px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 text-xs text-gray-300 select-none" onclick="toggleDisp(this)">Noite</button>
+                        <button type="button" class="px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 text-xs text-gray-300 select-none" onclick="toggleDisp(this)">Renda Extra</button>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-yellow-500 uppercase tracking-widest ml-1">Acesso</p>
+                    <div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="cad-email" class="input-dark" placeholder="E-mail"></div>
+                    <div class="input-group"><i class="fas fa-lock input-icon"></i><input type="password" id="cad-senha" class="input-dark" placeholder="Senha"></div>
+                </div>
+
+                <button onclick="enviarCadastro()" id="btn-cadastrar" class="w-full btn-action py-4 shadow-lg flex justify-center items-center"><span>ENVIAR CADASTRO</span></button>
+            </div>
+        </div>
+
+        <div id="app-header" class="hidden fixed top-0 left-0 right-0 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-4 max-w-md mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-tight">Drop <span class="text-yellow-500">Motoboy</span></h1>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="status-dot" class="w-2 h-2 rounded-full bg-red-500 transition-colors duration-300"></span>
+                        <p id="status-text" class="text-xs text-red-500 font-bold transition-colors duration-300">Offline</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="switch"><input type="checkbox" id="radar-toggle" onchange="toggleRadar()"><span class="slider"></span></label>
+                    <div class="text-right border-l border-gray-700 pl-3">
+                        <p class="text-[8px] text-gray-500 uppercase font-bold tracking-wider">Saldo</p>
+                        <p class="text-sm font-bold text-green-400" id="header-saldo">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-radar" class="screen p-4 pt-24 pb-24">
+            <div id="radar-off-msg" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-60">
+                <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4"><i class="fas fa-power-off text-3xl text-gray-500"></i></div>
+                <p class="text-lg text-white font-bold">Você está Offline</p>
+                <p class="text-sm text-gray-500 mt-2">Ative o radar no topo para receber corridas.</p>
+            </div>
+            <div id="radar-on-content" class="hidden">
+                <div id="radar-empty" class="hidden flex flex-col items-center justify-center h-[50vh] text-center opacity-70">
+                    <div class="w-24 h-24 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 relative">
+                        <div class="absolute inset-0 border-4 border-green-500/20 rounded-full animate-ping"></div>
+                        <i class="fas fa-satellite-dish text-3xl text-green-500"></i>
+                    </div>
+                    <p class="text-sm text-gray-400">Procurando corridas na região...</p>
+                </div>
+                <div id="radar-list" class="space-y-4 mt-2"></div>
+            </div>
+        </div>
+
+        <div id="screen-active" class="screen p-4 pt-24 pb-24">
+            <div id="active-empty" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-60">
+                <i class="fas fa-check-circle text-5xl text-gray-700 mb-4"></i>
+                <p class="text-lg text-gray-300 font-bold">Livre</p>
+                <p class="text-sm text-gray-500">Aguardando novos chamados.</p>
+            </div>
+            
+            <div id="active-content" class="hidden">
+                <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-4 shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-900/30 text-blue-400 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-route"></i></div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Status</p>
+                            <p class="text-sm font-bold text-white">EM ROTA</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Valor</p>
+                        <p class="text-xl font-bold text-green-400">R$ <span id="active-valor">0,00</span></p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-4 relative overflow-hidden shadow-lg">
+                    <div class="timeline-line"></div>
+                    
+                    <div class="relative z-10 flex gap-4 mb-8">
+                        <div class="w-3.5 h-3.5 rounded-full bg-blue-500 border-4 border-gray-800 mt-1 shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.6)]"></div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-[10px] text-blue-400 font-bold uppercase mb-1">COLETA</p>
+                                    <p class="text-white font-medium text-sm leading-tight" id="active-origem">...</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="copiarTexto('origem')" class="btn-copy-sm"><i class="far fa-copy"></i></button>
+                                    <button onclick="abrirGps('origem')" class="btn-gps-sm"><i class="fas fa-location-arrow"></i> GPS</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative z-10 flex gap-4">
+                        <div class="w-3.5 h-3.5 rounded-full bg-green-500 border-4 border-gray-800 mt-1 shrink-0 shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <p class="text-[10px] text-green-400 font-bold uppercase mb-1">ENTREGA</p>
+                                    <p class="text-white font-medium text-sm leading-tight mb-1" id="active-destino">...</p>
+                                    <p class="text-xs text-gray-400 flex items-center gap-1"><i class="fas fa-user text-[10px]"></i> <span id="active-cliente-nome">...</span></p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="copiarTexto('destino')" class="btn-copy-sm"><i class="far fa-copy"></i></button>
+                                    <button onclick="abrirGps('destino')" class="btn-gps-sm"><i class="fas fa-location-arrow"></i> GPS</button>
+                                </div>
+                            </div>
+                            <button onclick="abrirZap()" class="w-full bg-gray-700/50 hover:bg-gray-700 text-green-400 border border-green-500/30 transition py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
+                                <i class="fab fa-whatsapp text-lg"></i> Chamar Cliente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-6">
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase font-bold mb-1">Receber</p>
+                        <p class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-hand-holding-usd text-yellow-500"></i> <span id="active-forma">...</span></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-1 rounded font-bold uppercase tracking-wider">Cobrar</span>
+                    </div>
+                </div>
+
+                <button onclick="abrirModalPin()" class="w-full btn-action py-4 mb-4 shadow-[0_4px_20px_rgba(251,191,36,0.2)] text-base">FINALIZAR ENTREGA</button>
+                <button onclick="cancelarCorrida()" class="w-full text-red-500/60 text-xs py-2 hover:text-red-500 transition">Cancelar Corrida (Emergência)</button>
+            </div>
+        </div>
+
+        <div id="modal-pin" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 backdrop-blur-sm">
+            <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
+                <button onclick="document.getElementById('modal-pin').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+                <div class="w-14 h-14 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center mx-auto mb-4"><i class="fas fa-lock text-2xl"></i></div>
+                <h3 class="text-xl font-bold text-white mb-2">Validar Entrega</h3>
+                <p class="text-sm text-gray-400 mb-6">Peça o PIN de 4 dígitos ao cliente</p>
+                <input type="tel" id="input-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
+                <button onclick="validarPin()" class="w-full btn-action py-3.5 rounded-xl shadow-lg">CONFIRMAR</button>
+            </div>
+        </div>
+
+        <div id="screen-extract" class="screen p-4 pt-24 pb-24">
+            <h2 class="text-xl font-bold text-white mb-4 pl-1">Financeiro</h2>
+            
+            <div class="bg-gradient-to-r from-gray-800 to-gray-800 p-5 rounded-2xl border border-gray-700 mb-6 relative overflow-hidden">
+                <div class="absolute right-0 top-0 p-4 opacity-10"><i class="fas fa-wallet text-6xl text-white"></i></div>
+                <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Saldo Disponível</p>
+                <p class="text-3xl font-bold text-white mb-4" id="saque-saldo">R$ 0,00</p>
+                <div class="flex gap-2">
+                    <input type="number" id="valor-saque" class="input-dark h-10 text-sm" placeholder="Valor (R$)" style="background: rgba(0,0,0,0.2);">
+                    <button onclick="solicitarSaque()" class="bg-green-600 hover:bg-green-500 text-white px-4 h-10 rounded-xl text-xs font-bold shadow-lg transition whitespace-nowrap">SACAR</button>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mb-4">
+                <input type="date" id="filtro-ini" class="input-dark p-2 text-xs h-10 w-full" style="color-scheme: dark;">
+                <input type="date" id="filtro-fim" class="input-dark p-2 text-xs h-10 w-full" style="color-scheme: dark;">
+                <button onclick="carregarExtrato()" class="bg-blue-600 h-10 w-12 rounded-xl text-white flex items-center justify-center shrink-0 active:scale-95 transition"><i class="fas fa-search"></i></button>
+            </div>
+
             <div id="history-list" class="space-y-3"></div>
         </div>
 
-        <div id="screen-perfil" class="hidden p-4 pb-24 fade-in">
-            <h2 class="text-xl font-bold text-white mb-4">Meu Perfil Completo</h2>
+        <div id="screen-perfil" class="screen p-4 pt-24 pb-24">
+            <h2 class="text-xl font-bold text-white mb-4 pl-1">Meus Dados</h2>
             <div class="dark-card p-5 space-y-6">
-                <div><p class="text-yellow-500 text-xs font-bold uppercase mb-2 border-b border-gray-700 pb-1">Pessoal</p><div class="space-y-3"><div><p class="text-[10px] text-gray-500 font-bold">Nome</p><input type="text" id="perf-nome" class="input-dark bg-gray-800 text-gray-400" readonly></div><div class="flex gap-2"><div class="w-2/3"><p class="text-[10px] text-gray-500 font-bold">CPF</p><input type="text" id="perf-cpf" class="input-dark bg-gray-800 text-gray-400" readonly></div><div class="w-1/3"><p class="text-[10px] text-gray-500 font-bold">Idade</p><input type="text" id="perf-idade" class="input-dark bg-gray-800 text-gray-400 text-center" readonly></div></div><div><p class="text-[10px] text-gray-500 font-bold">WhatsApp</p><input type="text" id="perf-zap" class="input-dark"></div></div></div>
-                <div><p class="text-yellow-500 text-xs font-bold uppercase mb-2 border-b border-gray-700 pb-1">Endereço</p><div class="space-y-3"><div class="flex gap-2"><div class="w-1/3"><input type="text" id="perf-cep" class="input-dark" placeholder="CEP"></div><div class="w-2/3"><input type="text" id="perf-rua" class="input-dark" placeholder="Rua"></div></div><div class="flex gap-2"><div class="w-1/3"><input type="text" id="perf-num" class="input-dark" placeholder="Nº"></div><div class="w-2/3"><input type="text" id="perf-comp" class="input-dark" placeholder="Complemento"></div></div></div></div>
-                <div><p class="text-yellow-500 text-xs font-bold uppercase mb-2 border-b border-gray-700 pb-1">Moto</p><div class="space-y-3"><div class="flex gap-2"><div class="w-2/3"><input type="text" id="perf-modelo" class="input-dark" placeholder="Modelo"></div><div class="w-1/3"><input type="text" id="perf-cor" class="input-dark" placeholder="Cor"></div></div><div><input type="text" id="perf-placa" class="input-dark uppercase font-bold text-center" placeholder="PLACA"></div></div></div>
-                <button onclick="atualizarDados()" id="btn-update-perf" class="w-full btn-action py-3 mt-2 shadow-lg">Salvar Alterações</button>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><input type="text" id="perf-nome" class="input-dark mb-2 text-gray-400" readonly><div class="flex gap-2 mb-2"><input type="text" id="perf-cpf" class="input-dark text-gray-400" readonly><input type="text" id="perf-idade" class="input-dark text-center text-gray-400" readonly></div><input type="tel" id="perf-zap" class="input-dark"></div>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Moto</p><div class="flex gap-2 mb-2"><input type="text" id="perf-modelo" class="input-dark"><input type="text" id="perf-cor" class="input-dark"></div><input type="text" id="perf-placa" class="input-dark text-center uppercase font-bold"></div>
+                <button onclick="atualizarDados()" id="btn-update-perf" class="w-full btn-action py-3.5 shadow-lg">SALVAR ALTERAÇÕES</button>
             </div>
-            <button onclick="fazerLogout()" class="w-full bg-red-900/40 border border-red-800/50 text-red-400 font-bold py-4 rounded-xl mt-8 hover:bg-red-900/60 transition shadow-lg flex items-center justify-center gap-2"><i class="fas fa-sign-out-alt"></i> SAIR DA CONTA</button>
+            <button onclick="fazerLogout()" class="w-full mt-6 py-4 text-red-500 font-bold text-xs bg-red-500/10 rounded-xl border border-red-500/20 active:bg-red-500/20 transition">SAIR DA CONTA</button>
         </div>
 
-        <div id="bottom-menu" class="hidden bottom-nav"><div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt text-xl mb-1"></i>Radar</div><div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box text-xl mb-1"></i>Corrida</div><div class="nav-item" id="nav-extract" onclick="navegar('extract'); carregarExtrato()"><i class="fas fa-wallet text-xl mb-1"></i>Ganhos</div><div class="nav-item" id="nav-perfil" onclick="navegar('perfil');"><i class="fas fa-user text-xl mb-1"></i>Perfil</div></div>
+        <div id="bottom-menu" class="hidden bottom-nav">
+            <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt"></i><span>Radar</span></div>
+            <div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box"></i><span>Corrida</span></div>
+            <div class="nav-item" id="nav-extract" onclick="navegar('extract'); carregarExtrato()"><i class="fas fa-wallet"></i><span>Ganhos</span></div>
+            <div class="nav-item" id="nav-perfil" onclick="navegar('perfil')"><i class="fas fa-user"></i><span>Perfil</span></div>
+        </div>
+
     </div>
+
+    <script>
+        const formatCPF = v => v.replace(/\D/g,'').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2').substring(0,14);
+        const formatPhone = v => v.replace(/\D/g,'').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d)(\d{4})$/,'$1-$2').substring(0,15);
+        const formatCEP = v => v.replace(/\D/g,'').replace(/^(\d{5})(\d)/,'$1-$2').substring(0,9);
+        
+        document.querySelectorAll('input[id*="cpf"]').forEach(i => i.addEventListener('input', e => e.target.value = formatCPF(e.target.value)));
+        document.querySelectorAll('input[id*="zap"]').forEach(i => i.addEventListener('input', e => e.target.value = formatPhone(e.target.value)));
+        document.querySelectorAll('input[id*="cep"]').forEach(i => i.addEventListener('input', e => e.target.value = formatCEP(e.target.value)));
+    </script>
 
     <script>
         const SUPABASE_URL = 'https://ofpnnijkhgsjarixoyhg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcG5uaWpraGdzamFyaXhveWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjUyNzYsImV4cCI6MjA4MDY0MTI3Nn0.dNOIIETmTz3l1HvhuT-ihAiymJqiaYZnklzzBzDGCFU';
         const ADMIN_ZAP = "5584982005039";
-        let sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let userSession = null, pedidoAtual = null, appConfig = null, isOnline = false, saldoAtual = 0;
-        const INACTIVITY_TIME = 30*60*1000; let inactivityTimer;
+        
+        let sbClient, userSession, appConfig, isOnline = false, pedidoAtual = null;
 
-        // Auto-Force Login screen if nothing happens in 3s (Anti-Freeze)
-        setTimeout(() => { 
-            const loading = document.getElementById('global-loading');
-            if (loading && loading.style.display !== 'none' && !userSession) {
-                // Se ainda estiver carregando e sem sessão após 3s, força tela de boas-vindas
-                console.warn("Forçando tela de boas-vindas por timeout.");
+        // INICIALIZAÇÃO OTIMIZADA
+        (async function init() {
+            sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            
+            // 1. Tenta recuperar sessão do cache local primeiro (Instantâneo)
+            const cachedSession = localStorage.getItem('sb-session');
+            if (cachedSession) userSession = JSON.parse(cachedSession);
+
+            // 2. Verifica sessão real em paralelo com config
+            try {
+                const [sessionRes, configRes] = await Promise.all([
+                    sbClient.auth.getSession(),
+                    sbClient.from('app_config').select('*').single()
+                ]);
+
+                appConfig = configRes.data || { taxa_app_percent: 10 };
+                
+                if (sessionRes.data.session) {
+                    userSession = sessionRes.data.session;
+                    // Cache da sessão para próxima abertura ser rápida
+                    localStorage.setItem('sb-session', JSON.stringify(userSession));
+                    await carregarPerfil();
+                } else {
+                    showScreen('welcome');
+                }
+            } catch (e) {
+                console.error("Erro init:", e);
                 showScreen('welcome');
             }
-        }, 3000);
+        })();
 
-        function iniciarMonitoramento() { ['click','mousemove','keypress','scroll','touchstart'].forEach(e=>document.addEventListener(e,resetTimer,true)); resetTimer(); }
-        function resetTimer() { clearTimeout(inactivityTimer); if(userSession) inactivityTimer = setTimeout(async()=>{alert("Inatividade.");await fazerLogout();},INACTIVITY_TIME); }
+        // UX: Toast Notification
+        function showToast(msg, type='info') {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerText = msg;
+            if(type === 'error') t.style.border = '1px solid #ef4444';
+            document.getElementById('toast-container').appendChild(t);
+            requestAnimationFrame(() => t.classList.add('show'));
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
+        }
 
-        $(document).ready(function(){ $('#cad-cpf, #perf-cpf').mask('000.000.000-00'); $('#cad-zap, #cad-eme-zap, #perf-zap').mask('(00) 00000-0000'); $('#cad-cep, #perf-cep').mask('00000-000'); });
+        // UX: Troca de Tela
+        function showScreen(id) {
+            document.getElementById('splash').style.opacity = '0';
+            setTimeout(() => document.getElementById('splash').style.display = 'none', 300);
+            
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById('screen-' + id);
+            if(target) target.classList.add('active');
+            
+            const isApp = ['radar','active','extract','perfil'].includes(id);
+            document.getElementById('bottom-menu').classList.toggle('hidden', !isApp);
+            document.getElementById('app-header').classList.toggle('hidden', !isApp);
+            
+            if(isApp) window.scrollTo(0,0);
+        }
 
-        window.onload = async function() {
-            setLoading(true);
-            try {
-                // Tenta carregar config (pode falhar se tabela nao existir, nao tem problema)
-                const { data } = await sbClient.from('app_config').select('*').single();
-                appConfig = data || { taxa_app_percent: 10 };
-                
-                // Verifica sessão
-                const { data: { session } } = await sbClient.auth.getSession();
-                if (session) { 
-                    userSession = session; 
-                    verificarPerfil(); 
-                } else { 
-                    showScreen('welcome'); 
-                }
-            } catch(e) {
-                console.error("Erro inicialização:", e);
-                showScreen('welcome'); // Fallback seguro
+        function navegar(tab) {
+            if(tab === 'radar' && pedidoAtual) tab = 'active';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('nav-'+tab).classList.add('active');
+            showScreen(tab);
+        }
+
+        // LÓGICA PRINCIPAL
+        async function carregarPerfil() {
+            // Tenta cache do perfil primeiro
+            const cachedProfile = localStorage.getItem('profile-cache');
+            if(cachedProfile) preencherPerfil(JSON.parse(cachedProfile));
+
+            const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
+            if (error || !data) {
+                // Se der erro crítico, não trava, manda pro cadastro ou welcome
+                if(!cachedProfile) showScreen('welcome');
+                return;
             }
-        };
+            
+            // Atualiza cache
+            localStorage.setItem('profile-cache', JSON.stringify(data));
+            preencherPerfil(data);
 
-        function setLoading(s){document.getElementById('global-loading').style.display=s?'flex':'none';}
-        function showScreen(id){['welcome','cadastro','pending','radar','active','extract','perfil'].forEach(s=>document.getElementById('screen-'+s).classList.add('hidden'));document.getElementById('screen-'+id).classList.remove('hidden');const isApp=['radar','active','extract','perfil'].includes(id);document.getElementById('bottom-menu').classList.toggle('hidden',!isApp);document.getElementById('bottom-menu').classList.toggle('flex',isApp);document.getElementById('app-header').classList.toggle('hidden',!isApp);document.getElementById('app-header').classList.toggle('flex',isApp);setLoading(false);}
-        function navegar(t){if(t==='radar'&&pedidoAtual)t='active';document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));document.getElementById('nav-'+t).classList.add('active');showScreen(t);}
+            if (data.status !== 'Aprovado') showScreen('pending'); 
+            else iniciarApp();
+        }
+
+        function preencherPerfil(data) {
+            document.getElementById('header-saldo').innerText = `R$ ${(data.saldo||0).toFixed(2)}`;
+            document.getElementById('saque-saldo').innerText = `R$ ${(data.saldo||0).toFixed(2)}`;
+            
+            ['nome','cpf','whatsapp','cep','rua','numero','complemento','modelo','cor_moto','placa'].forEach(field => {
+                const el = document.getElementById('perf-' + (field === 'whatsapp' ? 'zap' : (field === 'cor_moto' ? 'cor' : field)));
+                if(el) el.value = data[field] || '';
+            });
+            document.getElementById('perf-idade').value = (data.idade || '') + ' anos';
+        }
+
+        function iniciarApp() {
+            verificarPedidoAtivo();
+            
+            // Radar Realtime
+            sbClient.channel('radar-realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, payload => {
+                if(isOnline) carregarRadar();
+                if(pedidoAtual && payload.new.id === pedidoAtual.id) verificarPedidoAtivo();
+            }).subscribe();
+        }
 
         function toggleRadar() {
             isOnline = document.getElementById('radar-toggle').checked;
             const t = document.getElementById('status-text'), d = document.getElementById('status-dot');
             if (isOnline) {
-                t.innerText = "Radar Ativo"; t.classList.replace('text-red-500','text-green-500'); d.classList.replace('bg-red-500','bg-green-500');
-                document.getElementById('radar-off-msg').classList.add('hidden'); document.getElementById('radar-on-content').classList.remove('hidden'); carregarRadar();
+                t.innerText = "Online"; t.classList.replace('text-red-500','text-green-500'); 
+                d.classList.replace('bg-red-500','bg-green-500'); d.classList.add('animate-ping');
+                document.getElementById('radar-off-msg').classList.add('hidden'); 
+                document.getElementById('radar-on-content').classList.remove('hidden'); 
+                carregarRadar();
             } else {
-                t.innerText = "Radar Inativo"; t.classList.replace('text-green-500','text-red-500'); d.classList.replace('bg-green-500','bg-red-500');
-                document.getElementById('radar-off-msg').classList.remove('hidden'); document.getElementById('radar-on-content').classList.add('hidden');
+                t.innerText = "Offline"; t.classList.replace('text-green-500','text-red-500'); 
+                d.classList.replace('bg-green-500','bg-red-500'); d.classList.remove('animate-ping');
+                document.getElementById('radar-off-msg').classList.remove('hidden'); 
+                document.getElementById('radar-on-content').classList.add('hidden');
             }
-        }
-
-        async function verificarPerfil() {
-            const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            // Se não achar o perfil, limpa e vai pro welcome para evitar loop
-            if (error || !data) { 
-                console.warn("Perfil não encontrado. Resetando.");
-                sbClient.auth.signOut(); 
-                localStorage.clear();
-                showScreen('welcome'); 
-                return; 
-            }
-            
-            saldoAtual = data.saldo || 0;
-            document.getElementById('header-saldo').innerText = `R$ ${saldoAtual.toFixed(2)}`;
-            document.getElementById('saque-saldo').innerText = `R$ ${saldoAtual.toFixed(2)}`;
-            
-            // Preenchimento seguro dos campos (evita null)
-            document.getElementById('perf-nome').value = data.nome||'';
-            document.getElementById('perf-cpf').value = data.cpf||'';
-            document.getElementById('perf-idade').value = (data.idade||'')+' anos';
-            document.getElementById('perf-zap').value = data.whatsapp||'';
-            document.getElementById('perf-cep').value = data.cep||'';
-            document.getElementById('perf-rua').value = data.rua||'';
-            document.getElementById('perf-num').value = data.numero||'';
-            document.getElementById('perf-comp').value = data.complemento||'';
-            document.getElementById('perf-modelo').value = data.modelo||'';
-            document.getElementById('perf-cor').value = data.cor_moto||'';
-            document.getElementById('perf-placa').value = data.placa||'';
-
-            iniciarMonitoramento();
-            if (data.status !== 'Aprovado') showScreen('pending'); else iniciarApp();
-        }
-
-        async function atualizarDados() {
-            const u = { whatsapp: document.getElementById('perf-zap').value, cep: document.getElementById('perf-cep').value, rua: document.getElementById('perf-rua').value, numero: document.getElementById('perf-num').value, complemento: document.getElementById('perf-comp').value, modelo: document.getElementById('perf-modelo').value, cor_moto: document.getElementById('perf-cor').value, placa: document.getElementById('perf-placa').value.toUpperCase() };
-            const b=document.getElementById('btn-update-perf'); b.innerText="Salvando..."; b.disabled=true;
-            await sbClient.from('motoboys').update(u).eq('id', userSession.user.id);
-            await sbClient.from('profiles').update({whatsapp_responsavel:u.whatsapp, modelo_moto:u.modelo, placa_moto:u.placa, cor_moto:u.cor_moto}).eq('id', userSession.user.id);
-            alert("Salvo!"); b.innerText="Salvar Alterações"; b.disabled=false;
-        }
-
-        async function carregarExtrato() { 
-            const div = document.getElementById('history-list'); div.innerHTML = '<div class="spinner mx-auto"></div>'; 
-            let query = sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).eq('status', 'concluido').order('created_at', {ascending:false});
-            const ini = document.getElementById('filtro-ini').value, fim = document.getElementById('filtro-fim').value;
-            if(ini && fim) query = query.gte('created_at', ini).lte('created_at', fim + 'T23:59:59');
-            const { data } = await query;
-            div.innerHTML = ''; 
-            if(!data || !data.length) div.innerHTML = '<p class="text-center text-gray-500 py-4">Sem ganhos no período.</p>';
-            else data.forEach(p => { const liq = calcularLiquido(p.valor_frete, p.taxa_app_aplicada); div.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-xs text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${liq.toFixed(2)}</p></div>`; }); 
-        }
-
-        function solicitarSaque() {
-            const valor = parseFloat(document.getElementById('valor-saque').value);
-            if(!valor || valor <= 0) return alert("Valor inválido.");
-            if(valor > saldoAtual) return alert("Saldo insuficiente.");
-            const msg = `Olá, sou *${document.getElementById('perf-nome').value}*. Solicito saque de *R$ ${valor.toFixed(2)}*. Saldo: R$ ${saldoAtual.toFixed(2)}.`;
-            window.open(`https://wa.me/${ADMIN_ZAP}?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
-        function iniciarApp() {
-            verificarPedidoAtivo(); 
-            document.getElementById('radar-toggle').checked = false; toggleRadar();
-            sbClient.channel('radar-realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, payload => {
-                if(isOnline) carregarRadar(); if(pedidoAtual && payload.new.id === pedidoAtual.id) verificarPedidoAtivo();
-            }).subscribe();
         }
 
         async function carregarRadar() {
             if(!isOnline) return;
             const { data } = await sbClient.from('pedidos').select('*').eq('status', 'solicitado').order('created_at', {ascending:false});
             const list = document.getElementById('radar-list'); list.innerHTML = '';
+            
             if(data && data.length > 0) {
                 document.getElementById('radar-empty').classList.add('hidden');
                 data.forEach(p => {
-                    const liq = calcularLiquido(p.valor_frete, p.taxa_app_aplicada);
-                    list.innerHTML += `<div class="dark-card p-4 border-l-4 border-yellow-500 relative pulse-once"><div class="flex justify-between mb-2"><span class="bg-gray-700 text-xs px-2 py-1 rounded text-gray-300">Nova Corrida</span><div class="text-right"><span class="text-white font-bold text-sm">Total: R$ ${p.valor_frete.toFixed(2)}</span><br><span class="text-green-400 font-bold text-lg">Receba: R$ ${liq.toFixed(2)}</span></div></div><h3 class="font-bold text-white text-sm mb-1">${p.origem}</h3><div class="pl-3 ml-1 border-l border-gray-600 my-2"><p class="text-xs text-gray-500">Entrega</p><p class="text-gray-300 text-sm line-clamp-1">${p.destino}</p></div><button onclick="aceitarCorrida(${p.id})" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl mt-2 shadow-lg">ACEITAR (A CAMINHO)</button></div>`;
+                    const liq = p.valor_frete - (p.valor_frete * ((p.taxa_app_aplicada || appConfig.taxa_app_percent) / 100));
+                    list.innerHTML += `
+                        <div class="dark-card p-4 border-l-4 border-yellow-500 mb-3 animate-pulse">
+                            <div class="flex justify-between mb-2">
+                                <span class="bg-gray-700 text-[10px] uppercase font-bold px-2 py-1 rounded text-gray-300">Nova Corrida</span>
+                                <div class="text-right">
+                                    <span class="text-white font-bold text-xs opacity-50 block line-through">R$ ${p.valor_frete.toFixed(2)}</span>
+                                    <span class="text-green-400 font-bold text-lg">R$ ${liq.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-3 items-center mb-3">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                                <p class="text-white font-bold text-sm truncate">${p.origem}</p>
+                            </div>
+                            <div class="flex gap-3 items-center mb-4">
+                                <div class="w-2 h-2 bg-gray-500 rounded-full"></div>
+                                <p class="text-gray-400 text-sm truncate">${p.destino}</p>
+                            </div>
+                            <button onclick="aceitarCorrida(${p.id})" class="w-full btn-action py-3 shadow-lg">ACEITAR (A CAMINHO)</button>
+                        </div>`;
                 });
             } else { document.getElementById('radar-empty').classList.remove('hidden'); }
         }
@@ -299,41 +520,106 @@
             const { data } = await sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).or('status.eq.pendente,status.eq.em_rota').single();
             if(data) {
                 pedidoAtual = data;
-                const liq = calcularLiquido(data.valor_frete, data.taxa_app_aplicada);
-                document.getElementById('active-empty').classList.add('hidden'); document.getElementById('active-content').classList.remove('hidden');
-                document.getElementById('active-origem').innerText = data.origem; document.getElementById('active-destino').innerText = data.destino; document.getElementById('active-cliente-nome').innerText = data.nome_destinatario; document.getElementById('active-forma').innerText = data.forma_pagamento; document.getElementById('active-valor').innerText = liq.toFixed(2);
+                const liq = data.valor_frete - (data.valor_frete * ((data.taxa_app_aplicada || appConfig.taxa_app_percent) / 100));
+                
+                document.getElementById('active-empty').classList.add('hidden'); 
+                document.getElementById('active-content').classList.remove('hidden');
+                
+                document.getElementById('active-origem').innerText = data.origem; 
+                document.getElementById('active-destino').innerText = data.destino; 
+                document.getElementById('active-cliente-nome').innerText = data.nome_destinatario; 
+                document.getElementById('active-forma').innerText = data.forma_pagamento; 
+                document.getElementById('active-valor').innerText = liq.toFixed(2);
+                
                 navegar('active');
-            } else { pedidoAtual = null; document.getElementById('active-content').classList.add('hidden'); document.getElementById('active-empty').classList.remove('hidden'); }
-        }
-
-        function calcularLiquido(v, t) { let taxa = t!=null?parseFloat(t):(appConfig?parseFloat(appConfig.taxa_app_percent):10); return v-(v*(taxa/100)); }
-        function calcularIdade(p){const n=document.getElementById(p+'-nasc').value;if(!n)return;const h=new Date();const d=new Date(n);let i=h.getFullYear()-d.getFullYear();const m=h.getMonth()-d.getMonth();if(m<0||(m===0&&h.getDate()<d.getDate()))i--;if(i<0||i>100){alert("Inválido");document.getElementById(p+'-nasc').value='';return;}document.getElementById(p+'-idade').value=i+' anos';}
-        function toggleIntegral(){const i=document.getElementById('disp-integral').checked;document.querySelectorAll('.disp-opt').forEach(e=>{e.checked=i;e.disabled=i;});}
-        function validarPlaca(p){return /^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$/i.test(p.replace('-',''));}
-        async function fazerLogin(){const e=$('#log-email').val(),s=$('#log-senha').val();if(!e||!s)return alert("Preencha tudo");$('#btn-login').text('...');const{error}=await sbClient.auth.signInWithPassword({email:e,password:s});if(error){alert(error.message);$('#btn-login').text('ENTRAR');}else location.reload();}
-        async function fazerLogout(){if(!confirm("Sair?"))return;await sbClient.auth.signOut();localStorage.clear();location.reload();}
-        async function aceitarCorrida(id){if(!confirm("Aceitar?"))return;const{error}=await sbClient.from('pedidos').update({status:'pendente',entregador_id:userSession.user.id}).eq('id',id).eq('status','solicitado');if(error)alert("Perdeu a vez!");else verificarPedidoAtivo();}
-        async function cancelarCorrida(){if(!confirm("Cancelar?"))return;await sbClient.from('pedidos').update({status:'solicitado',entregador_id:null}).eq('id',pedidoAtual.id);verificarPedidoAtivo();}
-        async function validarPin(){const p=$('#input-pin').val();if(p!=pedidoAtual.pin_entrega)return alert("PIN Errado");await sbClient.from('pedidos').update({status:'concluido'}).eq('id',pedidoAtual.id);const liq=calcularLiquido(pedidoAtual.valor_frete,pedidoAtual.taxa_app_aplicada);await sbClient.from('motoboys').update({saldo:saldoAtual+liq}).eq('id',userSession.user.id);alert("Sucesso! +R$ "+liq.toFixed(2));$('#modal-pin').addClass('hidden');verificarPerfil();}
-        
-        async function enviarCadastro(){
-            const d={nome:$('#cad-nome').val(),cpf:$('#cad-cpf').val(),nasc:$('#cad-nasc').val(),idade:$('#cad-idade').val(),zap:$('#cad-zap').val(),cep:$('#cad-cep').val(),rua:$('#cad-rua').val(),num:$('#cad-num').val(),comp:$('#cad-comp').val(),ref:$('#cad-ref').val(),eme_nome:$('#cad-eme-nome').val(),eme_zap:$('#cad-eme-zap').val(),eme_parent:$('#cad-eme-parent').val(),moto_mod:$('#moto-modelo').val(),moto_cor:$('#moto-cor').val(),moto_placa:$('#moto-placa').val().toUpperCase(),email:$('#cad-email').val(),senha:$('#cad-senha').val()};
-            if(Object.values(d).some(v=>v===''&&v!==d.comp))return alert("Preencha obrigatórios (*)");
-            if(parseInt(d.idade)<18)return alert("Maior de 18 anos.");
-            if(!validarPlaca(d.moto_placa))return alert("Placa inválida.");
-            let disp=[]; if($('#disp-integral').is(':checked'))disp.push("Integral");else{if($('#disp-manha').is(':checked'))disp.push("Manhã");if($('#disp-tarde').is(':checked'))disp.push("Tarde");if($('#disp-noite').is(':checked'))disp.push("Noite");}if($('#disp-extra').is(':checked'))disp.push("Renda Extra");if(!disp.length)return alert("Selecione disponibilidade.");
-            $('#btn-cadastrar').text("Enviando..."); const{data,error}=await sbClient.auth.signUp({email:d.email,password:d.senha});
-            if(error)return alert(error.message);
-            if(data.user){
-                await sbClient.from('motoboys').insert({id:data.user.id,nome:d.nome,cpf:d.cpf,data_nascimento:d.nasc,idade:parseInt(d.idade),whatsapp:d.zap,cep:d.cep,rua:d.rua,numero:d.num,complemento:d.comp,referencia:d.ref,emerg_nome:d.eme_nome,emerg_zap:d.eme_zap,emerg_parentesco:d.eme_parent,modelo:d.moto_mod,cor_moto:d.moto_cor,placa:d.moto_placa,disponibilidade:disp.join(', '),status:'Pendente'});
-                await sbClient.from('profiles').insert({id:data.user.id,responsavel:d.nome,funcao:'motoboy',modelo_moto:d.moto_mod,cor_moto:d.moto_cor,placa_moto:d.moto_placa,whatsapp_responsavel:d.zap});
-                alert("Enviado!");location.reload();
+            } else { 
+                pedidoAtual = null; 
+                document.getElementById('active-content').classList.add('hidden'); 
+                document.getElementById('active-empty').classList.remove('hidden'); 
             }
         }
-        function abrirGps(t){window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(t==='origem'?pedidoAtual.origem:pedidoAtual.destino)}`,'_blank');}
-        function abrirZap(){window.open(`https://wa.me/55${pedidoAtual.telefone_destinatario.replace(/\D/g,'')}`,'_blank');}
-        function abrirModalPin(){$('#input-pin').val('');$('#modal-pin').removeClass('hidden');}
-        function copiarTexto(t){navigator.clipboard.writeText(t==='origem'?pedidoAtual.origem:pedidoAtual.destino).then(()=>alert("Copiado!"));}
+
+        // AÇÕES
+        async function fazerLogin() {
+            const email = document.getElementById('log-email').value;
+            const password = document.getElementById('log-senha').value;
+            if(!email || !password) return showToast('Preencha os campos', 'error');
+            
+            const btn = document.getElementById('btn-login');
+            const originalText = btn.innerText;
+            btn.innerText = "...";
+            
+            const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+            if (error) { 
+                showToast(error.message, 'error'); 
+                btn.innerText = originalText;
+            } else { 
+                location.reload(); 
+            }
+        }
+
+        async function aceitarCorrida(id) {
+            // Optimistic UI: Remove o card na hora
+            document.getElementById('radar-list').innerHTML = ''; 
+            const { error } = await sbClient.from('pedidos').update({ status: 'pendente', entregador_id: userSession.user.id }).eq('id', id).eq('status', 'solicitado');
+            if(error) { showToast("Corrida já pegaram!", 'error'); carregarRadar(); } 
+            else { verificarPedidoAtivo(); }
+        }
+
+        async function validarPin() {
+            const p = document.getElementById('input-pin').value;
+            if(p != pedidoAtual.pin_entrega) return showToast("PIN Incorreto", 'error');
+            
+            // Atualiza Saldo Localmente (Instantâneo)
+            const liq = parseFloat(document.getElementById('active-valor').innerText);
+            const novoSaldo = (parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ','')) + liq);
+            document.getElementById('header-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
+            
+            // Envia pro banco
+            await sbClient.from('pedidos').update({ status: 'concluido' }).eq('id', pedidoAtual.id);
+            await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
+            
+            showToast(`Sucesso! + R$ ${liq.toFixed(2)}`);
+            document.getElementById('modal-pin').classList.add('hidden');
+            verificarPedidoAtivo();
+        }
+
+        async function cancelarCorrida() {
+            if(!confirm("Cancelar corrida?")) return;
+            await sbClient.from('pedidos').update({ status: 'solicitado', entregador_id: null }).eq('id', pedidoAtual.id);
+            verificarPedidoAtivo();
+        }
+
+        async function carregarExtrato() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '<div class="text-center py-4 opacity-50">Carregando...</div>';
+            
+            let q = sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).eq('status', 'concluido').order('created_at', {ascending:false}).limit(20);
+            const ini = document.getElementById('filtro-ini').value, fim = document.getElementById('filtro-fim').value;
+            if(ini && fim) q = q.gte('created_at', ini).lte('created_at', fim + 'T23:59:59');
+            
+            const { data } = await q;
+            list.innerHTML = '';
+            if(!data.length) return list.innerHTML = '<div class="text-center py-4 opacity-50 text-sm">Sem histórico.</div>';
+            
+            data.forEach(p => {
+                const liq = p.valor_frete - (p.valor_frete * ((p.taxa_app_aplicada || 10) / 100));
+                list.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-[10px] text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${liq.toFixed(2)}</p></div>`;
+            });
+        }
+
+        // Utils
+        function toggleDisp(el) { el.classList.toggle('bg-yellow-500'); el.classList.toggle('text-black'); el.classList.toggle('border-yellow-500'); }
+        function calcularIdade() { const n=document.getElementById('cad-nasc').value; if(n){ const i=new Date().getFullYear()-new Date(n).getFullYear(); document.getElementById('cad-idade').value=i+' anos'; } }
+        async function fazerLogout() { if(confirm("Sair?")) { await sbClient.auth.signOut(); localStorage.clear(); location.reload(); } }
+        function abrirGps(t) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(t==='origem'?pedidoAtual.origem:pedidoAtual.destino)}`,'_blank'); }
+        function abrirZap() { window.open(`https://wa.me/55${pedidoAtual.telefone_destinatario.replace(/\D/g,'')}`,'_blank'); }
+        function abrirModalPin() { document.getElementById('input-pin').value=''; document.getElementById('modal-pin').classList.remove('hidden'); }
+        function copiarTexto(t) { navigator.clipboard.writeText(t==='origem'?pedidoAtual.origem:pedidoAtual.destino); showToast("Copiado!"); }
+        function solicitarSaque() { 
+            const v=document.getElementById('valor-saque').value; 
+            if(v) window.open(`https://wa.me/${ADMIN_ZAP}?text=Solicito saque de R$ ${v}`, '_blank'); 
+        }
     </script>
 </body>
 </html>
