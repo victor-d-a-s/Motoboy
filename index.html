@@ -15,7 +15,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
     <style>
-        /* Base e Performance */
+        /* CSS CRÍTICO - Isso impede o menu de aparecer na tela de login */
+        .force-hidden { display: none !important; }
+
+        /* Base */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             background-color: #111827; color: #e5e7eb; 
@@ -169,7 +172,7 @@
             </div>
         </div>
 
-        <div id="app-header" class="hidden fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto transition-all">
+        <div id="app-header" class="force-hidden fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto transition-all" style="display: none;">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-lg font-bold text-white tracking-tight">Drop <span class="text-yellow-500">App</span></h1>
@@ -294,11 +297,11 @@
             <button onclick="logout()" class="w-full mt-6 py-4 text-red-500 font-bold text-xs bg-red-500/10 rounded-xl border border-red-500/20 active:bg-red-500/20 transition">SAIR DA CONTA</button>
         </div>
 
-        <div id="bottom-menu" class="hidden bottom-nav">
-            <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt"></i><span>Radar</span></div>
-            <div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box"></i><span>Corrida</span></div>
-            <div class="nav-item" id="nav-extract" onclick="navegar('extract'); loadExtrato()"><i class="fas fa-wallet"></i><span>Ganhos</span></div>
-            <div class="nav-item" id="nav-perfil" onclick="navegar('perfil')"><i class="fas fa-user"></i><span>Perfil</span></div>
+        <div id="bottom-menu" class="force-hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50 flex justify-around py-3 pb-safe transition-all" style="display: none;">
+            <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt text-xl mb-1"></i><span class="text-[10px]">Radar</span></div>
+            <div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box text-xl mb-1"></i><span class="text-[10px]">Corrida</span></div>
+            <div class="nav-item" id="nav-extract" onclick="navegar('extract'); loadExtrato()"><i class="fas fa-wallet text-xl mb-1"></i><span class="text-[10px]">Ganhos</span></div>
+            <div class="nav-item" id="nav-perfil" onclick="navegar('perfil')"><i class="fas fa-user text-xl mb-1"></i><span class="text-[10px]">Perfil</span></div>
         </div>
     </div>
 
@@ -391,10 +394,25 @@
             if(target) target.classList.add('active');
             
             const isApp = ['radar','active','extract','perfil'].includes(id);
-            // Toggles the 'hidden' class based on whether it's an app screen or not
-            document.getElementById('bottom-menu').classList.toggle('hidden', !isApp);
-            document.getElementById('app-header').classList.toggle('hidden', !isApp);
-            if(isApp) window.scrollTo(0,0);
+            
+            // MANIPULAÇÃO FORÇADA DE ESTILO PARA GARANTIR VISIBILIDADE/OCULTAÇÃO
+            const header = document.getElementById('app-header');
+            const menu = document.getElementById('bottom-menu');
+
+            if(isApp) {
+                // Remove as classes e styles que ocultam
+                header.classList.remove('force-hidden', 'hidden');
+                menu.classList.remove('force-hidden', 'hidden');
+                header.style.display = 'flex';
+                menu.style.display = 'flex';
+                window.scrollTo(0,0);
+            } else {
+                // Adiciona ocultação
+                header.classList.add('hidden');
+                menu.classList.add('hidden');
+                header.style.display = 'none';
+                menu.style.display = 'none';
+            }
         }
 
         function navegar(tab) {
