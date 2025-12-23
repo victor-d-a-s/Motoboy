@@ -169,7 +169,7 @@
             </div>
         </div>
 
-        <div id="app-header" class="hidden fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto transition-all" style="display: none !important;">
+        <div id="app-header" class="fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto transition-all" style="display: none !important;">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-lg font-bold text-white tracking-tight">Drop <span class="text-yellow-500">App</span></h1>
@@ -294,7 +294,7 @@
             <button onclick="logout()" class="w-full mt-6 py-4 text-red-500 font-bold text-xs bg-red-500/10 rounded-xl border border-red-500/20 active:bg-red-500/20 transition">SAIR DA CONTA</button>
         </div>
 
-        <div id="bottom-menu" class="hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50 flex justify-around py-3 pb-safe transition-all" style="display: none !important;">
+        <div id="bottom-menu" class="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50 flex justify-around py-3 pb-safe transition-all" style="display: none !important;">
             <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt text-xl mb-1"></i><span class="text-[10px]">Radar</span></div>
             <div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box text-xl mb-1"></i><span class="text-[10px]">Corrida</span></div>
             <div class="nav-item" id="nav-extract" onclick="navegar('extract'); loadExtrato()"><i class="fas fa-wallet text-xl mb-1"></i><span class="text-[10px]">Ganhos</span></div>
@@ -332,24 +332,13 @@
 
         // --- CORE ---
         async function loadPerfil() {
-            // Busca dados do motoboy
             const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            
-            if (error || !data) {
-                // Se der erro crítico ou não achar cadastro, força tela de cadastro/login
-                // Não trava na tela de loading
-                showScreen('welcome');
-                return;
-            }
-            
+            if (error || !data) { showScreen('welcome'); return; }
             preencherPerfil(data);
-
-            if (data.status !== 'Aprovado') {
-                showScreen('pending');
-            } else {
-                // Se aprovado, carrega configurações e inicia
+            if (data.status !== 'Aprovado') showScreen('pending');
+            else {
                 sbClient.from('app_config').select('*').single().then(({data}) => { if(data) appConfig = data; });
-                showScreen('radar'); // Vai direto pro app
+                showScreen('radar'); 
                 startRealtime();
             }
         }
@@ -357,7 +346,6 @@
         function preencherPerfil(d) {
             document.getElementById('header-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
             document.getElementById('saque-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
-            
             ['nome','cpf','whatsapp','cep','rua','numero','complemento','modelo','cor_moto','placa'].forEach(f => {
                 const el = document.getElementById('perf-' + (f==='whatsapp'?'zap':f.replace('_','')));
                 if(el) el.value = d[f] || '';
@@ -391,27 +379,18 @@
             if(target) target.classList.add('active');
             
             const isApp = ['radar','active','extract','perfil'].includes(id);
-            
-            // MANIPULAÇÃO FORÇADA DE ESTILO PARA GARANTIR VISIBILIDADE/OCULTAÇÃO
             const header = document.getElementById('app-header');
             const menu = document.getElementById('bottom-menu');
 
             if(isApp) {
-                // Remove as classes e styles que ocultam
-                header.classList.remove('hidden');
-                menu.classList.remove('hidden');
-                // IMPORTANTE: Remove o display: none !important
+                // REMOVE display: none !important e mostra flex
                 header.style.removeProperty('display');
                 menu.style.removeProperty('display');
-                // Adiciona display flex (se necessário pelo layout)
                 header.style.display = 'flex';
                 menu.style.display = 'flex';
                 window.scrollTo(0,0);
             } else {
-                // Adiciona ocultação
-                header.classList.add('hidden');
-                menu.classList.add('hidden');
-                // Força o display none
+                // FORÇA Ocultação
                 header.style.setProperty('display', 'none', 'important');
                 menu.style.setProperty('display', 'none', 'important');
             }
