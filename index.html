@@ -15,8 +15,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
     <style>
-        /* CSS CRÍTICO: ESCONDE MENUS POR PADRÃO */
-        #app-header, #bottom-menu { display: none; }
+        /* --- CORREÇÃO DEFINITIVA DE VISIBILIDADE --- */
+        /* 1. Esconde Menu e Header por padrão (Vence qualquer classe do Tailwind) */
+        #app-header, #bottom-menu { display: none !important; }
+
+        /* 2. Mostra APENAS quando o body tiver a classe .logged-in */
+        body.logged-in #app-header, 
+        body.logged-in #bottom-menu { display: flex !important; }
+        /* ------------------------------------------- */
 
         /* Base e Performance */
         body { 
@@ -336,22 +342,12 @@
         // --- CORE ---
         async function loadPerfil() {
             const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            
-            if (error || !data) {
-                // Se der erro crítico ou não achar cadastro, força tela de cadastro/login
-                // Não trava na tela de loading
-                showScreen('welcome');
-                return;
-            }
-            
+            if (error || !data) { showScreen('welcome'); return; }
             preencherPerfil(data);
-
-            if (data.status !== 'Aprovado') {
-                showScreen('pending');
-            } else {
-                // Se aprovado, carrega configurações e inicia
+            if (data.status !== 'Aprovado') showScreen('pending');
+            else {
                 sbClient.from('app_config').select('*').single().then(({data}) => { if(data) appConfig = data; });
-                showScreen('radar'); // Vai direto pro app
+                showScreen('radar'); 
                 startRealtime();
             }
         }
@@ -359,7 +355,6 @@
         function preencherPerfil(d) {
             document.getElementById('header-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
             document.getElementById('saque-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
-            
             ['nome','cpf','whatsapp','cep','rua','numero','complemento','modelo','cor_moto','placa'].forEach(f => {
                 const el = document.getElementById('perf-' + (f==='whatsapp'?'zap':f.replace('_','')));
                 if(el) el.value = d[f] || '';
@@ -393,16 +388,12 @@
             if(target) target.classList.add('active');
             
             const isApp = ['radar','active','extract','perfil'].includes(id);
-            const header = document.getElementById('app-header');
-            const menu = document.getElementById('bottom-menu');
-
-            if(isApp) {
-                header.style.display = 'flex';
-                menu.style.display = 'flex';
+            // LÓGICA CRÍTICA DE EXIBIÇÃO DO MENU VIA CLASSE NO BODY
+            if (isApp) {
+                document.body.classList.add('logged-in');
                 window.scrollTo(0,0);
             } else {
-                header.style.display = 'none';
-                menu.style.display = 'none';
+                document.body.classList.remove('logged-in');
             }
         }
 
