@@ -310,7 +310,11 @@
             t.className = `text-[10px] font-bold uppercase tracking-widest ${isOnline ? 'text-green-500' : 'text-red-500'}`;
             document.getElementById('radar-off-msg').classList.toggle('hidden-force', isOnline);
             document.getElementById('radar-on-content').classList.toggle('hidden-force', !isOnline);
-            if(isOnline) loadRadar();
+            if(isOnline) {
+                // TRUQUE DO SOM: Toca mudo para destravar o AudioContext do navegador no mobile
+                const a = document.getElementById('audio-alert'); a.volume=0; a.play().then(()=>{a.pause();a.currentTime=0;a.volume=1;});
+                loadRadar();
+            }
         }
 
         async function loadRadar() {
@@ -336,7 +340,6 @@
                 document.getElementById('active-origem').innerText = data.origem;
                 document.getElementById('active-destino').innerText = data.destino;
                 document.getElementById('active-cliente-nome').innerText = data.nome_destinatario;
-                document.getElementById('active-forma').innerText = data.forma_pagamento;
                 document.getElementById('active-valor').innerText = liq.toFixed(2);
                 
                 // Lógica dos Botões
@@ -379,7 +382,8 @@
             const d={nome:$('#cad-nome').val(),cpf:$('#cad-cpf').val(),nasc:$('#cad-nasc').val(),idade:$('#cad-idade').val(),zap:$('#cad-zap').val(),cep:$('#cad-cep').val(),rua:$('#cad-rua').val(),num:$('#cad-num').val(),comp:$('#cad-comp').val(),ref:$('#cad-ref').val(),eme_nome:$('#cad-eme-nome').val(),eme_zap:$('#cad-eme-zap').val(),eme_parent:$('#cad-eme-parent').val(),moto_mod:$('#moto-modelo').val(),moto_cor:$('#moto-cor').val(),moto_placa:$('#moto-placa').val().toUpperCase(),email:$('#cad-email').val(),senha:$('#cad-senha').val()};
             if(Object.values(d).some(v=>v===''&&v!==d.comp)) return toast("Preencha campos obrigatórios", 'error');
             let disp=[]; if($('#disp-integral').is(':checked'))disp.push("Integral"); else { if($('#disp-manha').is(':checked'))disp.push("Manhã"); if($('#disp-tarde').is(':checked'))disp.push("Tarde"); if($('#disp-noite').is(':checked'))disp.push("Noite"); } if($('#disp-extra').is(':checked'))disp.push("Renda Extra"); if(!disp.length) return toast("Selecione disponibilidade", 'error');
-            $('#btn-cadastrar').text("..."); const{data,error}=await sbClient.auth.signUp({email:d.email,password:d.senha});
+            $('#btn-cadastrar').text("..."); 
+            const{data,error}=await sbClient.auth.signUp({email:d.email,password:d.senha});
             if(error) { toast(error.message, 'error'); $('#btn-cadastrar').text("CADASTRAR"); return; }
             if(data.user){
                 await sbClient.from('motoboys').insert({id:data.user.id,nome:d.nome,cpf:d.cpf,data_nascimento:d.nasc,idade:parseInt(d.idade),whatsapp:d.zap,cep:d.cep,rua:d.rua,numero:d.num,complemento:d.comp,referencia:d.ref,emerg_nome:d.eme_nome,emerg_zap:d.eme_zap,emerg_parentesco:d.eme_parent,modelo:d.moto_mod,cor_moto:d.moto_cor,placa:d.moto_placa,disponibilidade:disp.join(', '),status:'Pendente'});
@@ -406,7 +410,10 @@
         function gps(t) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(t==='origem'?pedidoAtual.origem:pedidoAtual.destino)}`,'_blank'); }
         function copiar(t) { navigator.clipboard.writeText(t==='origem'?pedidoAtual.origem:pedidoAtual.destino); toast("Copiado!", 'success'); }
         function modalPin(s) { document.getElementById('modal-pin').classList.toggle('hidden-force', !s); if(s) document.getElementById('input-pin').value=''; }
-        
+        function showGuestScreen(id) { document.querySelectorAll('#guest-zone .screen').forEach(s => s.classList.remove('active')); document.getElementById('screen-' + id).classList.add('active'); }
+        function showAppScreen(id) { document.querySelectorAll('#member-zone .screen').forEach(s => s.classList.remove('active')); document.getElementById('screen-' + id).classList.add('active'); window.scrollTo(0,0); }
+        function navegar(tab) { if(tab === 'radar' && pedidoAtual) tab = 'active'; document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); document.getElementById('nav-'+tab).classList.add('active'); showAppScreen(tab); }
+
         async function aceitar(id) { document.getElementById('radar-list').innerHTML=''; const { error } = await sbClient.from('pedidos').update({ status:'pendente', entregador_id:userSession.user.id }).eq('id',id).eq('status','solicitado'); if(error){toast("Perdeu a vez!", 'error'); loadRadar();} else checkActive(); }
         async function validar() { if(document.getElementById('input-pin').value != pedidoAtual.pin_entrega) return toast("PIN Incorreto", 'error'); const liq=parseFloat(document.getElementById('active-valor').innerText); const novo=parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ',''))+liq; document.getElementById('header-saldo').innerText=`R$ ${novo.toFixed(2)}`; await sbClient.from('pedidos').update({status:'concluido'}).eq('id',pedidoAtual.id); await sbClient.from('motoboys').update({saldo:novo}).eq('id',userSession.user.id); toast("Concluído!", 'success'); modalPin(false); checkActive(); }
         async function cancelar() { if(!confirm("Cancelar?"))return; await sbClient.from('pedidos').update({status:'solicitado',entregador_id:null}).eq('id',pedidoAtual.id); checkActive(); }
