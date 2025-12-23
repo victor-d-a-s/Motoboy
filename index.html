@@ -15,16 +15,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
     <style>
-        /* --- CORREÇÃO DEFINITIVA DE VISIBILIDADE --- */
-        /* 1. Esconde Menu e Header por padrão (Vence qualquer classe do Tailwind) */
-        #app-header, #bottom-menu { display: none !important; }
-
-        /* 2. Mostra APENAS quando o body tiver a classe .logged-in */
-        body.logged-in #app-header, 
-        body.logged-in #bottom-menu { display: flex !important; }
-        /* ------------------------------------------- */
-
-        /* Base e Performance */
+        /* Base */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             background-color: #111827; color: #e5e7eb; 
@@ -32,6 +23,7 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
         
+        /* Telas */
         .screen { display: none; animation: fadeIn 0.2s ease-out; padding-bottom: 90px; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -113,7 +105,7 @@
                 <div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="log-email" class="input-dark" placeholder="E-mail"></div>
                 <div class="input-group"><i class="fas fa-lock input-icon"></i><input type="password" id="log-senha" class="input-dark" placeholder="Senha"></div>
                 <button onclick="fazerLogin()" id="btn-login" class="w-full btn-action py-4 shadow-lg flex justify-center items-center">ENTRAR</button>
-                <p onclick="navegar('cadastro')" class="text-gray-500 text-xs mt-6 text-center cursor-pointer p-2">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
+                <p onclick="showScreen('cadastro')" class="text-gray-500 text-xs mt-6 text-center cursor-pointer p-2">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
             </div>
         </div>
 
@@ -125,7 +117,7 @@
         </div>
 
         <div id="screen-cadastro" class="screen p-5 pt-8">
-            <div class="flex items-center mb-6"><button onclick="navegar('welcome')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-2">Criar Conta</h2></div>
+            <div class="flex items-center mb-6"><button onclick="showScreen('welcome')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-2">Criar Conta</h2></div>
             
             <div class="space-y-5">
                 <div class="space-y-3">
@@ -178,7 +170,7 @@
             </div>
         </div>
 
-        <div id="app-header" class="fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto transition-all">
+        <div id="app-header" class="fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto transition-all" style="display: none;">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-lg font-bold text-white tracking-tight">Drop <span class="text-yellow-500">App</span></h1>
@@ -303,7 +295,7 @@
             <button onclick="logout()" class="w-full mt-6 py-4 text-red-500 font-bold text-xs bg-red-500/10 rounded-xl border border-red-500/20 active:bg-red-500/20 transition">SAIR DA CONTA</button>
         </div>
 
-        <div id="bottom-menu" class="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50 flex justify-around py-3 pb-safe transition-all">
+        <div id="bottom-menu" class="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50 flex justify-around py-3 pb-safe transition-all" style="display: none;">
             <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt text-xl mb-1"></i><span class="text-[10px]">Radar</span></div>
             <div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box text-xl mb-1"></i><span class="text-[10px]">Corrida</span></div>
             <div class="nav-item" id="nav-extract" onclick="navegar('extract'); loadExtrato()"><i class="fas fa-wallet text-xl mb-1"></i><span class="text-[10px]">Ganhos</span></div>
@@ -387,13 +379,17 @@
             const target = document.getElementById('screen-' + id);
             if(target) target.classList.add('active');
             
-            const isApp = ['radar','active','extract','perfil'].includes(id);
-            // LÓGICA CRÍTICA DE EXIBIÇÃO DO MENU VIA CLASSE NO BODY
-            if (isApp) {
-                document.body.classList.add('logged-in');
-                window.scrollTo(0,0);
+            // --- CORREÇÃO DEFINITIVA DE VISIBILIDADE ---
+            // Se a tela for uma das públicas, ESCONDE OS MENUS.
+            const publicScreens = ['welcome', 'cadastro', 'pending', 'login']; // Adicionei 'login' por segurança
+            
+            if (publicScreens.includes(id)) {
+                document.getElementById('app-header').style.display = 'none';
+                document.getElementById('bottom-menu').style.display = 'none';
             } else {
-                document.body.classList.remove('logged-in');
+                document.getElementById('app-header').style.display = 'flex';
+                document.getElementById('bottom-menu').style.display = 'flex';
+                window.scrollTo(0,0);
             }
         }
 
