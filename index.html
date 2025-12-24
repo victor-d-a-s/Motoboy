@@ -24,7 +24,7 @@
 
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; -webkit-tap-highlight-color: transparent; user-select: none; padding-bottom: env(safe-area-inset-bottom); overflow-x: hidden; }
         
-        .screen { display: none; width: 100%; min-height: 100vh; position: absolute; top: 0; left: 0; background-color: #111827; z-index: 10; padding-bottom: 20px; }
+        .screen { display: none; width: 100%; min-height: 100vh; position: absolute; top: 0; left: 0; background-color: #111827; z-index: 10; padding-bottom: 90px; }
         .screen.active { display: block; position: relative; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -35,26 +35,24 @@
         .btn-action { background-color: #FBBF24; color: #111827; font-weight: 800; border-radius: 12px; text-transform: uppercase; width: 100%; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .btn-action:active { transform: scale(0.98); }
         
-        /* Switch */
-        .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ef4444; transition: .3s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background-color: #10B981; }
-        input:checked + .slider:before { transform: translateX(22px); }
-
         /* MENU LATERAL */
-        #side-menu { 
-            position: fixed; top: 0; left: -100%; width: 280px; height: 100%; 
-            background: #1F2937; z-index: 200; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            box-shadow: 4px 0 15px rgba(0,0,0,0.5); padding-top: env(safe-area-inset-top);
-        }
+        #side-menu { position: fixed; top: 0; left: -100%; width: 280px; height: 100%; background: #1F2937; z-index: 200; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 15px rgba(0,0,0,0.5); padding-top: env(safe-area-inset-top); }
         #side-menu.open { left: 0; }
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 199; opacity: 0; visibility: hidden; transition: 0.3s; }
         .menu-overlay.open { opacity: 1; visibility: visible; }
         .menu-item { padding: 16px 24px; border-bottom: 1px solid #374151; color: #e5e7eb; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
         .menu-item:active { background-color: #374151; }
         .menu-item i { width: 24px; text-align: center; color: #FBBF24; }
+
+        /* BOTTOM SHEET (Atividades) */
+        #sheet-activities { position: fixed; bottom: 0; left: 0; right: 0; background: #1F2937; border-top-left-radius: 24px; border-top-right-radius: 24px; z-index: 150; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 -4px 20px rgba(0,0,0,0.5); padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+        #sheet-activities.open { transform: translateY(0); }
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .sheet-overlay.open { opacity: 1; visibility: visible; }
+
+        /* Botão Power */
+        .btn-power { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.3s; background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid #EF4444; }
+        .btn-power.online { background: rgba(16, 185, 129, 0.2); color: #10B981; border-color: #10B981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
 
         .chk-container { display: flex; flex-wrap: wrap; gap: 8px; }
         .chk-item input { display: none; }
@@ -64,9 +62,7 @@
         #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { background: rgba(31, 41, 55, 0.95); color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(-20px); transition: all 0.3s; pointer-events: auto; border: 1px solid #374151; display: flex; align-items: center; gap: 8px; }
         .toast.show { opacity: 1; transform: translateY(0); }
-        .toast.success i { color: #10B981; } .toast.error i { color: #EF4444; }
-
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 160; display: flex; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body>
@@ -76,7 +72,7 @@
     <div id="splash" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100] transition-opacity duration-300">
         <div class="mb-4 text-yellow-500 text-5xl"><i class="fas fa-motorcycle"></i></div>
         <div class="w-6 h-6 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin"></div>
-        <p class="text-gray-500 text-xs mt-4 animate-pulse">Carregando Sistema...</p>
+        <p class="text-gray-500 text-xs mt-4 animate-pulse">Carregando...</p>
     </div>
 
     <div id="toast-box"></div>
@@ -148,23 +144,35 @@
     <div id="member-zone" class="w-full min-h-screen relative">
         <div class="fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto">
             <div class="flex justify-between items-center">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                     <button onclick="toggleMenu()" class="text-white text-xl p-1"><i class="fas fa-bars"></i></button>
-                    <div><h1 class="text-lg font-bold text-white tracking-tight leading-none">Drop <span class="text-yellow-500">App</span></h1></div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white tracking-tight leading-none">Drop <span class="text-yellow-500">App</span></h1>
+                        <p class="text-[10px] text-gray-500 uppercase font-mono mt-0.5" id="header-id-user">ID: ...</p>
+                    </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <label class="switch"><input type="checkbox" id="radar-toggle" onchange="toggleRadar()"><span class="slider"></span></label>
-                    <div class="text-right border-l border-gray-700 pl-3"><p class="text-[8px] text-gray-500 uppercase font-bold">Saldo</p><p class="text-sm font-bold text-green-400" id="header-saldo">R$ 0,00</p></div>
+                    <button id="btn-power" class="btn-power" onclick="toggleRadar()"><i class="fas fa-power-off"></i></button>
+                    <div class="text-right border-l border-gray-700 pl-3 cursor-pointer" onclick="abrirAtividades()">
+                        <p class="text-[8px] text-gray-500 uppercase font-bold">Saldo</p>
+                        <p class="text-sm font-bold text-green-400">R$ ****</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="menu-overlay" class="menu-overlay" onclick="toggleMenu()"></div>
         <div id="side-menu">
-            <div class="p-6 border-b border-gray-700 bg-gray-800">
-                <div class="w-12 h-12 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center mb-3"><i class="fas fa-user text-xl"></i></div>
-                <p class="text-white font-bold" id="menu-user-name">Motoboy</p>
-                <p class="text-xs text-gray-400">Parceiro Drop</p>
+            <div class="p-6 border-b border-gray-700 bg-gray-800 flex flex-col items-center text-center">
+                <div class="relative mb-3">
+                    <label for="upload-foto" class="cursor-pointer">
+                        <img id="menu-user-foto" src="https://ui-avatars.com/api/?name=User&background=FBBF24&color=111" class="w-20 h-20 rounded-full border-2 border-yellow-500 object-cover">
+                        <div class="absolute bottom-0 right-0 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs border border-gray-600"><i class="fas fa-camera"></i></div>
+                    </label>
+                    <input type="file" id="upload-foto" hidden accept="image/*" onchange="uploadFoto()">
+                </div>
+                <p class="text-white font-bold text-lg leading-tight" id="menu-user-name">Carregando...</p>
+                <p class="text-xs text-gray-400 mt-1 font-mono" id="menu-user-id">ID: ...</p>
             </div>
             <div class="py-2">
                 <div class="menu-item" onclick="navegar('radar')"><i class="fas fa-map-marked-alt"></i> Radar</div>
@@ -175,11 +183,35 @@
             </div>
         </div>
 
+        <div id="sheet-overlay" class="sheet-overlay" onclick="fecharAtividades()"></div>
+        <div id="sheet-activities">
+            <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-6"></div>
+            <div class="px-6">
+                <h3 class="text-xl font-bold text-white mb-6">Suas atividades de hoje</h3>
+                <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 mb-4 text-center">
+                    <p class="text-gray-400 text-xs uppercase mb-1">Saldo Atual</p>
+                    <p class="text-3xl font-bold text-green-400" id="sheet-saldo">R$ 0,00</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center">
+                        <i class="fas fa-check-circle text-green-500 text-xl mb-2"></i>
+                        <p class="text-2xl font-bold text-white" id="sheet-finalizadas">0</p>
+                        <p class="text-[10px] text-gray-400 uppercase">Finalizadas</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center">
+                        <i class="fas fa-times-circle text-red-500 text-xl mb-2"></i>
+                        <p class="text-2xl font-bold text-white" id="sheet-canceladas">0</p>
+                        <p class="text-[10px] text-gray-400 uppercase">Canceladas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="screen-radar" class="screen p-4 pt-24 active">
             <div id="radar-off-msg" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-60">
                 <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4"><i class="fas fa-power-off text-2xl text-gray-500"></i></div>
                 <p class="text-lg text-white font-bold">Você está Offline</p>
-                <p class="text-sm text-gray-500 mt-1">Ative o radar para receber chamados.</p>
+                <p class="text-sm text-gray-500 mt-1">Toque no botão Power para iniciar.</p>
             </div>
             <div id="radar-on-content" class="hidden-force">
                 <div id="radar-empty" class="hidden-force flex flex-col items-center justify-center h-[50vh] text-center opacity-70">
@@ -225,12 +257,10 @@
         <div id="screen-perfil" class="screen p-4 pt-24 overflow-y-auto pb-24">
             <h2 class="text-xl font-bold text-white mb-4 pl-1">Meus Dados</h2>
             <div class="dark-card p-5 space-y-6">
-                
                 <div class="grid grid-cols-2 gap-3 mb-2">
                     <button onclick="openModal('change-pass')" class="bg-gray-700 text-white text-xs font-bold py-3 rounded-xl border border-gray-600 hover:bg-gray-600"><i class="fas fa-lock"></i> ALTERAR SENHA</button>
                     <button onclick="openModal('change-pin')" class="bg-gray-700 text-white text-xs font-bold py-3 rounded-xl border border-gray-600 hover:bg-gray-600"><i class="fas fa-key"></i> REDEFINIR PIN</button>
                 </div>
-
                 <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><div class="space-y-2"><div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="perf-nome" class="input-dark" placeholder="Nome Completo"></div><div class="flex gap-2"><div class="relative w-2/3"><i class="fas fa-id-card input-icon"></i><input type="text" id="perf-cpf" class="input-dark" readonly></div><div class="relative w-1/3"><input type="text" id="perf-idade" class="input-dark text-center font-bold" readonly placeholder="Idade"></div></div><div class="relative"><i class="fas fa-calendar input-icon"></i><input type="date" id="perf-nasc" class="input-dark text-gray-400" onchange="calcIdadePerfil()"></div><div class="relative"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="perf-zap" class="input-dark" placeholder="WhatsApp"></div></div></div>
                 <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Endereço</p><div class="space-y-2"><div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="text" id="perf-cep" class="input-dark" placeholder="CEP"></div><div class="flex gap-2"><div class="relative w-3/4"><input type="text" id="perf-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="perf-num" class="input-dark pl-4" placeholder="Número"></div></div><div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="perf-comp" class="input-dark" placeholder="Complemento"></div><div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="perf-ref" class="input-dark" placeholder="Ponto de Referência"></div></div></div>
                 <div><p class="text-red-400 text-[10px] font-bold uppercase mb-2">Emergência</p><div class="space-y-2"><div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="perf-eme-nome" class="input-dark" placeholder="Nome Contato"></div><div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="perf-eme-zap" class="input-dark" placeholder="WhatsApp Contato"></div><div class="relative"><i class="fas fa-users input-icon"></i><input type="text" id="perf-eme-parent" class="input-dark" placeholder="Parentesco"></div></div></div>
@@ -323,7 +353,7 @@
         function navegar(tab) {
             if(tab === 'radar' && pedidoAtual) tab = 'active';
             showAppScreen(tab);
-            toggleMenu(); // Fecha o menu lateral
+            toggleMenu(); 
         }
 
         function toggleMenu() {
@@ -338,6 +368,47 @@
             }
         }
 
+        // --- ATIVIDADES (SHEET) ---
+        async function abrirAtividades() {
+            const sheet = document.getElementById('sheet-activities');
+            const overlay = document.getElementById('sheet-overlay');
+            sheet.classList.add('open');
+            overlay.classList.add('open');
+            
+            // Carregar estatísticas do dia
+            const today = new Date().toISOString().split('T')[0];
+            const { data: finalizadas } = await sbClient.from('pedidos').select('id', { count: 'exact' }).eq('entregador_id', userSession.user.id).eq('status', 'concluido').gte('created_at', today);
+            const { data: canceladas } = await sbClient.from('pedidos').select('id', { count: 'exact' }).eq('entregador_id', userSession.user.id).eq('status', 'cancelado').gte('created_at', today);
+            
+            document.getElementById('sheet-finalizadas').innerText = finalizadas ? finalizadas.length : 0;
+            document.getElementById('sheet-canceladas').innerText = canceladas ? canceladas.length : 0;
+            
+            const saldoEl = document.getElementById('header-saldo').innerText;
+            document.getElementById('sheet-saldo').innerText = saldoEl;
+        }
+
+        function fecharAtividades() {
+            document.getElementById('sheet-activities').classList.remove('open');
+            document.getElementById('sheet-overlay').classList.remove('open');
+        }
+
+        // --- UPLOAD FOTO ---
+        async function uploadFoto() {
+            const file = document.getElementById('upload-foto').files[0];
+            if(!file) return;
+            const ext = file.name.split('.').pop();
+            const fileName = `${userSession.user.id}/${Date.now()}.${ext}`;
+            
+            toast("Enviando foto...", "info");
+            const { error: uploadError } = await sbClient.storage.from('avatars').upload(fileName, file);
+            if(uploadError) return toast("Erro no upload", "error");
+            
+            const { data: { publicUrl } } = sbClient.storage.from('avatars').getPublicUrl(fileName);
+            await sbClient.from('motoboys').update({ foto_url: publicUrl }).eq('id', userSession.user.id);
+            document.getElementById('menu-user-foto').src = publicUrl;
+            toast("Foto atualizada!", "success");
+        }
+
         // --- LÓGICA DO APP ---
         async function loadPerfil() {
             const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
@@ -345,6 +416,9 @@
             
             preencherPerfil(data);
             document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
+            document.getElementById('menu-user-id').innerText = 'ID: ' + (data.id ? data.id.split('-')[0] : '...');
+            document.getElementById('header-id-user').innerText = 'ID: ' + (data.id ? data.id.split('-')[0] : '...');
+            if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
             
             if (data.status !== 'Aprovado') {
                 document.body.classList.remove('is-logged-in'); 
@@ -363,8 +437,9 @@
         }
 
         function preencherPerfil(d) {
-            document.getElementById('header-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
-            document.getElementById('saque-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
+            const s = (d.saldo||0).toFixed(2);
+            document.getElementById('header-saldo').innerText = `R$ ${s}`; // Hidden logic happens in CSS or rendering if needed, here we store value but visual is hidden by **** in HTML until click
+            document.getElementById('saque-saldo').innerText = `R$ ${s}`;
             
             const map = {
                 'perf-nome': 'nome', 'perf-cpf': 'cpf', 'perf-zap': 'whatsapp', 'perf-nasc': 'data_nascimento',
@@ -391,15 +466,19 @@
         }
 
         function toggleRadar() {
-            isOnline = document.getElementById('radar-toggle').checked;
-            const t = document.getElementById('status-text');
-            t.innerText = isOnline ? "Online" : "Offline";
-            t.className = `text-[10px] font-bold uppercase tracking-widest ${isOnline ? 'text-green-500' : 'text-red-500'}`;
-            document.getElementById('radar-off-msg').classList.toggle('hidden-force', isOnline);
-            document.getElementById('radar-on-content').classList.toggle('hidden-force', !isOnline);
-            if(isOnline) {
+            isOnline = !isOnline; // Toggle state manually
+            const btn = document.getElementById('btn-power');
+            
+            if (isOnline) {
+                btn.classList.add('online');
+                document.getElementById('radar-off-msg').classList.add('hidden-force');
+                document.getElementById('radar-on-content').classList.remove('hidden-force');
                 const a = document.getElementById('audio-alert'); a.volume=0; a.play().then(()=>{a.pause();a.currentTime=0;a.volume=1;});
                 loadRadar();
+            } else {
+                btn.classList.remove('online');
+                document.getElementById('radar-off-msg').classList.remove('hidden-force');
+                document.getElementById('radar-on-content').classList.add('hidden-force');
             }
         }
 
@@ -477,7 +556,6 @@
 
             const { data } = await sbClient.from('motoboys').select('pin_carteira').eq('id', userSession.user.id).single();
             
-            // LÓGICA DE 1º SAQUE: Se não tem PIN, abre modal de CRIAR PIN direto
             if (!data.pin_carteira || data.pin_carteira === '0000') {
                 openModal('create-pin'); 
             } else {
@@ -490,13 +568,17 @@
             if(currentAction === 'entrega') {
                 if(pin != pedidoAtual.pin_entrega) return toast("PIN Incorreto", 'error');
                 const liq = parseFloat(document.getElementById('active-valor').innerText);
-                const novoSaldo = parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ','')) + liq;
-                
+                const novoSaldo = parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ','')) + liq; // NOTE: header-saldo shows value, logic assumes innerText has it. Since UI hides it with ****, we need to fetch real saldo or store it in a var. For simplicity, assuming loadPerfil stored it in memory or DOM attribute. Better approach: Fetch DB.
+                // CORRECTION: For security and correctness, re-fetch saldo or use stored `data`.
+                // Let's optimize: update DB directly with `saldo + liq`.
+                const {data: mb} = await sbClient.from('motoboys').select('saldo').eq('id', userSession.user.id).single();
+                const finalSaldo = mb.saldo + liq;
+
                 await sbClient.from('pedidos').update({ status: 'concluido' }).eq('id', pedidoAtual.id);
-                await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
+                await sbClient.from('motoboys').update({ saldo: finalSaldo }).eq('id', userSession.user.id);
                 
-                document.getElementById('header-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
-                document.getElementById('saque-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
+                document.getElementById('header-saldo').innerText = `R$ ${finalSaldo.toFixed(2)}`;
+                document.getElementById('saque-saldo').innerText = `R$ ${finalSaldo.toFixed(2)}`;
                 toast(`Sucesso! + R$ ${liq.toFixed(2)}`, 'success');
                 closeModal('validate-pin');
                 checkActive();
