@@ -24,7 +24,7 @@
 
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; -webkit-tap-highlight-color: transparent; user-select: none; padding-bottom: env(safe-area-inset-bottom); overflow-x: hidden; }
         
-        .screen { display: none; width: 100%; min-height: 100vh; position: absolute; top: 0; left: 0; background-color: #111827; z-index: 10; padding-bottom: 90px; }
+        .screen { display: none; width: 100%; min-height: 100vh; position: absolute; top: 0; left: 0; background-color: #111827; z-index: 10; padding-bottom: 20px; }
         .screen.active { display: block; position: relative; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -35,6 +35,7 @@
         .btn-action { background-color: #FBBF24; color: #111827; font-weight: 800; border-radius: 12px; text-transform: uppercase; width: 100%; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .btn-action:active { transform: scale(0.98); }
         
+        /* Switch */
         .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ef4444; transition: .3s; border-radius: 34px; }
@@ -42,9 +43,18 @@
         input:checked + .slider { background-color: #10B981; }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #374151; display: flex; justify-content: space-around; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)) 0; z-index: 50; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #6B7280; flex: 1; font-size: 10px; transition: 0.2s; }
-        .nav-item.active { color: #FBBF24; font-weight: bold; transform: translateY(-2px); }
+        /* MENU LATERAL */
+        #side-menu { 
+            position: fixed; top: 0; left: -100%; width: 280px; height: 100%; 
+            background: #1F2937; z-index: 200; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.5); padding-top: env(safe-area-inset-top);
+        }
+        #side-menu.open { left: 0; }
+        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 199; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+        .menu-item { padding: 16px 24px; border-bottom: 1px solid #374151; color: #e5e7eb; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+        .menu-item:active { background-color: #374151; }
+        .menu-item i { width: 24px; text-align: center; color: #FBBF24; }
 
         .chk-container { display: flex; flex-wrap: wrap; gap: 8px; }
         .chk-item input { display: none; }
@@ -56,7 +66,6 @@
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.success i { color: #10B981; } .toast.error i { color: #EF4444; }
 
-        /* Modal Overlay */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
@@ -67,7 +76,7 @@
     <div id="splash" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100] transition-opacity duration-300">
         <div class="mb-4 text-yellow-500 text-5xl"><i class="fas fa-motorcycle"></i></div>
         <div class="w-6 h-6 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin"></div>
-        <p class="text-gray-500 text-xs mt-4 animate-pulse">Carregando...</p>
+        <p class="text-gray-500 text-xs mt-4 animate-pulse">Carregando Sistema...</p>
     </div>
 
     <div id="toast-box"></div>
@@ -107,9 +116,9 @@
                 <div class="space-y-3">
                     <p class="text-[10px] font-bold text-yellow-500 uppercase">Endereço</p>
                     <div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="tel" id="cad-cep" class="input-dark" placeholder="CEP"></div>
-                    <div class="flex gap-3"><div class="relative w-3/4"><input type="text" id="cad-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="cad-num" class="input-dark pl-4" placeholder="Nº"></div></div>
+                    <div class="flex gap-3"><div class="relative w-3/4"><input type="text" id="cad-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="cad-num" class="input-dark pl-4" placeholder="Número"></div></div>
                     <div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="cad-comp" class="input-dark" placeholder="Complemento"></div>
-                    <div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="cad-ref" class="input-dark" placeholder="Referência"></div>
+                    <div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="cad-ref" class="input-dark" placeholder="Ponto de Referência"></div>
                 </div>
                 <div class="space-y-3 bg-gray-800/50 p-4 rounded-2xl border border-gray-700/50">
                     <p class="text-[10px] font-bold text-red-400 uppercase">Emergência</p>
@@ -139,11 +148,30 @@
     <div id="member-zone" class="w-full min-h-screen relative">
         <div class="fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto">
             <div class="flex justify-between items-center">
-                <div><h1 class="text-lg font-bold text-white tracking-tight">Drop <span class="text-yellow-500">App</span></h1><p id="status-text" class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Offline</p></div>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleMenu()" class="text-white text-xl p-1"><i class="fas fa-bars"></i></button>
+                    <div><h1 class="text-lg font-bold text-white tracking-tight leading-none">Drop <span class="text-yellow-500">App</span></h1></div>
+                </div>
                 <div class="flex items-center gap-4">
                     <label class="switch"><input type="checkbox" id="radar-toggle" onchange="toggleRadar()"><span class="slider"></span></label>
                     <div class="text-right border-l border-gray-700 pl-3"><p class="text-[8px] text-gray-500 uppercase font-bold">Saldo</p><p class="text-sm font-bold text-green-400" id="header-saldo">R$ 0,00</p></div>
                 </div>
+            </div>
+        </div>
+
+        <div id="menu-overlay" class="menu-overlay" onclick="toggleMenu()"></div>
+        <div id="side-menu">
+            <div class="p-6 border-b border-gray-700 bg-gray-800">
+                <div class="w-12 h-12 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center mb-3"><i class="fas fa-user text-xl"></i></div>
+                <p class="text-white font-bold" id="menu-user-name">Motoboy</p>
+                <p class="text-xs text-gray-400">Parceiro Drop</p>
+            </div>
+            <div class="py-2">
+                <div class="menu-item" onclick="navegar('radar')"><i class="fas fa-map-marked-alt"></i> Radar</div>
+                <div class="menu-item" onclick="navegar('active')"><i class="fas fa-box"></i> Corrida Ativa</div>
+                <div class="menu-item" onclick="navegar('extract')"><i class="fas fa-wallet"></i> Ganhos</div>
+                <div class="menu-item" onclick="navegar('perfil')"><i class="fas fa-user-cog"></i> Perfil</div>
+                <div class="menu-item text-red-400 mt-4" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</div>
             </div>
         </div>
 
@@ -203,20 +231,12 @@
                     <button onclick="openModal('change-pin')" class="bg-gray-700 text-white text-xs font-bold py-3 rounded-xl border border-gray-600 hover:bg-gray-600"><i class="fas fa-key"></i> REDEFINIR PIN</button>
                 </div>
 
-                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><div class="space-y-2"><div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="perf-nome" class="input-dark" placeholder="Nome"></div><div class="flex gap-2"><div class="relative w-2/3"><i class="fas fa-id-card input-icon"></i><input type="text" id="perf-cpf" class="input-dark" readonly></div><div class="relative w-1/3"><input type="text" id="perf-idade" class="input-dark text-center" readonly></div></div><div class="relative"><i class="fas fa-calendar input-icon"></i><input type="date" id="perf-nasc" class="input-dark text-gray-400"></div><div class="relative"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="perf-zap" class="input-dark"></div></div></div>
-                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Endereço</p><div class="space-y-2"><div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="text" id="perf-cep" class="input-dark" placeholder="CEP"></div><div class="flex gap-2"><div class="relative w-3/4"><input type="text" id="perf-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="perf-num" class="input-dark pl-4" placeholder="Nº"></div></div><div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="perf-comp" class="input-dark" placeholder="Comp"></div><div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="perf-ref" class="input-dark" placeholder="Ref"></div></div></div>
-                <div><p class="text-red-400 text-[10px] font-bold uppercase mb-2">Emergência</p><div class="space-y-2"><div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="perf-eme-nome" class="input-dark" placeholder="Nome"></div><div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="perf-eme-zap" class="input-dark" placeholder="Zap"></div><div class="relative"><i class="fas fa-users input-icon"></i><input type="text" id="perf-eme-parent" class="input-dark" placeholder="Parentesco"></div></div></div>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><div class="space-y-2"><div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="perf-nome" class="input-dark" placeholder="Nome Completo"></div><div class="flex gap-2"><div class="relative w-2/3"><i class="fas fa-id-card input-icon"></i><input type="text" id="perf-cpf" class="input-dark" readonly></div><div class="relative w-1/3"><input type="text" id="perf-idade" class="input-dark text-center font-bold" readonly placeholder="Idade"></div></div><div class="relative"><i class="fas fa-calendar input-icon"></i><input type="date" id="perf-nasc" class="input-dark text-gray-400" onchange="calcIdadePerfil()"></div><div class="relative"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="perf-zap" class="input-dark" placeholder="WhatsApp"></div></div></div>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Endereço</p><div class="space-y-2"><div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="text" id="perf-cep" class="input-dark" placeholder="CEP"></div><div class="flex gap-2"><div class="relative w-3/4"><input type="text" id="perf-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="perf-num" class="input-dark pl-4" placeholder="Número"></div></div><div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="perf-comp" class="input-dark" placeholder="Complemento"></div><div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="perf-ref" class="input-dark" placeholder="Ponto de Referência"></div></div></div>
+                <div><p class="text-red-400 text-[10px] font-bold uppercase mb-2">Emergência</p><div class="space-y-2"><div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="perf-eme-nome" class="input-dark" placeholder="Nome Contato"></div><div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="perf-eme-zap" class="input-dark" placeholder="WhatsApp Contato"></div><div class="relative"><i class="fas fa-users input-icon"></i><input type="text" id="perf-eme-parent" class="input-dark" placeholder="Parentesco"></div></div></div>
                 <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Moto</p><div class="flex gap-2 mb-2"><input type="text" id="perf-modelo" class="input-dark" placeholder="Modelo"><input type="text" id="perf-cor" class="input-dark" placeholder="Cor"></div><input type="text" id="perf-placa" class="input-dark text-center uppercase font-bold" placeholder="PLACA"></div>
                 <button onclick="savePerfil()" id="btn-update-perf" class="btn-action shadow-lg">SALVAR DADOS</button>
             </div>
-            <button onclick="logout()" class="w-full mt-6 py-4 text-red-500 font-bold text-xs bg-red-500/10 rounded-xl border border-red-500/20">SAIR DA CONTA</button>
-        </div>
-
-        <div class="bottom-nav">
-            <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt text-xl mb-1"></i><span class="text-[10px]">Radar</span></div>
-            <div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box text-xl mb-1"></i><span class="text-[10px]">Corrida</span></div>
-            <div class="nav-item" id="nav-extract" onclick="navegar('extract'); loadExtrato()"><i class="fas fa-wallet text-xl mb-1"></i><span class="text-[10px]">Ganhos</span></div>
-            <div class="nav-item" id="nav-perfil" onclick="navegar('perfil')"><i class="fas fa-user text-xl mb-1"></i><span class="text-[10px]">Perfil</span></div>
         </div>
     </div>
 
@@ -302,9 +322,20 @@
 
         function navegar(tab) {
             if(tab === 'radar' && pedidoAtual) tab = 'active';
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById('nav-'+tab).classList.add('active');
             showAppScreen(tab);
+            toggleMenu(); // Fecha o menu lateral
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('side-menu');
+            const overlay = document.getElementById('menu-overlay');
+            if (menu.classList.contains('open')) {
+                menu.classList.remove('open');
+                overlay.classList.remove('open');
+            } else {
+                menu.classList.add('open');
+                overlay.classList.add('open');
+            }
         }
 
         // --- LÓGICA DO APP ---
@@ -313,6 +344,7 @@
             if (error || !data) { switchZone(false); return; }
             
             preencherPerfil(data);
+            document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
             
             if (data.status !== 'Aprovado') {
                 document.body.classList.remove('is-logged-in'); 
@@ -342,6 +374,11 @@
             };
             for(const [id, key] of Object.entries(map)) { const el = document.getElementById(id); if(el) el.value = d[key] || ''; }
             if(d.idade) document.getElementById('perf-idade').value = d.idade + ' anos';
+        }
+
+        function calcIdadePerfil() {
+            const n = document.getElementById('perf-nasc').value;
+            if(n) document.getElementById('perf-idade').value = (new Date().getFullYear() - new Date(n).getFullYear()) + ' anos';
         }
 
         function startRealtime() {
@@ -407,7 +444,7 @@
                     btnIni.classList.add('hidden-force');
                     btnFim.classList.remove('hidden-force');
                 }
-                navApp('active');
+                navegar('active');
             } else { pedidoAtual = null; ['empty','content'].forEach(s => document.getElementById('active-'+s).classList.toggle('hidden-force', s === 'content')); }
         }
 
@@ -421,7 +458,7 @@
         // --- GESTÃO DE MODAIS E PIN ---
         function openModal(id, action = null) {
             currentAction = action;
-            document.querySelectorAll('input').forEach(i => i.value = i.value); // Fix layout glitch
+            document.querySelectorAll('input').forEach(i => i.value = i.value); 
             document.getElementById('modal-' + id).classList.remove('hidden-force');
             if(id === 'validate-pin') {
                 document.getElementById('input-val-pin').value = '';
@@ -440,8 +477,9 @@
 
             const { data } = await sbClient.from('motoboys').select('pin_carteira').eq('id', userSession.user.id).single();
             
+            // LÓGICA DE 1º SAQUE: Se não tem PIN, abre modal de CRIAR PIN direto
             if (!data.pin_carteira || data.pin_carteira === '0000') {
-                openModal('create-pin'); // Força criação do PIN no próprio modal
+                openModal('create-pin'); 
             } else {
                 openModal('validate-pin', 'saque');
             }
@@ -489,7 +527,6 @@
             await sbClient.from('motoboys').update({ pin_carteira: pin }).eq('id', userSession.user.id);
             toast("PIN Criado com Sucesso!", 'success');
             closeModal('create-pin');
-            // Reabre o saque automaticamente
             setTimeout(() => openModal('validate-pin', 'saque'), 500);
         }
 
@@ -537,7 +574,7 @@
 
         async function savePerfil() {
             const u = { 
-                whatsapp: document.getElementById('perf-zap').value, data_nascimento: document.getElementById('perf-nasc').value,
+                whatsapp: document.getElementById('perf-zap').value, data_nascimento: document.getElementById('perf-nasc').value, idade: parseInt(document.getElementById('perf-idade').value),
                 cep: document.getElementById('perf-cep').value, rua: document.getElementById('perf-rua').value, numero: document.getElementById('perf-num').value, complemento: document.getElementById('perf-comp').value, referencia: document.getElementById('perf-ref').value,
                 emerg_nome: document.getElementById('perf-eme-nome').value, emerg_zap: document.getElementById('perf-eme-zap').value, emerg_parentesco: document.getElementById('perf-eme-parent').value,
                 modelo: document.getElementById('perf-modelo').value, cor_moto: document.getElementById('perf-cor').value, placa: document.getElementById('perf-placa').value.toUpperCase()
