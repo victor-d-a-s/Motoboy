@@ -55,6 +55,9 @@
         .toast { background: rgba(31, 41, 55, 0.95); color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(-20px); transition: all 0.3s; pointer-events: auto; border: 1px solid #374151; display: flex; align-items: center; gap: 8px; }
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.success i { color: #10B981; } .toast.error i { color: #EF4444; }
+
+        /* Modal Overlay */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body>
@@ -64,7 +67,7 @@
     <div id="splash" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100] transition-opacity duration-300">
         <div class="mb-4 text-yellow-500 text-5xl"><i class="fas fa-motorcycle"></i></div>
         <div class="w-6 h-6 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin"></div>
-        <p class="text-gray-500 text-xs mt-4 animate-pulse">Carregando Sistema...</p>
+        <p class="text-gray-500 text-xs mt-4 animate-pulse">Carregando...</p>
     </div>
 
     <div id="toast-box"></div>
@@ -175,7 +178,7 @@
                 <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-6"><div><p class="text-xs text-gray-400 uppercase font-bold mb-1">Cobrança</p><p class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-hand-holding-usd text-yellow-500"></i> <span id="active-forma">...</span></p></div><span class="text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded font-bold uppercase">Confirmar na Loja</span></div>
                 
                 <button id="btn-iniciar" onclick="iniciarEntrega()" class="btn-action shadow-lg mb-4 hidden-force bg-blue-600 text-white">INICIAR ENTREGA</button>
-                <button id="btn-finalizar" onclick="modalPin(true, 'entrega')" class="btn-action shadow-lg mb-4 hidden-force">FINALIZAR ENTREGA</button>
+                <button id="btn-finalizar" onclick="openModal('validate-pin', 'entrega')" class="btn-action shadow-lg mb-4 hidden-force">FINALIZAR ENTREGA</button>
                 <button onclick="cancelar()" class="w-full text-red-500/60 text-xs py-2 hover:text-red-500">Cancelar (Emergência)</button>
             </div>
         </div>
@@ -185,7 +188,7 @@
             <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 mb-6 shadow-lg">
                 <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Saldo Disponível</p>
                 <p class="text-3xl font-bold text-white mb-4" id="saque-saldo">R$ 0,00</p>
-                <div class="flex gap-2"><input type="number" id="valor-saque" class="input-dark h-10 text-sm" placeholder="Valor (R$)"><button onclick="modalPin(true, 'saque')" class="bg-green-600 text-white px-4 h-10 rounded-xl text-xs font-bold shadow-lg">SACAR</button></div>
+                <div class="flex gap-2"><input type="number" id="valor-saque" class="input-dark h-10 text-sm" placeholder="Valor (R$)"><button onclick="sacar()" class="bg-green-600 text-white px-4 h-10 rounded-xl text-xs font-bold shadow-lg">SACAR</button></div>
             </div>
             <div class="flex gap-2 mb-4"><input type="date" id="filtro-ini" class="input-dark p-2 text-xs h-10 w-full" style="color-scheme: dark;"><input type="date" id="filtro-fim" class="input-dark p-2 text-xs h-10 w-full" style="color-scheme: dark;"><button onclick="loadExtrato()" class="bg-blue-600 h-10 w-12 rounded-xl text-white flex items-center justify-center"><i class="fas fa-search"></i></button></div>
             <div id="history-list" class="space-y-3"></div>
@@ -194,11 +197,17 @@
         <div id="screen-perfil" class="screen p-4 pt-24 overflow-y-auto pb-24">
             <h2 class="text-xl font-bold text-white mb-4 pl-1">Meus Dados</h2>
             <div class="dark-card p-5 space-y-6">
-                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><div class="space-y-2"><div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="perf-nome" class="input-dark" placeholder="Nome"></div><div class="flex gap-2"><div class="relative w-2/3"><i class="fas fa-id-card input-icon"></i><input type="text" id="perf-cpf" class="input-dark" readonly></div><div class="relative w-1/3"><input type="text" id="perf-idade" class="input-dark text-center" readonly></div></div><div class="relative"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="perf-zap" class="input-dark"></div></div></div>
+                
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <button onclick="openModal('change-pass')" class="bg-gray-700 text-white text-xs font-bold py-3 rounded-xl border border-gray-600 hover:bg-gray-600"><i class="fas fa-lock"></i> ALTERAR SENHA</button>
+                    <button onclick="openModal('change-pin')" class="bg-gray-700 text-white text-xs font-bold py-3 rounded-xl border border-gray-600 hover:bg-gray-600"><i class="fas fa-key"></i> REDEFINIR PIN</button>
+                </div>
+
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><div class="space-y-2"><div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="perf-nome" class="input-dark" placeholder="Nome"></div><div class="flex gap-2"><div class="relative w-2/3"><i class="fas fa-id-card input-icon"></i><input type="text" id="perf-cpf" class="input-dark" readonly></div><div class="relative w-1/3"><input type="text" id="perf-idade" class="input-dark text-center" readonly></div></div><div class="relative"><i class="fas fa-calendar input-icon"></i><input type="date" id="perf-nasc" class="input-dark text-gray-400"></div><div class="relative"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="perf-zap" class="input-dark"></div></div></div>
                 <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Endereço</p><div class="space-y-2"><div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="text" id="perf-cep" class="input-dark" placeholder="CEP"></div><div class="flex gap-2"><div class="relative w-3/4"><input type="text" id="perf-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="perf-num" class="input-dark pl-4" placeholder="Nº"></div></div><div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="perf-comp" class="input-dark" placeholder="Comp"></div><div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="perf-ref" class="input-dark" placeholder="Ref"></div></div></div>
-                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Segurança (Saque)</p><div class="relative"><i class="fas fa-key input-icon"></i><input type="tel" id="perf-pin" class="input-dark" maxlength="4" placeholder="PIN de 4 dígitos"></div></div>
+                <div><p class="text-red-400 text-[10px] font-bold uppercase mb-2">Emergência</p><div class="space-y-2"><div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="perf-eme-nome" class="input-dark" placeholder="Nome"></div><div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="perf-eme-zap" class="input-dark" placeholder="Zap"></div><div class="relative"><i class="fas fa-users input-icon"></i><input type="text" id="perf-eme-parent" class="input-dark" placeholder="Parentesco"></div></div></div>
                 <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Moto</p><div class="flex gap-2 mb-2"><input type="text" id="perf-modelo" class="input-dark" placeholder="Modelo"><input type="text" id="perf-cor" class="input-dark" placeholder="Cor"></div><input type="text" id="perf-placa" class="input-dark text-center uppercase font-bold" placeholder="PLACA"></div>
-                <button onclick="savePerfil()" id="btn-update-perf" class="btn-action shadow-lg">SALVAR ALTERAÇÕES</button>
+                <button onclick="savePerfil()" id="btn-update-perf" class="btn-action shadow-lg">SALVAR DADOS</button>
             </div>
             <button onclick="logout()" class="w-full mt-6 py-4 text-red-500 font-bold text-xs bg-red-500/10 rounded-xl border border-red-500/20">SAIR DA CONTA</button>
         </div>
@@ -211,13 +220,42 @@
         </div>
     </div>
 
-    <div id="modal-pin" class="hidden-force fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 backdrop-blur-sm">
+    <div id="modal-validate-pin" class="modal-overlay hidden-force">
         <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
-            <button onclick="modalPin(false)" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-xl font-bold text-white mb-2 mt-4" id="modal-title">Validar</h3>
-            <p class="text-sm text-gray-400 mb-6" id="modal-desc">Peça o PIN de 4 dígitos</p>
-            <input type="tel" id="input-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
-            <button onclick="confirmarPinAcao()" class="btn-action shadow-lg">CONFIRMAR</button>
+            <button onclick="closeModal('validate-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-xl font-bold text-white mb-2 mt-4" id="modal-val-title">Validar</h3>
+            <p class="text-sm text-gray-400 mb-6" id="modal-val-desc">Digite o PIN</p>
+            <input type="tel" id="input-val-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
+            <button onclick="processarAcaoPin()" class="btn-action shadow-lg">CONFIRMAR</button>
+        </div>
+    </div>
+
+    <div id="modal-create-pin" class="modal-overlay hidden-force">
+        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-yellow-500/30 text-center relative shadow-2xl">
+            <button onclick="closeModal('create-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+            <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-500"><i class="fas fa-shield-alt text-2xl"></i></div>
+            <h3 class="text-lg font-bold text-white mb-2">Criar PIN de Segurança</h3>
+            <p class="text-xs text-gray-400 mb-6">Defina um PIN de 4 dígitos para realizar saques com segurança.</p>
+            <input type="tel" id="input-new-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-4 focus:border-yellow-500 outline-none tracking-widest" placeholder="••••">
+            <button onclick="criarPin()" class="btn-action shadow-lg">CADASTRAR PIN</button>
+        </div>
+    </div>
+
+    <div id="modal-change-pass" class="modal-overlay hidden-force">
+        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
+            <button onclick="closeModal('change-pass')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-lg font-bold text-white mb-6 mt-2">Alterar Senha</h3>
+            <input type="password" id="input-new-pass" class="input-dark mb-4" placeholder="Nova Senha (min 6 carac.)">
+            <button onclick="alterarSenha()" class="btn-action shadow-lg">SALVAR NOVA SENHA</button>
+        </div>
+    </div>
+
+    <div id="modal-change-pin" class="modal-overlay hidden-force">
+        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
+            <button onclick="closeModal('change-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-lg font-bold text-white mb-6 mt-2">Redefinir PIN</h3>
+            <input type="tel" id="input-change-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
+            <button onclick="alterarPin()" class="btn-action shadow-lg">SALVAR NOVO PIN</button>
         </div>
     </div>
 
@@ -287,7 +325,7 @@
                         if(data.som_alerta_url) document.getElementById('audio-alert').src = data.som_alerta_url;
                     } 
                 });
-                switchZone(true); // Garante que entra
+                switchZone(true);
                 startRealtime();
             }
         }
@@ -295,10 +333,12 @@
         function preencherPerfil(d) {
             document.getElementById('header-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
             document.getElementById('saque-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
+            
             const map = {
-                'perf-nome': 'nome', 'perf-cpf': 'cpf', 'perf-zap': 'whatsapp',
+                'perf-nome': 'nome', 'perf-cpf': 'cpf', 'perf-zap': 'whatsapp', 'perf-nasc': 'data_nascimento',
                 'perf-cep': 'cep', 'perf-rua': 'rua', 'perf-num': 'numero', 'perf-comp': 'complemento', 'perf-ref': 'referencia',
-                'perf-modelo': 'modelo', 'perf-cor': 'cor_moto', 'perf-placa': 'placa', 'perf-pin': 'pin_carteira'
+                'perf-eme-nome': 'emerg_nome', 'perf-eme-zap': 'emerg_zap', 'perf-eme-parent': 'emerg_parentesco',
+                'perf-modelo': 'modelo', 'perf-cor': 'cor_moto', 'perf-placa': 'placa'
             };
             for(const [id, key] of Object.entries(map)) { const el = document.getElementById(id); if(el) el.value = d[key] || ''; }
             if(d.idade) document.getElementById('perf-idade').value = d.idade + ' anos';
@@ -321,7 +361,6 @@
             document.getElementById('radar-off-msg').classList.toggle('hidden-force', isOnline);
             document.getElementById('radar-on-content').classList.toggle('hidden-force', !isOnline);
             if(isOnline) {
-                // TRUQUE DO SOM: Toca mudo para destravar
                 const a = document.getElementById('audio-alert'); a.volume=0; a.play().then(()=>{a.pause();a.currentTime=0;a.volume=1;});
                 loadRadar();
             }
@@ -331,16 +370,13 @@
             if(!isOnline) return;
             const { data } = await sbClient.from('pedidos').select('*').eq('status', 'solicitado').order('created_at', {ascending:false});
             const l = document.getElementById('radar-list'); l.innerHTML = '';
-            
             if(data && data.length) {
                 document.getElementById('radar-empty').classList.add('hidden-force');
                 data.forEach(p => {
                     const liq = p.valor_frete - (p.valor_frete * ((p.taxa_app_aplicada || 10) / 100));
                     l.innerHTML += `<div class="dark-card p-4 border-l-4 border-yellow-500 mb-3 animate-pulse"><div class="flex justify-between mb-2"><span class="bg-gray-700 text-[10px] uppercase font-bold px-2 py-1 rounded text-white">Nova</span><div class="text-right"><span class="text-white font-bold text-xs opacity-50 block line-through">R$ ${p.valor_frete.toFixed(2)}</span><span class="text-green-400 font-bold text-lg">R$ ${liq.toFixed(2)}</span></div></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Retirada</p><p class="text-white font-bold text-sm truncate">${p.origem}</p></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Entrega</p><p class="text-gray-400 text-sm truncate">${p.destino}</p></div><button onclick="aceitar(${p.id})" class="btn-action shadow-lg">ACEITAR</button></div>`;
                 });
-            } else { 
-                document.getElementById('radar-empty').classList.remove('hidden-force'); 
-            }
+            } else { document.getElementById('radar-empty').classList.remove('hidden-force'); }
         }
 
         async function checkActive() {
@@ -371,7 +407,6 @@
                     btnIni.classList.add('hidden-force');
                     btnFim.classList.remove('hidden-force');
                 }
-
                 navApp('active');
             } else { pedidoAtual = null; ['empty','content'].forEach(s => document.getElementById('active-'+s).classList.toggle('hidden-force', s === 'content')); }
         }
@@ -383,23 +418,39 @@
             else checkActive();
         }
 
-        // --- CONFIRMAÇÃO COM PIN ---
-        function modalPin(show, action) {
-            const m = document.getElementById('modal-pin');
-            m.classList.toggle('hidden-force', !show);
-            if(show) {
-                document.getElementById('input-pin').value = '';
-                currentAction = action; // 'entrega' ou 'saque'
-                document.getElementById('modal-title').innerText = action === 'entrega' ? 'Validar Entrega' : 'Validar Saque';
-                document.getElementById('modal-desc').innerText = action === 'entrega' ? 'PIN do Cliente' : 'Seu PIN da Carteira';
+        // --- GESTÃO DE MODAIS E PIN ---
+        function openModal(id, action = null) {
+            currentAction = action;
+            document.querySelectorAll('input').forEach(i => i.value = i.value); // Fix layout glitch
+            document.getElementById('modal-' + id).classList.remove('hidden-force');
+            if(id === 'validate-pin') {
+                document.getElementById('input-val-pin').value = '';
+                document.getElementById('modal-val-title').innerText = action === 'entrega' ? 'Validar Entrega' : 'Validar Saque';
+                document.getElementById('modal-val-desc').innerText = action === 'entrega' ? 'PIN do Cliente' : 'Seu PIN da Carteira';
             }
         }
 
-        async function confirmarPinAcao() {
-            const pin = document.getElementById('input-pin').value;
+        function closeModal(id) {
+            document.getElementById('modal-' + id).classList.add('hidden-force');
+        }
+
+        async function sacar() {
+            const v = document.getElementById('valor-saque').value;
+            if(!v || v<=0) return toast("Valor inválido", 'error');
+
+            const { data } = await sbClient.from('motoboys').select('pin_carteira').eq('id', userSession.user.id).single();
+            
+            if (!data.pin_carteira || data.pin_carteira === '0000') {
+                openModal('create-pin'); // Força criação do PIN no próprio modal
+            } else {
+                openModal('validate-pin', 'saque');
+            }
+        }
+
+        async function processarAcaoPin() {
+            const pin = document.getElementById('input-val-pin').value;
             if(currentAction === 'entrega') {
                 if(pin != pedidoAtual.pin_entrega) return toast("PIN Incorreto", 'error');
-                // Finaliza Entrega
                 const liq = parseFloat(document.getElementById('active-valor').innerText);
                 const novoSaldo = parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ','')) + liq;
                 
@@ -408,35 +459,57 @@
                 
                 document.getElementById('header-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
                 document.getElementById('saque-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
-                
                 toast(`Sucesso! + R$ ${liq.toFixed(2)}`, 'success');
-                modalPin(false);
+                closeModal('validate-pin');
                 checkActive();
             } else if (currentAction === 'saque') {
-                // Valida Saque
                 const { data } = await sbClient.from('motoboys').select('pin_carteira, saldo, nome').eq('id', userSession.user.id).single();
-                if(data.pin_carteira !== pin) return toast("PIN da Carteira Incorreto", 'error');
+                if(data.pin_carteira !== pin) return toast("PIN Incorreto", 'error');
                 
                 const valorSaque = parseFloat(document.getElementById('valor-saque').value);
                 if(valorSaque > data.saldo) return toast("Saldo insuficiente", 'error');
 
-                // Desconta e Registra
                 const novoSaldo = data.saldo - valorSaque;
                 await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
-                await sbClient.from('transacoes').insert({ user_id: userSession.user.id, tipo: 'debito', valor: valorSaque, descricao: 'Solicitação de Saque' });
-
+                
                 document.getElementById('header-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
                 document.getElementById('saque-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
                 
                 const msg = `Solicitação de Saque\nMotoboy: ${data.nome}\nValor: R$ ${valorSaque.toFixed(2)}\nSaldo Restante: R$ ${novoSaldo.toFixed(2)}`;
                 window.open(`https://wa.me/${ADMIN_ZAP}?text=${encodeURIComponent(msg)}`, '_blank');
-                
-                modalPin(false);
-                toast("Saque solicitado!", 'success');
+                closeModal('validate-pin');
+                toast("Solicitado!", 'success');
             }
         }
 
-        // --- CADASTRO E LOGIN ---
+        async function criarPin() {
+            const pin = document.getElementById('input-new-pin').value;
+            if(pin.length !== 4) return toast("PIN deve ter 4 dígitos", 'error');
+            
+            await sbClient.from('motoboys').update({ pin_carteira: pin }).eq('id', userSession.user.id);
+            toast("PIN Criado com Sucesso!", 'success');
+            closeModal('create-pin');
+            // Reabre o saque automaticamente
+            setTimeout(() => openModal('validate-pin', 'saque'), 500);
+        }
+
+        async function alterarSenha() {
+            const pass = document.getElementById('input-new-pass').value;
+            if(pass.length < 6) return toast("Mínimo 6 caracteres", 'error');
+            const { error } = await sbClient.auth.updateUser({ password: pass });
+            if(error) toast(error.message, 'error');
+            else { toast("Senha alterada!", 'success'); closeModal('change-pass'); }
+        }
+
+        async function alterarPin() {
+            const pin = document.getElementById('input-change-pin').value;
+            if(pin.length !== 4) return toast("PIN deve ter 4 dígitos", 'error');
+            const { error } = await sbClient.from('motoboys').update({ pin_carteira: pin }).eq('id', userSession.user.id);
+            if(error) toast("Erro ao alterar PIN", 'error');
+            else { toast("PIN alterado!", 'success'); closeModal('change-pin'); }
+        }
+
+        // --- CRUD E LOGIN ---
         async function fazerLogin() {
             const e = document.getElementById('log-email').value, p = document.getElementById('log-senha').value;
             if(!e || !p) return toast('Preencha tudo', 'error');
@@ -464,13 +537,15 @@
 
         async function savePerfil() {
             const u = { 
-                whatsapp: document.getElementById('perf-zap').value, cep: document.getElementById('perf-cep').value, rua: document.getElementById('perf-rua').value, numero: document.getElementById('perf-num').value, complemento: document.getElementById('perf-comp').value, referencia: document.getElementById('perf-ref').value,
-                modelo: document.getElementById('perf-modelo').value, cor_moto: document.getElementById('perf-cor').value, placa: document.getElementById('perf-placa').value.toUpperCase(), pin_carteira: document.getElementById('perf-pin').value
+                whatsapp: document.getElementById('perf-zap').value, data_nascimento: document.getElementById('perf-nasc').value,
+                cep: document.getElementById('perf-cep').value, rua: document.getElementById('perf-rua').value, numero: document.getElementById('perf-num').value, complemento: document.getElementById('perf-comp').value, referencia: document.getElementById('perf-ref').value,
+                emerg_nome: document.getElementById('perf-eme-nome').value, emerg_zap: document.getElementById('perf-eme-zap').value, emerg_parentesco: document.getElementById('perf-eme-parent').value,
+                modelo: document.getElementById('perf-modelo').value, cor_moto: document.getElementById('perf-cor').value, placa: document.getElementById('perf-placa').value.toUpperCase()
             };
             const btn = document.getElementById('btn-update-perf'); btn.innerText = "...";
             await sbClient.from('motoboys').update(u).eq('id', userSession.user.id);
             await sbClient.from('profiles').update({whatsapp_responsavel:u.whatsapp, modelo_moto:u.modelo, placa_moto:u.placa, cor_moto:u.cor_moto}).eq('id', userSession.user.id);
-            toast("Perfil Atualizado!", 'success'); btn.innerText = "SALVAR ALTERAÇÕES";
+            toast("Perfil Atualizado!", 'success'); btn.innerText = "SALVAR DADOS";
         }
 
         // UTILS
@@ -478,7 +553,8 @@
         function logout() { if(confirm("Sair?")) { sbClient.auth.signOut(); localStorage.clear(); location.reload(); } }
         function calcIdade() { const n=document.getElementById('cad-nasc').value; if(n) document.getElementById('cad-idade').value=(new Date().getFullYear()-new Date(n).getFullYear())+' anos'; }
         function toggleIntegral(){ const i=document.getElementById('disp-integral').checked; document.querySelectorAll('.chk-item input:not(#disp-integral):not(#disp-extra)').forEach(e=>{e.checked=i;e.disabled=i;}); }
-        function sacar() { const v=document.getElementById('valor-saque').value; if(!v || v<=0) return toast("Valor inválido", 'error'); modalPin(true, 'saque'); }
+        function sacar() { const v=document.getElementById('valor-saque').value; if(!v || v<=0) return toast("Valor inválido", 'error'); checkPinAndWithdraw(); }
+        async function checkPinAndWithdraw() { const { data } = await sbClient.from('motoboys').select('pin_carteira').eq('id', userSession.user.id).single(); if (!data.pin_carteira || data.pin_carteira === '0000') { openModal('create-pin'); } else { openModal('validate-pin', 'saque'); } }
         function zap() { window.open(`https://wa.me/55${pedidoAtual.telefone_destinatario.replace(/\D/g,'')}`, '_blank'); }
         function gps(t) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(t==='origem'?pedidoAtual.origem:pedidoAtual.destino)}`,'_blank'); }
         function copiar(t) { navigator.clipboard.writeText(t==='origem'?pedidoAtual.origem:pedidoAtual.destino); toast("Copiado!", 'success'); }
@@ -487,7 +563,7 @@
         async function cancelar() { if(!confirm("Cancelar?"))return; await sbClient.from('pedidos').update({status:'solicitado',entregador_id:null}).eq('id',pedidoAtual.id); checkActive(); }
         async function loadExtrato() { const l=document.getElementById('history-list'); l.innerHTML='<div class="text-center opacity-50">Carregando...</div>'; const {data}=await sbClient.from('pedidos').select('*').eq('entregador_id',userSession.user.id).eq('status','concluido').order('created_at',{ascending:false}).limit(20); l.innerHTML=''; data?.forEach(p=>{ l.innerHTML+=`<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-[10px] text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${(p.valor_frete-(p.valor_frete*((p.taxa_app_aplicada||10)/100))).toFixed(2)}</p></div>`; }); }
 
-        $(document).ready(function(){ $('#cad-cpf, #perf-cpf').mask('000.000.000-00'); $('#cad-zap, #cad-eme-zap, #perf-zap').mask('(00) 00000-0000'); $('#cad-cep, #perf-cep').mask('00000-000'); });
+        $(document).ready(function(){ $('#cad-cpf, #perf-cpf').mask('000.000.000-00'); $('#cad-zap, #cad-eme-zap, #perf-zap, #perf-eme-zap').mask('(00) 00000-0000'); $('#cad-cep, #perf-cep').mask('00000-000'); });
     </script>
 </body>
 </html>
