@@ -24,12 +24,10 @@
 
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; -webkit-tap-highlight-color: transparent; user-select: none; padding-bottom: env(safe-area-inset-bottom); overflow-x: hidden; }
         
-        /* Transições */
         .screen { display: none; width: 100%; min-height: 100vh; position: absolute; top: 0; left: 0; background-color: #111827; z-index: 10; padding-bottom: 90px; }
         .screen.active { display: block; position: relative; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilos Gerais */
         .dark-card { background-color: #1F2937; border: 1px solid #374151; border-radius: 16px; overflow: hidden; }
         .input-dark { background-color: #111827; border: 1px solid #374151; color: white; padding: 14px 14px 14px 45px; border-radius: 12px; width: 100%; outline: none; transition: border 0.2s; }
         .input-dark:focus { border-color: #FBBF24; }
@@ -52,9 +50,21 @@
         .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; opacity: 0; visibility: hidden; transition: 0.3s; }
         .sheet-overlay.open { opacity: 1; visibility: visible; }
 
-        /* Botão Power */
-        .btn-power { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.3s; background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 2px solid #EF4444; }
-        .btn-power.online { background: rgba(16, 185, 129, 0.15); color: #10B981; border-color: #10B981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        /* BOTÃO POWER GIGANTE (NOVO) */
+        .power-container { position: fixed; bottom: 90px; left: 0; right: 0; display: flex; justify-content: center; z-index: 40; pointer-events: none; }
+        .btn-power-large { 
+            pointer-events: auto;
+            width: 80px; height: 80px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 24px; font-weight: bold; color: white;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: #10B981; /* Verde Default */
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.5);
+            border: 4px solid #064E3B;
+        }
+        .btn-power-large:active { transform: scale(0.9); }
+        .btn-power-large.offline { background: #EF4444; border-color: #7F1D1D; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.5); }
+        .btn-power-large i { font-size: 30px; }
 
         .chk-container { display: flex; flex-wrap: wrap; gap: 8px; }
         .chk-item input { display: none; }
@@ -65,13 +75,17 @@
         .toast { background: rgba(31, 41, 55, 0.95); color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(-20px); transition: all 0.3s; pointer-events: auto; border: 1px solid #374151; display: flex; align-items: center; gap: 8px; }
         .toast.show { opacity: 1; transform: translateY(0); }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 160; display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #374151; display: flex; justify-content: space-around; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)) 0; z-index: 50; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #6B7280; flex: 1; font-size: 10px; transition: 0.2s; }
+        .nav-item.active { color: #FBBF24; font-weight: bold; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
     <audio id="audio-alert" preload="auto"></audio>
 
-    <div id="splash" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100]">
+    <div id="splash" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100] transition-opacity duration-300">
         <div class="mb-4 text-yellow-500 text-5xl"><i class="fas fa-motorcycle"></i></div>
         <div class="w-6 h-6 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin"></div>
         <p class="text-gray-500 text-xs mt-4 animate-pulse">Iniciando...</p>
@@ -151,13 +165,16 @@
                     <button onclick="toggleMenu()" class="text-white text-xl p-2"><i class="fas fa-bars"></i></button>
                     <div>
                         <h1 class="text-lg font-bold text-white tracking-tight leading-none">Drop <span class="text-yellow-500">App</span></h1>
+                        <p class="text-[10px] text-gray-500 uppercase font-mono tracking-widest mb-0.5" id="header-id-user">ID: ...</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4">
-                    <button id="btn-power" class="btn-power" onclick="toggleRadar()"><i class="fas fa-power-off"></i></button>
-                    <div class="text-right border-l border-gray-700 pl-3 cursor-pointer" onclick="abrirAtividades()">
-                        <p class="text-[10px] text-gray-500 uppercase font-mono tracking-widest mb-0.5" id="header-id-user">ID: ...</p>
-                        <p class="text-sm font-bold text-green-400">R$ ****</p>
+                <div class="flex items-center gap-2">
+                    <div class="text-right border-l border-gray-700 pl-3">
+                        <div class="flex items-center justify-end gap-2 text-gray-400">
+                            <p class="text-[10px] uppercase font-bold">Saldo</p>
+                            <button onclick="toggleSaldoVisibilidade()" class="text-xs focus:outline-none"><i id="eye-icon" class="fas fa-eye-slash"></i></button>
+                        </div>
+                        <p class="text-sm font-bold text-green-400 cursor-pointer" onclick="abrirAtividades()" id="header-saldo-display">R$ ****</p>
                     </div>
                 </div>
             </div>
@@ -211,18 +228,25 @@
             </div>
         </div>
 
-        <div id="screen-radar" class="screen p-4 pt-24 active">
-            <div id="radar-off-msg" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-60">
+        <div id="screen-radar" class="screen p-4 pt-24 active relative h-full">
+            <div id="radar-off-msg" class="flex flex-col items-center justify-center h-[50vh] text-center opacity-60">
                 <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-6 border border-gray-700"><i class="fas fa-power-off text-3xl text-gray-500"></i></div>
                 <p class="text-xl text-white font-bold">Você está Offline</p>
-                <p class="text-sm text-gray-500 mt-2">Toque no botão Power no topo para iniciar.</p>
+                <p class="text-sm text-gray-500 mt-2">Toque em INICIAR para receber corridas.</p>
             </div>
+            
             <div id="radar-on-content" class="hidden-force">
                 <div id="radar-empty" class="hidden-force flex flex-col items-center justify-center h-[50vh] text-center opacity-70">
                     <div class="w-24 h-24 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 relative"><div class="absolute inset-0 border-4 border-green-500/20 rounded-full animate-ping"></div><i class="fas fa-satellite-dish text-3xl text-green-500"></i></div>
                     <p class="text-sm text-gray-400">Procurando corridas...</p>
                 </div>
-                <div id="radar-list" class="space-y-4"></div>
+                <div id="radar-list" class="space-y-4 pb-32"></div>
+            </div>
+
+            <div class="power-container">
+                <button id="btn-power-large" class="btn-power-large" onclick="toggleRadar()">
+                    <i class="fas fa-play"></i>
+                </button>
             </div>
         </div>
 
@@ -231,16 +255,9 @@
                 <i class="fas fa-check-circle text-5xl text-gray-700 mb-4"></i><p class="text-lg text-gray-300 font-bold">Sem Corridas</p><button onclick="navegar('radar')" class="mt-4 text-yellow-500 text-sm font-bold">Ir para o Radar</button>
             </div>
             <div id="active-content" class="hidden-force">
-                <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-4 shadow-lg">
-                    <div class="flex items-center gap-3"><div class="bg-blue-900/30 text-blue-400 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-route"></i></div><div><p class="text-[10px] text-gray-400 uppercase font-bold">Status</p><p class="text-sm font-bold text-white" id="active-status-text">EM ROTA</p></div></div>
-                    <div class="text-right"><p class="text-[10px] text-gray-400 uppercase font-bold">Ganho</p><p class="text-xl font-bold text-green-400">R$ <span id="active-valor">0,00</span></p></div>
-                </div>
-                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-4 shadow-lg">
-                    <div class="mb-6 pb-6 border-b border-gray-700 relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-blue-500 rounded-full"></div><p class="text-[10px] text-blue-400 font-bold uppercase mb-1 ml-2">COLETA</p><div class="flex justify-between"><p class="text-white font-medium text-sm ml-2" id="active-origem">...</p><div class="flex gap-2"><button onclick="copiar('origem')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('origem')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div></div>
-                    <div class="relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-green-500 rounded-full"></div><p class="text-[10px] text-green-400 font-bold uppercase mb-1 ml-2">ENTREGA</p><div class="flex justify-between mb-4"><div class="ml-2"><p class="text-white font-medium text-sm" id="active-destino">...</p><p class="text-xs text-gray-400 mt-1"><i class="fas fa-user"></i> <span id="active-cliente-nome">...</span></p></div><div class="flex gap-2"><button onclick="copiar('destino')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('destino')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div><button onclick="zap()" class="w-full bg-green-600/20 text-green-400 border border-green-600/50 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-lg"></i> Chamar Cliente</button></div>
-                </div>
+                <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-4 shadow-lg"><div class="flex items-center gap-3"><div class="bg-blue-900/30 text-blue-400 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-route"></i></div><div><p class="text-[10px] text-gray-400 uppercase font-bold">Status</p><p class="text-sm font-bold text-white" id="active-status-text">EM ROTA</p></div></div><div class="text-right"><p class="text-[10px] text-gray-400 uppercase font-bold">Ganho</p><p class="text-xl font-bold text-green-400">R$ <span id="active-valor">0,00</span></p></div></div>
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-4 shadow-lg"><div class="mb-6 pb-6 border-b border-gray-700 relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-blue-500 rounded-full"></div><p class="text-[10px] text-blue-400 font-bold uppercase mb-1 ml-2">COLETA</p><div class="flex justify-between"><p class="text-white font-medium text-sm ml-2" id="active-origem">...</p><div class="flex gap-2"><button onclick="copiar('origem')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('origem')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div></div><div class="relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-green-500 rounded-full"></div><p class="text-[10px] text-green-400 font-bold uppercase mb-1 ml-2">ENTREGA</p><div class="flex justify-between mb-4"><div class="ml-2"><p class="text-white font-medium text-sm" id="active-destino">...</p><p class="text-xs text-gray-400 mt-1"><i class="fas fa-user"></i> <span id="active-cliente-nome">...</span></p></div><div class="flex gap-2"><button onclick="copiar('destino')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('destino')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div><button onclick="zap()" class="w-full bg-green-600/20 text-green-400 border border-green-600/50 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-lg"></i> Chamar Cliente</button></div></div>
                 <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-6"><div><p class="text-xs text-gray-400 uppercase font-bold mb-1">Cobrança</p><p class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-hand-holding-usd text-yellow-500"></i> <span id="active-forma">...</span></p></div><span class="text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded font-bold uppercase">Confirmar na Loja</span></div>
-                
                 <button id="btn-iniciar" onclick="iniciarEntrega()" class="btn-action shadow-lg mb-4 hidden-force bg-blue-600 text-white">INICIAR ENTREGA</button>
                 <button id="btn-finalizar" onclick="openModal('validate-pin', 'entrega')" class="btn-action shadow-lg mb-4 hidden-force">FINALIZAR ENTREGA</button>
                 <button onclick="cancelar()" class="w-full text-red-500/60 text-xs py-2 hover:text-red-500">Cancelar (Emergência)</button>
@@ -272,46 +289,19 @@
                 <button onclick="savePerfil()" id="btn-update-perf" class="btn-action shadow-lg">SALVAR DADOS</button>
             </div>
         </div>
-    </div>
 
-    <div id="modal-validate-pin" class="modal-overlay hidden-force">
-        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
-            <button onclick="closeModal('validate-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-xl font-bold text-white mb-2 mt-4" id="modal-val-title">Validar</h3>
-            <p class="text-sm text-gray-400 mb-6" id="modal-val-desc">Digite o PIN</p>
-            <input type="tel" id="input-val-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
-            <button onclick="processarAcaoPin()" class="btn-action shadow-lg">CONFIRMAR</button>
+        <div class="bottom-nav">
+            <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-map-marked-alt text-xl mb-1"></i><span class="text-[10px]">Radar</span></div>
+            <div class="nav-item" id="nav-active" onclick="navegar('active')"><i class="fas fa-box text-xl mb-1"></i><span class="text-[10px]">Corrida</span></div>
+            <div class="nav-item" id="nav-extract" onclick="navegar('extract'); loadExtrato()"><i class="fas fa-wallet text-xl mb-1"></i><span class="text-[10px]">Ganhos</span></div>
+            <div class="nav-item" id="nav-perfil" onclick="navegar('perfil')"><i class="fas fa-user text-xl mb-1"></i><span class="text-[10px]">Perfil</span></div>
         </div>
     </div>
 
-    <div id="modal-create-pin" class="modal-overlay hidden-force">
-        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-yellow-500/30 text-center relative shadow-2xl">
-            <button onclick="closeModal('create-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
-            <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-500"><i class="fas fa-shield-alt text-2xl"></i></div>
-            <h3 class="text-lg font-bold text-white mb-2">Criar PIN de Segurança</h3>
-            <p class="text-xs text-gray-400 mb-6">Defina um PIN de 4 dígitos para realizar saques com segurança.</p>
-            <input type="tel" id="input-new-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-4 focus:border-yellow-500 outline-none tracking-widest" placeholder="••••">
-            <button onclick="criarPin()" class="btn-action shadow-lg">CADASTRAR PIN</button>
-        </div>
-    </div>
-
-    <div id="modal-change-pass" class="modal-overlay hidden-force">
-        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
-            <button onclick="closeModal('change-pass')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-lg font-bold text-white mb-6 mt-2">Alterar Senha</h3>
-            <input type="password" id="input-new-pass" class="input-dark mb-4" placeholder="Nova Senha (min 6 carac.)">
-            <button onclick="alterarSenha()" class="btn-action shadow-lg">SALVAR NOVA SENHA</button>
-        </div>
-    </div>
-
-    <div id="modal-change-pin" class="modal-overlay hidden-force">
-        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
-            <button onclick="closeModal('change-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-lg font-bold text-white mb-6 mt-2">Redefinir PIN</h3>
-            <input type="tel" id="input-change-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
-            <button onclick="alterarPin()" class="btn-action shadow-lg">SALVAR NOVO PIN</button>
-        </div>
-    </div>
+    <div id="modal-validate-pin" class="modal-overlay hidden-force"><div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl"><button onclick="closeModal('validate-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><h3 class="text-xl font-bold text-white mb-2 mt-4" id="modal-val-title">Validar</h3><p class="text-sm text-gray-400 mb-6" id="modal-val-desc">Digite o PIN</p><input type="tel" id="input-val-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••"><button onclick="processarAcaoPin()" class="btn-action shadow-lg">CONFIRMAR</button></div></div>
+    <div id="modal-create-pin" class="modal-overlay hidden-force"><div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-yellow-500/30 text-center relative shadow-2xl"><button onclick="closeModal('create-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-500"><i class="fas fa-shield-alt text-2xl"></i></div><h3 class="text-lg font-bold text-white mb-2">Criar PIN de Segurança</h3><p class="text-xs text-gray-400 mb-6">Defina um PIN de 4 dígitos para realizar saques com segurança.</p><input type="tel" id="input-new-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-4 focus:border-yellow-500 outline-none tracking-widest" placeholder="••••"><button onclick="criarPin()" class="btn-action shadow-lg">CADASTRAR PIN</button></div></div>
+    <div id="modal-change-pass" class="modal-overlay hidden-force"><div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl"><button onclick="closeModal('change-pass')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><h3 class="text-lg font-bold text-white mb-6 mt-2">Alterar Senha</h3><input type="password" id="input-new-pass" class="input-dark mb-4" placeholder="Nova Senha (min 6 carac.)"><button onclick="alterarSenha()" class="btn-action shadow-lg">SALVAR NOVA SENHA</button></div></div>
+    <div id="modal-change-pin" class="modal-overlay hidden-force"><div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl"><button onclick="closeModal('change-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><h3 class="text-lg font-bold text-white mb-6 mt-2">Redefinir PIN</h3><input type="tel" id="input-change-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••"><button onclick="alterarPin()" class="btn-action shadow-lg">SALVAR NOVO PIN</button></div></div>
 
     <script>
         const SUPABASE_URL = 'https://ofpnnijkhgsjarixoyhg.supabase.co';
@@ -319,7 +309,7 @@
         const ADMIN_ZAP = "5584982005039";
         
         let sbClient, userSession, appConfig = {taxa_app_percent:10, som_alerta_url:''}, isOnline = false, pedidoAtual = null, currentAction = '';
-        let saldoReal = 0; // Armazena o valor para usar na sheet
+        let saldoReal = 0, isSaldoVisible = false;
 
         (async function init() {
             try {
@@ -333,7 +323,7 @@
                 }
             } catch (e) {
                 console.error("Erro init", e);
-                switchZone(false); // Fallback de segurança
+                switchZone(false);
             }
             setTimeout(() => document.getElementById('splash').style.display = 'none', 500);
         })();
@@ -378,7 +368,23 @@
             }
         }
 
-        // --- ATIVIDADES (SHEET) ---
+        // --- ATIVIDADES E SALDO ---
+        function toggleSaldoVisibilidade() {
+            isSaldoVisible = !isSaldoVisible;
+            const icon = document.getElementById('eye-icon');
+            const display = document.getElementById('header-saldo-display');
+            
+            if(isSaldoVisible) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                display.innerText = `R$ ${saldoReal.toFixed(2)}`;
+            } else {
+                icon.classList.add('fa-eye-slash');
+                icon.classList.remove('fa-eye');
+                display.innerText = "R$ ****";
+            }
+        }
+
         async function abrirAtividades() {
             const sheet = document.getElementById('sheet-activities');
             const overlay = document.getElementById('sheet-overlay');
@@ -424,7 +430,6 @@
             
             preencherPerfil(data);
             
-            // Dados do Menu
             document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
             const shortId = data.id.split('-')[0];
             document.getElementById('menu-user-id').innerText = `ID: ${shortId}`;
@@ -450,7 +455,9 @@
 
         function preencherPerfil(d) {
             saldoReal = d.saldo || 0;
-            // No header só mostra oculto, o valor real vai pro sheet e pro extrato
+            // Atualiza visualização conforme estado do olho
+            if(isSaldoVisible) document.getElementById('header-saldo-display').innerText = `R$ ${saldoReal.toFixed(2)}`;
+            
             document.getElementById('saque-saldo').innerText = `R$ ${saldoReal.toFixed(2)}`;
             
             const map = {
@@ -479,16 +486,18 @@
 
         function toggleRadar() {
             isOnline = !isOnline;
-            const btn = document.getElementById('btn-power');
+            const btn = document.getElementById('btn-power-large'); // Usa o botão grande agora
             
             if (isOnline) {
-                btn.classList.add('online');
+                btn.classList.remove('offline');
+                btn.innerHTML = '<i class="fas fa-stop"></i>'; // Muda icone para Stop
                 document.getElementById('radar-off-msg').classList.add('hidden-force');
                 document.getElementById('radar-on-content').classList.remove('hidden-force');
                 const a = document.getElementById('audio-alert'); a.volume=0; a.play().then(()=>{a.pause();a.currentTime=0;a.volume=1;});
                 loadRadar();
             } else {
-                btn.classList.remove('online');
+                btn.classList.add('offline');
+                btn.innerHTML = '<i class="fas fa-play"></i>'; // Muda icone para Play
                 document.getElementById('radar-off-msg').classList.remove('hidden-force');
                 document.getElementById('radar-on-content').classList.add('hidden-force');
             }
@@ -546,7 +555,7 @@
             else checkActive();
         }
 
-        // --- GESTÃO DE MODAIS E PIN ---
+        // --- MODAIS E PIN ---
         function openModal(id, action = null) {
             currentAction = action;
             document.querySelectorAll('input').forEach(i => i.value = i.value); 
@@ -568,7 +577,6 @@
 
             const { data } = await sbClient.from('motoboys').select('pin_carteira').eq('id', userSession.user.id).single();
             
-            // LÓGICA DE 1º SAQUE: Se não tem PIN, abre modal de CRIAR PIN direto
             if (!data.pin_carteira || data.pin_carteira === '0000') {
                 openModal('create-pin'); 
             } else {
@@ -587,7 +595,9 @@
                 await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
                 
                 saldoReal = novoSaldo;
-                document.getElementById('saque-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
+                if(isSaldoVisible) document.getElementById('header-saldo-display').innerText = `R$ ${saldoReal.toFixed(2)}`;
+                document.getElementById('saque-saldo').innerText = `R$ ${saldoReal.toFixed(2)}`;
+                
                 toast(`Sucesso! + R$ ${liq.toFixed(2)}`, 'success');
                 closeModal('validate-pin');
                 checkActive();
@@ -602,7 +612,8 @@
                 await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
                 
                 saldoReal = novoSaldo;
-                document.getElementById('saque-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
+                if(isSaldoVisible) document.getElementById('header-saldo-display').innerText = `R$ ${saldoReal.toFixed(2)}`;
+                document.getElementById('saque-saldo').innerText = `R$ ${saldoReal.toFixed(2)}`;
                 
                 const msg = `Solicitação de Saque\nMotoboy: ${data.nome}\nValor: R$ ${valorSaque.toFixed(2)}\nSaldo Restante: R$ ${novoSaldo.toFixed(2)}`;
                 window.open(`https://wa.me/${ADMIN_ZAP}?text=${encodeURIComponent(msg)}`, '_blank');
