@@ -15,57 +15,72 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; -webkit-tap-highlight-color: transparent; user-select: none; padding-bottom: env(safe-area-inset-bottom); }
-        
-        /* ESTILOS ESPECÍFICOS */
+        /* ISOLAMENTO DE ÁREAS */
+        #member-zone { display: none !important; }
         .hidden-force { display: none !important; }
-        .visible-force { display: block !important; }
         
-        .input-dark { background-color: #1f2937; border: 1px solid #374151; color: white; padding: 14px 14px 14px 45px; border-radius: 12px; width: 100%; outline: none; transition: 0.2s; }
+        body.is-logged-in #member-zone { display: block !important; }
+        body.is-logged-in #guest-zone { display: none !important; }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; -webkit-tap-highlight-color: transparent; user-select: none; padding-bottom: env(safe-area-inset-bottom); overflow-x: hidden; }
+        
+        /* Transições */
+        .screen { display: none; width: 100%; min-height: 100vh; position: absolute; top: 0; left: 0; background-color: #111827; z-index: 10; padding-bottom: 90px; }
+        .screen.active { display: block; position: relative; animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Estilos Gerais */
+        .dark-card { background-color: #1F2937; border: 1px solid #374151; border-radius: 16px; overflow: hidden; }
+        .input-dark { background-color: #111827; border: 1px solid #374151; color: white; padding: 14px 14px 14px 45px; border-radius: 12px; width: 100%; outline: none; transition: border 0.2s; }
         .input-dark:focus { border-color: #FBBF24; }
         .input-icon { position: absolute; left: 16px; top: 14px; color: #9CA3AF; z-index: 10; }
-        
         .btn-action { background-color: #FBBF24; color: #111827; font-weight: 800; border-radius: 12px; text-transform: uppercase; width: 100%; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .btn-action:active { transform: scale(0.98); }
-
-        /* Switch */
-        .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ef4444; transition: .3s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background-color: #10B981; }
-        input:checked + .slider:before { transform: translateX(22px); }
-
-        /* Bottom Nav Fixa dentro do App Logado */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #374151; display: flex; justify-content: space-around; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)) 0; z-index: 50; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #6B7280; flex: 1; font-size: 10px; }
-        .nav-item.active { color: #FBBF24; font-weight: bold; }
-
-        .spinner { width: 30px; height: 30px; border: 4px solid rgba(255,255,255,0.1); border-left-color: #FBBF24; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
         
-        #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { background: rgba(31, 41, 55, 0.95); color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(-20px); transition: all 0.3s; pointer-events: auto; border: 1px solid #374151; display: flex; align-items: center; gap: 8px; }
-        .toast.show { opacity: 1; transform: translateY(0); }
-        
+        /* MENU LATERAL */
+        #side-menu { position: fixed; top: 0; left: -100%; width: 280px; height: 100%; background: #1F2937; z-index: 200; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 15px rgba(0,0,0,0.5); padding-top: env(safe-area-inset-top); }
+        #side-menu.open { left: 0; }
+        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 199; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+        .menu-item { padding: 16px 24px; border-bottom: 1px solid #374151; color: #e5e7eb; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+        .menu-item:active { background-color: #374151; }
+        .menu-item i { width: 24px; text-align: center; color: #FBBF24; }
+
+        /* BOTTOM SHEET (Atividades) */
+        #sheet-activities { position: fixed; bottom: 0; left: 0; right: 0; background: #1F2937; border-top-left-radius: 24px; border-top-right-radius: 24px; z-index: 150; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 -4px 20px rgba(0,0,0,0.5); padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+        #sheet-activities.open { transform: translateY(0); }
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .sheet-overlay.open { opacity: 1; visibility: visible; }
+
+        /* Botão Power */
+        .btn-power { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.3s; background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 2px solid #EF4444; }
+        .btn-power.online { background: rgba(16, 185, 129, 0.15); color: #10B981; border-color: #10B981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+
         .chk-container { display: flex; flex-wrap: wrap; gap: 8px; }
         .chk-item input { display: none; }
         .chk-label { padding: 8px 12px; background: #374151; border-radius: 8px; font-size: 12px; color: #D1D5DB; border: 1px solid #4B5563; }
         .chk-item input:checked + .chk-label { background: #FBBF24; color: black; border-color: #F59E0B; font-weight: bold; }
+        
+        #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: rgba(31, 41, 55, 0.95); color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(-20px); transition: all 0.3s; pointer-events: auto; border: 1px solid #374151; display: flex; align-items: center; gap: 8px; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 160; display: flex; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body>
 
+    <audio id="audio-alert" preload="auto"></audio>
+
     <div id="splash" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-[100]">
         <div class="mb-4 text-yellow-500 text-5xl"><i class="fas fa-motorcycle"></i></div>
-        <div class="spinner"></div>
+        <div class="w-6 h-6 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin"></div>
+        <p class="text-gray-500 text-xs mt-4 animate-pulse">Iniciando...</p>
     </div>
 
     <div id="toast-box"></div>
 
-    <div id="guest-zone" class="w-full min-h-screen bg-gray-900 absolute top-0 left-0 z-50">
-        
-        <div id="view-login" class="min-h-screen flex flex-col justify-center p-8">
+    <div id="guest-zone" class="w-full min-h-screen relative">
+        <div id="screen-welcome" class="screen active flex flex-col justify-center p-8">
             <div class="mb-12 text-center">
                 <div class="inline-flex p-4 rounded-full bg-yellow-500/10 text-yellow-500 mb-4 border border-yellow-500/20"><i class="fas fa-bolt text-3xl"></i></div>
                 <h1 class="text-3xl font-bold text-white tracking-tight">Drop Entregas</h1>
@@ -74,14 +89,21 @@
             <div class="space-y-4 w-full">
                 <div class="relative"><i class="fas fa-envelope input-icon"></i><input type="email" id="log-email" class="input-dark" placeholder="E-mail"></div>
                 <div class="relative"><i class="fas fa-lock input-icon"></i><input type="password" id="log-senha" class="input-dark" placeholder="Senha"></div>
-                <button onclick="fazerLogin()" id="btn-login" class="btn-action">ENTRAR</button>
-                <p onclick="switchGuestView('register')" class="text-gray-500 text-xs mt-6 text-center cursor-pointer p-3 hover:text-yellow-500 transition">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
+                <button onclick="fazerLogin()" id="btn-login" class="btn-action shadow-lg">ENTRAR</button>
+                <p onclick="showGuestScreen('cadastro')" class="text-gray-500 text-xs mt-6 text-center cursor-pointer p-2 hover:text-yellow-500 transition">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
             </div>
         </div>
 
-        <div id="view-register" class="hidden-force min-h-screen p-5 pt-8 bg-gray-900 overflow-y-auto pb-20">
-            <div class="flex items-center mb-6"><button onclick="switchGuestView('login')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-2">Criar Conta</h2></div>
-            <div class="space-y-5">
+        <div id="screen-pending" class="screen flex flex-col justify-center p-8 text-center">
+            <div class="mb-6 text-yellow-500 animate-pulse"><i class="fas fa-clock text-6xl"></i></div>
+            <h2 class="text-2xl font-bold text-white mb-2">Em Análise</h2>
+            <p class="text-gray-400 text-sm mb-8">Estamos validando seu cadastro.</p>
+            <button onclick="logout()" class="text-gray-500 text-sm underline">Sair da conta</button>
+        </div>
+
+        <div id="screen-cadastro" class="screen p-5 pt-8 overflow-y-auto">
+            <div class="flex items-center mb-6"><button onclick="showGuestScreen('welcome')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-2">Criar Conta</h2></div>
+            <div class="space-y-5 pb-10">
                 <div class="space-y-3">
                     <p class="text-[10px] font-bold text-yellow-500 uppercase">Pessoal</p>
                     <div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo"></div>
@@ -92,11 +114,11 @@
                 <div class="space-y-3">
                     <p class="text-[10px] font-bold text-yellow-500 uppercase">Endereço</p>
                     <div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="tel" id="cad-cep" class="input-dark" placeholder="CEP"></div>
-                    <div class="flex gap-3"><div class="relative w-3/4"><input type="text" id="cad-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="cad-num" class="input-dark pl-4" placeholder="Nº"></div></div>
+                    <div class="flex gap-3"><div class="relative w-3/4"><input type="text" id="cad-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="cad-num" class="input-dark pl-4" placeholder="Número"></div></div>
                     <div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="cad-comp" class="input-dark" placeholder="Complemento"></div>
-                    <div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="cad-ref" class="input-dark" placeholder="Referência"></div>
+                    <div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="cad-ref" class="input-dark" placeholder="Ponto de Referência"></div>
                 </div>
-                <div class="space-y-3 bg-gray-800 p-4 rounded-xl">
+                <div class="space-y-3 bg-gray-800/50 p-4 rounded-2xl border border-gray-700/50">
                     <p class="text-[10px] font-bold text-red-400 uppercase">Emergência</p>
                     <div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="cad-eme-nome" class="input-dark" placeholder="Nome Contato"></div>
                     <div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="cad-eme-zap" class="input-dark" placeholder="WhatsApp Contato"></div>
@@ -116,53 +138,178 @@
                     <div class="relative"><i class="fas fa-envelope input-icon"></i><input type="email" id="cad-email" class="input-dark" placeholder="E-mail"></div>
                     <div class="relative"><i class="fas fa-lock input-icon"></i><input type="password" id="cad-senha" class="input-dark" placeholder="Senha"></div>
                 </div>
-                <button onclick="enviarCadastro()" id="btn-cadastrar" class="btn-action">FINALIZAR CADASTRO</button>
+                <button onclick="enviarCadastro()" id="btn-cadastrar" class="btn-action shadow-lg">CADASTRAR</button>
             </div>
-        </div>
-
-        <div id="view-pending" class="hidden-force min-h-screen flex flex-col justify-center p-8 text-center">
-            <div class="mb-6 text-yellow-500 animate-pulse"><i class="fas fa-clock text-6xl"></i></div>
-            <h2 class="text-2xl font-bold text-white mb-2">Em Análise</h2>
-            <p class="text-gray-400 text-sm mb-8">Estamos validando seu cadastro. Tente novamente mais tarde.</p>
-            <button onclick="logout()" class="text-gray-500 text-sm underline">Sair da conta</button>
         </div>
     </div>
 
-    <div id="app-zone" class="w-full min-h-screen bg-gray-900 pb-24 hidden-force">
+    <div id="member-zone" class="w-full min-h-screen relative">
         
         <div class="fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-40 px-5 py-3 max-w-md mx-auto">
             <div class="flex justify-between items-center">
-                <div><h1 class="text-lg font-bold text-white tracking-tight">Drop <span class="text-yellow-500">App</span></h1><p id="status-text" class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Offline</p></div>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleMenu()" class="text-white text-xl p-2"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="text-lg font-bold text-white tracking-tight leading-none">Drop <span class="text-yellow-500">App</span></h1>
+                    </div>
+                </div>
                 <div class="flex items-center gap-4">
-                    <label class="switch"><input type="checkbox" id="radar-toggle" onchange="toggleRadar()"><span class="slider"></span></label>
-                    <div class="text-right border-l border-gray-700 pl-3"><p class="text-[8px] text-gray-500 uppercase font-bold">Saldo</p><p class="text-sm font-bold text-green-400" id="header-saldo">R$ 0,00</p></div>
+                    <button id="btn-power" class="btn-power" onclick="toggleRadar()"><i class="fas fa-power-off"></i></button>
+                    <div class="text-right border-l border-gray-700 pl-3 cursor-pointer" onclick="abrirAtividades()">
+                        <p class="text-[10px] text-gray-500 uppercase font-mono tracking-widest mb-0.5" id="header-id-user">ID: ...</p>
+                        <p class="text-sm font-bold text-green-400">R$ ****</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="app-radar" class="p-4 pt-24"><div id="radar-off-msg" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-60"><div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4"><i class="fas fa-power-off text-2xl text-gray-500"></i></div><p class="text-lg text-white font-bold">Você está Offline</p></div><div id="radar-on-content" class="hidden-force"><div id="radar-empty" class="hidden-force flex flex-col items-center justify-center h-[50vh] text-center opacity-70"><div class="w-20 h-20 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 relative"><div class="absolute inset-0 border-4 border-green-500/20 rounded-full animate-ping"></div><i class="fas fa-satellite-dish text-2xl text-green-500"></i></div><p class="text-sm text-gray-400">Procurando corridas...</p></div><div id="radar-list" class="space-y-3"></div></div></div>
+        <div id="menu-overlay" class="menu-overlay" onclick="toggleMenu()"></div>
+        <div id="side-menu">
+            <div class="p-6 border-b border-gray-700 bg-gray-800 flex flex-col items-center text-center">
+                <div class="relative mb-3 group">
+                    <label for="upload-foto" class="cursor-pointer block relative">
+                        <img id="menu-user-foto" src="https://ui-avatars.com/api/?name=User&background=FBBF24&color=111" class="w-20 h-20 rounded-full border-2 border-yellow-500 object-cover">
+                        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fas fa-camera text-white"></i>
+                        </div>
+                    </label>
+                    <input type="file" id="upload-foto" hidden accept="image/*" onchange="uploadFoto()">
+                </div>
+                <p class="text-white font-bold text-lg leading-tight" id="menu-user-name">Carregando...</p>
+                <p class="text-xs text-gray-400 mt-1 font-mono" id="menu-user-id">ID: ...</p>
+            </div>
+            <div class="py-2">
+                <div class="menu-item cursor-pointer hover:bg-gray-800" onclick="navegar('radar')"><i class="fas fa-map-marked-alt"></i> Radar</div>
+                <div class="menu-item cursor-pointer hover:bg-gray-800" onclick="navegar('active')"><i class="fas fa-box"></i> Corrida Ativa</div>
+                <div class="menu-item cursor-pointer hover:bg-gray-800" onclick="navegar('extract')"><i class="fas fa-wallet"></i> Ganhos</div>
+                <div class="menu-item cursor-pointer hover:bg-gray-800" onclick="navegar('perfil')"><i class="fas fa-user-cog"></i> Perfil</div>
+                <div class="menu-item text-red-400 mt-4 cursor-pointer hover:bg-gray-800" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</div>
+            </div>
+        </div>
 
-        <div id="app-active" class="hidden-force p-4 pt-24"><div id="active-empty" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-50"><i class="fas fa-check-circle text-5xl text-gray-700 mb-4"></i><p class="text-lg text-gray-300 font-bold">Sem Corridas</p><button onclick="navApp('radar')" class="mt-4 text-yellow-500 text-sm font-bold">Ir para o Radar</button></div><div id="active-content" class="hidden-force"><div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-4 shadow-lg"><div class="flex items-center gap-3"><div class="bg-blue-900/30 text-blue-400 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-route"></i></div><div><p class="text-[10px] text-gray-400 uppercase font-bold">Status</p><p class="text-sm font-bold text-white">EM ROTA</p></div></div><div class="text-right"><p class="text-[10px] text-gray-400 uppercase font-bold">Ganho</p><p class="text-xl font-bold text-green-400">R$ <span id="active-valor">0,00</span></p></div></div><div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-4 shadow-lg"><div class="mb-6 pb-6 border-b border-gray-700 relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-blue-500 rounded-full"></div><p class="text-[10px] text-blue-400 font-bold uppercase mb-1 ml-2">COLETA</p><div class="flex justify-between"><p class="text-white font-medium text-sm ml-2" id="active-origem">...</p><div class="flex gap-2"><button onclick="copiar('origem')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('origem')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div></div><div class="relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-green-500 rounded-full"></div><p class="text-[10px] text-green-400 font-bold uppercase mb-1 ml-2">ENTREGA</p><div class="flex justify-between mb-4"><div class="ml-2"><p class="text-white font-medium text-sm" id="active-destino">...</p><p class="text-xs text-gray-400 mt-1"><i class="fas fa-user"></i> <span id="active-cliente-nome">...</span></p></div><div class="flex gap-2"><button onclick="copiar('destino')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('destino')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div><button onclick="zap()" class="w-full bg-green-600/20 text-green-400 border border-green-600/50 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-lg"></i> Chamar Cliente</button></div></div><div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-6"><div><p class="text-xs text-gray-400 uppercase font-bold mb-1">Cobrança</p><p class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-hand-holding-usd text-yellow-500"></i> <span id="active-forma">...</span></p></div><span class="text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded font-bold uppercase">Confirmar na Loja</span></div><button onclick="modalPin(true)" class="btn-action shadow-lg mb-4">FINALIZAR ENTREGA</button><button onclick="cancelar()" class="w-full text-red-500/60 text-xs py-2 hover:text-red-500">Cancelar (Emergência)</button></div></div>
+        <div id="sheet-overlay" class="sheet-overlay" onclick="fecharAtividades()"></div>
+        <div id="sheet-activities">
+            <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-6"></div>
+            <div class="px-6">
+                <h3 class="text-xl font-bold text-white mb-6">Resumo do Dia</h3>
+                <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 mb-4 text-center">
+                    <p class="text-gray-400 text-xs uppercase mb-1">Saldo Atual</p>
+                    <p class="text-3xl font-bold text-green-400" id="sheet-saldo">R$ 0,00</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center">
+                        <i class="fas fa-check-circle text-green-500 text-xl mb-2"></i>
+                        <p class="text-2xl font-bold text-white" id="sheet-finalizadas">0</p>
+                        <p class="text-[10px] text-gray-400 uppercase">Entregues</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center">
+                        <i class="fas fa-times-circle text-red-500 text-xl mb-2"></i>
+                        <p class="text-2xl font-bold text-white" id="sheet-canceladas">0</p>
+                        <p class="text-[10px] text-gray-400 uppercase">Canceladas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <div id="app-extract" class="hidden-force p-4 pt-24"><h2 class="text-xl font-bold text-white mb-4 pl-1">Financeiro</h2><div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 mb-6 shadow-lg"><p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Saldo Disponível</p><p class="text-3xl font-bold text-white mb-4" id="saque-saldo">R$ 0,00</p><div class="flex gap-2"><input type="number" id="valor-saque" class="input-dark h-10 text-sm" placeholder="Valor (R$)"><button onclick="sacar()" class="bg-green-600 text-white px-4 h-10 rounded-xl text-xs font-bold shadow-lg">SACAR</button></div></div><div class="flex gap-2 mb-4"><input type="date" id="filtro-ini" class="input-dark p-2 text-xs h-10 w-full" style="color-scheme: dark;"><input type="date" id="filtro-fim" class="input-dark p-2 text-xs h-10 w-full" style="color-scheme: dark;"><button onclick="loadExtrato()" class="bg-blue-600 h-10 w-12 rounded-xl text-white flex items-center justify-center"><i class="fas fa-search"></i></button></div><div id="history-list" class="space-y-3"></div></div>
+        <div id="screen-radar" class="screen p-4 pt-24 active">
+            <div id="radar-off-msg" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-60">
+                <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-6 border border-gray-700"><i class="fas fa-power-off text-3xl text-gray-500"></i></div>
+                <p class="text-xl text-white font-bold">Você está Offline</p>
+                <p class="text-sm text-gray-500 mt-2">Toque no botão Power no topo para iniciar.</p>
+            </div>
+            <div id="radar-on-content" class="hidden-force">
+                <div id="radar-empty" class="hidden-force flex flex-col items-center justify-center h-[50vh] text-center opacity-70">
+                    <div class="w-24 h-24 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 relative"><div class="absolute inset-0 border-4 border-green-500/20 rounded-full animate-ping"></div><i class="fas fa-satellite-dish text-3xl text-green-500"></i></div>
+                    <p class="text-sm text-gray-400">Procurando corridas...</p>
+                </div>
+                <div id="radar-list" class="space-y-4"></div>
+            </div>
+        </div>
 
-        <div id="app-perfil" class="hidden-force p-4 pt-24"><h2 class="text-xl font-bold text-white mb-4 pl-1">Meus Dados</h2><div class="dark-card p-5 space-y-6"><div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><input type="text" id="perf-nome" class="input-dark mb-2 text-gray-400" readonly><div class="flex gap-2 mb-2"><input type="text" id="perf-cpf" class="input-dark text-gray-400" readonly><input type="text" id="perf-idade" class="input-dark text-center text-gray-400" readonly></div><input type="tel" id="perf-zap" class="input-dark"></div><div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Moto</p><div class="flex gap-2 mb-2"><input type="text" id="perf-modelo" class="input-dark"><input type="text" id="perf-cor" class="input-dark"></div><input type="text" id="perf-placa" class="input-dark text-center uppercase font-bold"></div><button onclick="savePerfil()" id="btn-update-perf" class="btn-action shadow-lg">SALVAR ALTERAÇÕES</button></div><button onclick="logout()" class="w-full mt-6 py-4 text-red-500 font-bold text-xs bg-red-500/10 rounded-xl border border-red-500/20">SAIR DA CONTA</button></div>
+        <div id="screen-active" class="screen p-4 pt-24">
+            <div id="active-empty" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-50">
+                <i class="fas fa-check-circle text-5xl text-gray-700 mb-4"></i><p class="text-lg text-gray-300 font-bold">Sem Corridas</p><button onclick="navegar('radar')" class="mt-4 text-yellow-500 text-sm font-bold">Ir para o Radar</button>
+            </div>
+            <div id="active-content" class="hidden-force">
+                <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-4 shadow-lg">
+                    <div class="flex items-center gap-3"><div class="bg-blue-900/30 text-blue-400 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-route"></i></div><div><p class="text-[10px] text-gray-400 uppercase font-bold">Status</p><p class="text-sm font-bold text-white" id="active-status-text">EM ROTA</p></div></div>
+                    <div class="text-right"><p class="text-[10px] text-gray-400 uppercase font-bold">Ganho</p><p class="text-xl font-bold text-green-400">R$ <span id="active-valor">0,00</span></p></div>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-4 shadow-lg">
+                    <div class="mb-6 pb-6 border-b border-gray-700 relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-blue-500 rounded-full"></div><p class="text-[10px] text-blue-400 font-bold uppercase mb-1 ml-2">COLETA</p><div class="flex justify-between"><p class="text-white font-medium text-sm ml-2" id="active-origem">...</p><div class="flex gap-2"><button onclick="copiar('origem')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('origem')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div></div>
+                    <div class="relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-green-500 rounded-full"></div><p class="text-[10px] text-green-400 font-bold uppercase mb-1 ml-2">ENTREGA</p><div class="flex justify-between mb-4"><div class="ml-2"><p class="text-white font-medium text-sm" id="active-destino">...</p><p class="text-xs text-gray-400 mt-1"><i class="fas fa-user"></i> <span id="active-cliente-nome">...</span></p></div><div class="flex gap-2"><button onclick="copiar('destino')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('destino')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div><button onclick="zap()" class="w-full bg-green-600/20 text-green-400 border border-green-600/50 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-lg"></i> Chamar Cliente</button></div>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-6"><div><p class="text-xs text-gray-400 uppercase font-bold mb-1">Cobrança</p><p class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-hand-holding-usd text-yellow-500"></i> <span id="active-forma">...</span></p></div><span class="text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded font-bold uppercase">Confirmar na Loja</span></div>
+                
+                <button id="btn-iniciar" onclick="iniciarEntrega()" class="btn-action shadow-lg mb-4 hidden-force bg-blue-600 text-white">INICIAR ENTREGA</button>
+                <button id="btn-finalizar" onclick="openModal('validate-pin', 'entrega')" class="btn-action shadow-lg mb-4 hidden-force">FINALIZAR ENTREGA</button>
+                <button onclick="cancelar()" class="w-full text-red-500/60 text-xs py-2 hover:text-red-500">Cancelar (Emergência)</button>
+            </div>
+        </div>
 
-        <div class="bottom-nav">
-            <div class="nav-item active" id="nav-radar" onclick="navApp('radar')"><i class="fas fa-map-marked-alt text-xl mb-1"></i><span class="text-[10px]">Radar</span></div>
-            <div class="nav-item" id="nav-active" onclick="navApp('active')"><i class="fas fa-box text-xl mb-1"></i><span class="text-[10px]">Corrida</span></div>
-            <div class="nav-item" id="nav-extract" onclick="navApp('extract'); loadExtrato()"><i class="fas fa-wallet text-xl mb-1"></i><span class="text-[10px]">Ganhos</span></div>
-            <div class="nav-item" id="nav-perfil" onclick="navApp('perfil')"><i class="fas fa-user text-xl mb-1"></i><span class="text-[10px]">Perfil</span></div>
+        <div id="screen-extract" class="screen p-4 pt-24">
+            <h2 class="text-xl font-bold text-white mb-4 pl-1">Financeiro</h2>
+            <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 mb-6 shadow-lg">
+                <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Saldo Disponível</p>
+                <p class="text-3xl font-bold text-white mb-4" id="saque-saldo">R$ 0,00</p>
+                <div class="flex gap-2"><input type="number" id="valor-saque" class="input-dark h-10 text-sm" placeholder="Valor (R$)"><button onclick="sacar()" class="bg-green-600 text-white px-4 h-10 rounded-xl text-xs font-bold shadow-lg">SACAR</button></div>
+            </div>
+            <div class="flex gap-2 mb-4"><input type="date" id="filtro-ini" class="input-dark p-2 text-xs h-10 w-full" style="color-scheme: dark;"><input type="date" id="filtro-fim" class="input-dark p-2 text-xs h-10 w-full" style="color-scheme: dark;"><button onclick="loadExtrato()" class="bg-blue-600 h-10 w-12 rounded-xl text-white flex items-center justify-center"><i class="fas fa-search"></i></button></div>
+            <div id="history-list" class="space-y-3"></div>
+        </div>
+
+        <div id="screen-perfil" class="screen p-4 pt-24 overflow-y-auto pb-24">
+            <h2 class="text-xl font-bold text-white mb-4 pl-1">Meus Dados</h2>
+            <div class="dark-card p-5 space-y-6">
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <button onclick="openModal('change-pass')" class="bg-gray-700 text-white text-xs font-bold py-3 rounded-xl border border-gray-600 hover:bg-gray-600"><i class="fas fa-lock"></i> ALTERAR SENHA</button>
+                    <button onclick="openModal('change-pin')" class="bg-gray-700 text-white text-xs font-bold py-3 rounded-xl border border-gray-600 hover:bg-gray-600"><i class="fas fa-key"></i> REDEFINIR PIN</button>
+                </div>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><div class="space-y-2"><div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="perf-nome" class="input-dark" placeholder="Nome Completo"></div><div class="flex gap-2"><div class="relative w-2/3"><i class="fas fa-id-card input-icon"></i><input type="text" id="perf-cpf" class="input-dark" readonly></div><div class="relative w-1/3"><input type="text" id="perf-idade" class="input-dark text-center font-bold" readonly placeholder="Idade"></div></div><div class="relative"><i class="fas fa-calendar input-icon"></i><input type="date" id="perf-nasc" class="input-dark text-gray-400" onchange="calcIdadePerfil()"></div><div class="relative"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="perf-zap" class="input-dark" placeholder="WhatsApp"></div></div></div>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Endereço</p><div class="space-y-2"><div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="text" id="perf-cep" class="input-dark" placeholder="CEP"></div><div class="flex gap-2"><div class="relative w-3/4"><input type="text" id="perf-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="perf-num" class="input-dark pl-4" placeholder="Número"></div></div><div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="perf-comp" class="input-dark" placeholder="Complemento"></div><div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="perf-ref" class="input-dark" placeholder="Ponto de Referência"></div></div></div>
+                <div><p class="text-red-400 text-[10px] font-bold uppercase mb-2">Emergência</p><div class="space-y-2"><div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="perf-eme-nome" class="input-dark" placeholder="Nome Contato"></div><div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="perf-eme-zap" class="input-dark" placeholder="WhatsApp Contato"></div><div class="relative"><i class="fas fa-users input-icon"></i><input type="text" id="perf-eme-parent" class="input-dark" placeholder="Parentesco"></div></div></div>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Moto</p><div class="flex gap-2 mb-2"><input type="text" id="perf-modelo" class="input-dark" placeholder="Modelo"><input type="text" id="perf-cor" class="input-dark" placeholder="Cor"></div><input type="text" id="perf-placa" class="input-dark text-center uppercase font-bold" placeholder="PLACA"></div>
+                <button onclick="savePerfil()" id="btn-update-perf" class="btn-action shadow-lg">SALVAR DADOS</button>
+            </div>
         </div>
     </div>
 
-    <div id="modal-pin" class="hidden-force fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 backdrop-blur-sm">
+    <div id="modal-validate-pin" class="modal-overlay hidden-force">
         <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
-            <button onclick="modalPin(false)" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-xl font-bold text-white mb-2 mt-4">Validar</h3>
-            <p class="text-sm text-gray-400 mb-6">Peça o PIN de 4 dígitos</p>
-            <input type="tel" id="input-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
-            <button onclick="validar()" class="btn-action shadow-lg">CONFIRMAR</button>
+            <button onclick="closeModal('validate-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-xl font-bold text-white mb-2 mt-4" id="modal-val-title">Validar</h3>
+            <p class="text-sm text-gray-400 mb-6" id="modal-val-desc">Digite o PIN</p>
+            <input type="tel" id="input-val-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
+            <button onclick="processarAcaoPin()" class="btn-action shadow-lg">CONFIRMAR</button>
+        </div>
+    </div>
+
+    <div id="modal-create-pin" class="modal-overlay hidden-force">
+        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-yellow-500/30 text-center relative shadow-2xl">
+            <button onclick="closeModal('create-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+            <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-500"><i class="fas fa-shield-alt text-2xl"></i></div>
+            <h3 class="text-lg font-bold text-white mb-2">Criar PIN de Segurança</h3>
+            <p class="text-xs text-gray-400 mb-6">Defina um PIN de 4 dígitos para realizar saques com segurança.</p>
+            <input type="tel" id="input-new-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-4 focus:border-yellow-500 outline-none tracking-widest" placeholder="••••">
+            <button onclick="criarPin()" class="btn-action shadow-lg">CADASTRAR PIN</button>
+        </div>
+    </div>
+
+    <div id="modal-change-pass" class="modal-overlay hidden-force">
+        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
+            <button onclick="closeModal('change-pass')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-lg font-bold text-white mb-6 mt-2">Alterar Senha</h3>
+            <input type="password" id="input-new-pass" class="input-dark mb-4" placeholder="Nova Senha (min 6 carac.)">
+            <button onclick="alterarSenha()" class="btn-action shadow-lg">SALVAR NOVA SENHA</button>
+        </div>
+    </div>
+
+    <div id="modal-change-pin" class="modal-overlay hidden-force">
+        <div class="bg-gray-800 w-full max-w-xs p-6 rounded-3xl border border-gray-700 text-center relative shadow-2xl">
+            <button onclick="closeModal('change-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-lg font-bold text-white mb-6 mt-2">Redefinir PIN</h3>
+            <input type="tel" id="input-change-pin" maxlength="4" class="w-full bg-gray-900 border border-gray-600 rounded-2xl p-4 text-center text-4xl font-bold text-white mb-6 focus:border-yellow-500 outline-none tracking-widest placeholder-gray-700" placeholder="••••">
+            <button onclick="alterarPin()" class="btn-action shadow-lg">SALVAR NOVO PIN</button>
         </div>
     </div>
 
@@ -171,186 +318,180 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcG5uaWpraGdzamFyaXhveWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjUyNzYsImV4cCI6MjA4MDY0MTI3Nn0.dNOIIETmTz3l1HvhuT-ihAiymJqiaYZnklzzBzDGCFU';
         const ADMIN_ZAP = "5584982005039";
         
-        let sbClient, userSession, appConfig = {taxa_app_percent:10}, isOnline = false, pedidoAtual = null;
+        let sbClient, userSession, appConfig = {taxa_app_percent:10, som_alerta_url:''}, isOnline = false, pedidoAtual = null, currentAction = '';
+        let saldoReal = 0; // Armazena o valor para usar na sheet
 
-        // INICIALIZAÇÃO
         (async function init() {
-            sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            // Verifica Cache Primeiro (Mais Rápido)
-            const cached = localStorage.getItem('sb-session');
-            if (cached) {
-                userSession = JSON.parse(cached);
-                switchZone(true); // Entra na área logada imediatamente
-                loadPerfil();
-            } else {
-                try {
-                    const { data } = await sbClient.auth.getSession();
-                    if (data.session) {
-                        userSession = data.session;
-                        localStorage.setItem('sb-session', JSON.stringify(userSession));
-                        switchZone(true);
-                        loadPerfil();
-                    } else {
-                        switchZone(false); // Mostra login
-                    }
-                } catch { switchZone(false); }
+            try {
+                sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                const { data } = await sbClient.auth.getSession();
+                if (data.session) {
+                    userSession = data.session;
+                    loadPerfil();
+                } else {
+                    switchZone(false);
+                }
+            } catch (e) {
+                console.error("Erro init", e);
+                switchZone(false); // Fallback de segurança
             }
             setTimeout(() => document.getElementById('splash').style.display = 'none', 500);
         })();
 
-        // --- GERENCIADOR DE ZONAS (O SEGREDOS DO FIX) ---
-        function toggleZone(zone) {
-            const guest = document.getElementById('guest-zone');
-            const app = document.getElementById('app-zone');
-            
-            if (zone === 'app') {
-                guest.classList.add('hidden-force'); // Esconde login/cadastro
-                app.classList.remove('hidden-force'); // Mostra app
-                navApp('radar'); // Vai pra home do app
+        // --- SISTEMA DE ZONAS ---
+        function switchZone(isLoggedIn) {
+            if (isLoggedIn) {
+                document.body.classList.add('is-logged-in');
+                showAppScreen('radar');
             } else {
-                app.classList.add('hidden-force'); // Esconde app
-                guest.classList.remove('hidden-force'); // Mostra login
-                switchGuestView('login'); // Garante que é o login
+                document.body.classList.remove('is-logged-in');
+                showGuestScreen('welcome');
             }
         }
 
-        // Navegação dentro da área de visitante (Login <-> Cadastro)
-        function switchGuestView(viewId) {
-            ['login', 'register', 'pending'].forEach(v => {
-                const el = document.getElementById('view-' + v);
-                if (v === viewId) el.classList.remove('hidden-force');
-                else el.classList.add('hidden-force');
-            });
+        function showGuestScreen(id) {
+            document.querySelectorAll('#guest-zone .screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+        }
+
+        function showAppScreen(id) {
+            document.querySelectorAll('#member-zone .screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
             window.scrollTo(0,0);
         }
 
-        // Navegação dentro da área logada (Radar, Corrida, etc)
-        function navApp(tabId) {
-            if(tabId === 'radar' && pedidoAtual) tabId = 'active'; // Redireciona se tiver corrida
+        function navegar(tab) {
+            if(tab === 'radar' && pedidoAtual) tab = 'active';
+            showAppScreen(tab);
+            toggleMenu(); 
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('side-menu');
+            const overlay = document.getElementById('menu-overlay');
+            if (menu.classList.contains('open')) {
+                menu.classList.remove('open');
+                overlay.classList.remove('open');
+            } else {
+                menu.classList.add('open');
+                overlay.classList.add('open');
+            }
+        }
+
+        // --- ATIVIDADES (SHEET) ---
+        async function abrirAtividades() {
+            const sheet = document.getElementById('sheet-activities');
+            const overlay = document.getElementById('sheet-overlay');
+            sheet.classList.add('open');
+            overlay.classList.add('open');
             
-            ['radar', 'active', 'extract', 'perfil'].forEach(t => {
-                const el = document.getElementById('app-' + t);
-                if (t === tabId) el.classList.remove('hidden-force');
-                else el.classList.add('hidden-force');
-            });
+            document.getElementById('sheet-saldo').innerText = `R$ ${saldoReal.toFixed(2)}`;
 
-            // Atualiza ícones do rodapé
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById('nav-' + tabId).classList.add('active');
-            window.scrollTo(0,0);
+            const today = new Date().toISOString().split('T')[0];
+            const { data: finalizadas } = await sbClient.from('pedidos').select('id', { count: 'exact' }).eq('entregador_id', userSession.user.id).eq('status', 'concluido').gte('created_at', today);
+            const { data: canceladas } = await sbClient.from('pedidos').select('id', { count: 'exact' }).eq('entregador_id', userSession.user.id).eq('status', 'cancelado').gte('created_at', today);
+            
+            document.getElementById('sheet-finalizadas').innerText = finalizadas ? finalizadas.length : 0;
+            document.getElementById('sheet-canceladas').innerText = canceladas ? canceladas.length : 0;
         }
 
-        // --- LÓGICA DE NEGÓCIO ---
+        function fecharAtividades() {
+            document.getElementById('sheet-activities').classList.remove('open');
+            document.getElementById('sheet-overlay').classList.remove('open');
+        }
+
+        // --- UPLOAD FOTO ---
+        async function uploadFoto() {
+            const file = document.getElementById('upload-foto').files[0];
+            if(!file) return;
+            const ext = file.name.split('.').pop();
+            const fileName = `${userSession.user.id}/${Date.now()}.${ext}`;
+            
+            toast("Enviando foto...", "info");
+            const { error: uploadError } = await sbClient.storage.from('avatars').upload(fileName, file);
+            if(uploadError) return toast("Erro no upload", "error");
+            
+            const { data: { publicUrl } } = sbClient.storage.from('avatars').getPublicUrl(fileName);
+            await sbClient.from('motoboys').update({ foto_url: publicUrl }).eq('id', userSession.user.id);
+            document.getElementById('menu-user-foto').src = publicUrl;
+            toast("Foto atualizada!", "success");
+        }
+
+        // --- LÓGICA DO APP ---
         async function loadPerfil() {
             const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            if (error || !data) { toggleZone('guest'); return; }
+            if (error || !data) { switchZone(false); return; }
             
             preencherPerfil(data);
             
+            // Dados do Menu
+            document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
+            const shortId = data.id.split('-')[0];
+            document.getElementById('menu-user-id').innerText = `ID: ${shortId}`;
+            document.getElementById('header-id-user').innerText = `ID: ${shortId}`;
+            
+            if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
+            
             if (data.status !== 'Aprovado') {
-                // Mostra área de visitante, mas na tela de Pendente
-                document.getElementById('app-zone').classList.add('hidden-force');
-                document.getElementById('guest-zone').classList.remove('hidden-force');
-                switchGuestView('pending');
+                document.body.classList.remove('is-logged-in'); 
+                document.getElementById('guest-zone').style.display = 'block'; 
+                showGuestScreen('pending');
             } else {
-                // Entra no app
-                sbClient.from('app_config').select('*').single().then(({data}) => { if(data) appConfig = data; });
-                toggleZone('app');
+                sbClient.from('app_config').select('*').single().then(({data}) => { 
+                    if(data) {
+                        appConfig = data;
+                        if(data.som_alerta_url) document.getElementById('audio-alert').src = data.som_alerta_url;
+                    } 
+                });
+                switchZone(true);
                 startRealtime();
             }
         }
 
         function preencherPerfil(d) {
-            document.getElementById('header-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
-            document.getElementById('saque-saldo').innerText = `R$ ${(d.saldo||0).toFixed(2)}`;
-            // Preenche campos do perfil
-            const map = { nome:'perf-nome', cpf:'perf-cpf', whatsapp:'perf-zap', modelo:'perf-modelo', cor_moto:'perf-cor', placa:'perf-placa' };
-            for(let k in map) { const el=document.getElementById(map[k]); if(el) el.value = d[k]||''; }
+            saldoReal = d.saldo || 0;
+            // No header só mostra oculto, o valor real vai pro sheet e pro extrato
+            document.getElementById('saque-saldo').innerText = `R$ ${saldoReal.toFixed(2)}`;
+            
+            const map = {
+                'perf-nome': 'nome', 'perf-cpf': 'cpf', 'perf-zap': 'whatsapp', 'perf-nasc': 'data_nascimento',
+                'perf-cep': 'cep', 'perf-rua': 'rua', 'perf-num': 'numero', 'perf-comp': 'complemento', 'perf-ref': 'referencia',
+                'perf-eme-nome': 'emerg_nome', 'perf-eme-zap': 'emerg_zap', 'perf-eme-parent': 'emerg_parentesco',
+                'perf-modelo': 'modelo', 'perf-cor': 'cor_moto', 'perf-placa': 'placa'
+            };
+            for(const [id, key] of Object.entries(map)) { const el = document.getElementById(id); if(el) el.value = d[key] || ''; }
             if(d.idade) document.getElementById('perf-idade').value = d.idade + ' anos';
+        }
+
+        function calcIdadePerfil() {
+            const n = document.getElementById('perf-nasc').value;
+            if(n) document.getElementById('perf-idade').value = (new Date().getFullYear() - new Date(n).getFullYear()) + ' anos';
         }
 
         function startRealtime() {
             checkActive();
             sbClient.channel('radar').on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, p => {
+                if(p.eventType === 'INSERT' && isOnline) document.getElementById('audio-alert').play().catch(()=>{});
                 if(isOnline) loadRadar();
                 if(pedidoAtual && p.new.id === pedidoAtual.id) checkActive();
             }).subscribe();
         }
 
-        // --- FUNÇÕES DE AÇÃO ---
-        async function fazerLogin() {
-            const e = document.getElementById('log-email').value;
-            const p = document.getElementById('log-senha').value;
-            if(!e || !p) return toast('Preencha tudo', 'error');
-            
-            document.getElementById('btn-login').innerText = "...";
-            const { data, error } = await sbClient.auth.signInWithPassword({ email:e, password:p });
-            
-            if (error) { 
-                toast("Erro ao entrar", 'error'); 
-                document.getElementById('btn-login').innerText = "ENTRAR"; 
-            } else { 
-                location.reload(); 
-            }
-        }
-
-        async function enviarCadastro() {
-            const d = {
-                nome: $('#cad-nome').val(), cpf: $('#cad-cpf').val(), nasc: $('#cad-nasc').val(), idade: $('#cad-idade').val(),
-                zap: $('#cad-zap').val(), cep: $('#cad-cep').val(), rua: $('#cad-rua').val(), num: $('#cad-num').val(),
-                comp: $('#cad-comp').val(), ref: $('#cad-ref').val(), eme_nome: $('#cad-eme-nome').val(),
-                eme_zap: $('#cad-eme-zap').val(), eme_parent: $('#cad-eme-parent').val(), moto_mod: $('#moto-modelo').val(),
-                moto_cor: $('#moto-cor').val(), moto_placa: $('#moto-placa').val().toUpperCase(), email: $('#cad-email').val(),
-                senha: $('#cad-senha').val()
-            };
-
-            if(Object.values(d).some(v => v === '' && v !== d.comp)) return toast("Preencha todos os campos obrigatórios", 'error');
-            
-            // Check disponibilidade
-            let disp = [];
-            if($('#disp-integral').is(':checked')) disp.push("Integral");
-            else { if($('#disp-manha').is(':checked')) disp.push("Manhã"); if($('#disp-tarde').is(':checked')) disp.push("Tarde"); if($('#disp-noite').is(':checked')) disp.push("Noite"); }
-            if($('#disp-extra').is(':checked')) disp.push("Renda Extra");
-            if(!disp.length) return toast("Selecione disponibilidade", 'error');
-
-            $('#btn-cadastrar').text("Enviando...");
-            const { data, error } = await sbClient.auth.signUp({ email: d.email, password: d.senha });
-
-            if (error) { toast(error.message, 'error'); $('#btn-cadastrar').text("CADASTRAR"); return; }
-
-            if (data.user) {
-                await sbClient.from('motoboys').insert({
-                    id: data.user.id, nome: d.nome, cpf: d.cpf, data_nascimento: d.nasc, idade: parseInt(d.idade),
-                    whatsapp: d.zap, cep: d.cep, rua: d.rua, numero: d.num, complemento: d.comp, referencia: d.ref,
-                    emerg_nome: d.eme_nome, emerg_zap: d.eme_zap, emerg_parentesco: d.eme_parent, modelo: d.moto_mod,
-                    cor_moto: d.moto_cor, placa: d.moto_placa, disponibilidade: disp.join(', '), status: 'Pendente'
-                });
-                await sbClient.from('profiles').insert({
-                    id: data.user.id, responsavel: d.nome, funcao: 'motoboy', modelo_moto: d.moto_mod,
-                    cor_moto: d.moto_cor, placa_moto: d.moto_placa, whatsapp_responsavel: d.zap
-                });
-                toast("Cadastro Enviado!", 'success');
-                location.reload();
-            }
-        }
-
-        async function savePerfil() {
-            const u = { whatsapp: document.getElementById('perf-zap').value, modelo: document.getElementById('perf-modelo').value, cor_moto: document.getElementById('perf-cor').value, placa: document.getElementById('perf-placa').value.toUpperCase() };
-            const btn = document.getElementById('btn-update-perf'); btn.innerText = "...";
-            await sbClient.from('motoboys').update(u).eq('id', userSession.user.id);
-            await sbClient.from('profiles').update({ whatsapp_responsavel: u.whatsapp, modelo_moto: u.modelo, placa_moto: u.placa, cor_moto: u.cor_moto }).eq('id', userSession.user.id);
-            toast("Perfil Atualizado!", 'success'); btn.innerText = "SALVAR ALTERAÇÕES";
-        }
-
-        // Radar e Pedidos
         function toggleRadar() {
-            isOnline = document.getElementById('radar-toggle').checked;
-            const t = document.getElementById('status-text');
-            t.innerText = isOnline ? "Online" : "Offline";
-            t.className = `text-[10px] font-bold uppercase tracking-widest ${isOnline ? 'text-green-500' : 'text-red-500'}`;
-            document.getElementById('radar-off-msg').classList.toggle('hidden-force', isOnline);
-            document.getElementById('radar-on-content').classList.toggle('hidden-force', !isOnline);
-            if(isOnline) loadRadar();
+            isOnline = !isOnline;
+            const btn = document.getElementById('btn-power');
+            
+            if (isOnline) {
+                btn.classList.add('online');
+                document.getElementById('radar-off-msg').classList.add('hidden-force');
+                document.getElementById('radar-on-content').classList.remove('hidden-force');
+                const a = document.getElementById('audio-alert'); a.volume=0; a.play().then(()=>{a.pause();a.currentTime=0;a.volume=1;});
+                loadRadar();
+            } else {
+                btn.classList.remove('online');
+                document.getElementById('radar-off-msg').classList.remove('hidden-force');
+                document.getElementById('radar-on-content').classList.add('hidden-force');
+            }
         }
 
         async function loadRadar() {
@@ -371,35 +512,186 @@
             if(data) {
                 pedidoAtual = data;
                 const liq = data.valor_frete - (data.valor_frete * ((data.taxa_app_aplicada||10)/100));
+                
                 ['empty','content'].forEach(s => document.getElementById('active-'+s).classList.toggle('hidden-force', s === 'empty'));
                 document.getElementById('active-origem').innerText = data.origem;
                 document.getElementById('active-destino').innerText = data.destino;
                 document.getElementById('active-cliente-nome').innerText = data.nome_destinatario;
                 document.getElementById('active-valor').innerText = liq.toFixed(2);
+                document.getElementById('active-forma').innerText = data.forma_pagamento;
+                
+                const statusTxt = document.getElementById('active-status-text');
+                const btnIni = document.getElementById('btn-iniciar');
+                const btnFim = document.getElementById('btn-finalizar');
+
+                if(data.status === 'pendente') {
+                    statusTxt.innerText = "PENDENTE (RETIRAR)";
+                    statusTxt.classList.replace('text-blue-400', 'text-yellow-400');
+                    btnIni.classList.remove('hidden-force');
+                    btnFim.classList.add('hidden-force');
+                } else {
+                    statusTxt.innerText = "EM ROTA (ENTREGAR)";
+                    statusTxt.classList.replace('text-yellow-400', 'text-blue-400');
+                    btnIni.classList.add('hidden-force');
+                    btnFim.classList.remove('hidden-force');
+                }
                 navApp('active');
-            } else {
-                pedidoAtual = null;
-                ['empty','content'].forEach(s => document.getElementById('active-'+s).classList.toggle('hidden-force', s === 'content'));
+            } else { pedidoAtual = null; ['empty','content'].forEach(s => document.getElementById('active-'+s).classList.toggle('hidden-force', s === 'content')); }
+        }
+
+        async function iniciarEntrega() {
+            if(!confirm("Já retirou o pedido?")) return;
+            const { error } = await sbClient.from('pedidos').update({ status: 'em_rota' }).eq('id', pedidoAtual.id);
+            if(error) toast("Erro ao atualizar", "error");
+            else checkActive();
+        }
+
+        // --- GESTÃO DE MODAIS E PIN ---
+        function openModal(id, action = null) {
+            currentAction = action;
+            document.querySelectorAll('input').forEach(i => i.value = i.value); 
+            document.getElementById('modal-' + id).classList.remove('hidden-force');
+            if(id === 'validate-pin') {
+                document.getElementById('input-val-pin').value = '';
+                document.getElementById('modal-val-title').innerText = action === 'entrega' ? 'Validar Entrega' : 'Validar Saque';
+                document.getElementById('modal-val-desc').innerText = action === 'entrega' ? 'PIN do Cliente' : 'Seu PIN da Carteira';
             }
         }
 
-        // Utils e Ações
+        function closeModal(id) {
+            document.getElementById('modal-' + id).classList.add('hidden-force');
+        }
+
+        async function sacar() {
+            const v = document.getElementById('valor-saque').value;
+            if(!v || v<=0) return toast("Valor inválido", 'error');
+
+            const { data } = await sbClient.from('motoboys').select('pin_carteira').eq('id', userSession.user.id).single();
+            
+            // LÓGICA DE 1º SAQUE: Se não tem PIN, abre modal de CRIAR PIN direto
+            if (!data.pin_carteira || data.pin_carteira === '0000') {
+                openModal('create-pin'); 
+            } else {
+                openModal('validate-pin', 'saque');
+            }
+        }
+
+        async function processarAcaoPin() {
+            const pin = document.getElementById('input-val-pin').value;
+            if(currentAction === 'entrega') {
+                if(pin != pedidoAtual.pin_entrega) return toast("PIN Incorreto", 'error');
+                const liq = parseFloat(document.getElementById('active-valor').innerText);
+                const novoSaldo = saldoReal + liq;
+                
+                await sbClient.from('pedidos').update({ status: 'concluido' }).eq('id', pedidoAtual.id);
+                await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
+                
+                saldoReal = novoSaldo;
+                document.getElementById('saque-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
+                toast(`Sucesso! + R$ ${liq.toFixed(2)}`, 'success');
+                closeModal('validate-pin');
+                checkActive();
+            } else if (currentAction === 'saque') {
+                const { data } = await sbClient.from('motoboys').select('pin_carteira, saldo, nome').eq('id', userSession.user.id).single();
+                if(data.pin_carteira !== pin) return toast("PIN Incorreto", 'error');
+                
+                const valorSaque = parseFloat(document.getElementById('valor-saque').value);
+                if(valorSaque > data.saldo) return toast("Saldo insuficiente", 'error');
+
+                const novoSaldo = data.saldo - valorSaque;
+                await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
+                
+                saldoReal = novoSaldo;
+                document.getElementById('saque-saldo').innerText = `R$ ${novoSaldo.toFixed(2)}`;
+                
+                const msg = `Solicitação de Saque\nMotoboy: ${data.nome}\nValor: R$ ${valorSaque.toFixed(2)}\nSaldo Restante: R$ ${novoSaldo.toFixed(2)}`;
+                window.open(`https://wa.me/${ADMIN_ZAP}?text=${encodeURIComponent(msg)}`, '_blank');
+                closeModal('validate-pin');
+                toast("Solicitado!", 'success');
+            }
+        }
+
+        async function criarPin() {
+            const pin = document.getElementById('input-new-pin').value;
+            if(pin.length !== 4) return toast("PIN deve ter 4 dígitos", 'error');
+            
+            await sbClient.from('motoboys').update({ pin_carteira: pin }).eq('id', userSession.user.id);
+            toast("PIN Criado com Sucesso!", 'success');
+            closeModal('create-pin');
+            setTimeout(() => openModal('validate-pin', 'saque'), 500);
+        }
+
+        async function alterarSenha() {
+            const pass = document.getElementById('input-new-pass').value;
+            if(pass.length < 6) return toast("Mínimo 6 caracteres", 'error');
+            const { error } = await sbClient.auth.updateUser({ password: pass });
+            if(error) toast(error.message, 'error');
+            else { toast("Senha alterada!", 'success'); closeModal('change-pass'); }
+        }
+
+        async function alterarPin() {
+            const pin = document.getElementById('input-change-pin').value;
+            if(pin.length !== 4) return toast("PIN deve ter 4 dígitos", 'error');
+            const { error } = await sbClient.from('motoboys').update({ pin_carteira: pin }).eq('id', userSession.user.id);
+            if(error) toast("Erro ao alterar PIN", 'error');
+            else { toast("PIN alterado!", 'success'); closeModal('change-pin'); }
+        }
+
+        // --- CRUD E LOGIN ---
+        async function fazerLogin() {
+            const e = document.getElementById('log-email').value, p = document.getElementById('log-senha').value;
+            if(!e || !p) return toast('Preencha tudo', 'error');
+            document.getElementById('btn-login').innerText = "...";
+            const { data, error } = await sbClient.auth.signInWithPassword({ email:e, password:p });
+            if (error) { toast(error.message, 'error'); document.getElementById('btn-login').innerText = "ENTRAR"; } else { location.reload(); }
+        }
+
+        async function enviarCadastro() {
+            const d={nome:$('#cad-nome').val(),cpf:$('#cad-cpf').val(),nasc:$('#cad-nasc').val(),idade:$('#cad-idade').val(),zap:$('#cad-zap').val(),cep:$('#cad-cep').val(),rua:$('#cad-rua').val(),num:$('#cad-num').val(),comp:$('#cad-comp').val(),ref:$('#cad-ref').val(),eme_nome:$('#cad-eme-nome').val(),eme_zap:$('#cad-eme-zap').val(),eme_parent:$('#cad-eme-parent').val(),moto_mod:$('#moto-modelo').val(),moto_cor:$('#moto-cor').val(),moto_placa:$('#moto-placa').val().toUpperCase(),email:$('#cad-email').val(),senha:$('#cad-senha').val()};
+            if(Object.values(d).some(v=>v===''&&v!==d.comp)) return toast("Preencha campos obrigatórios", 'error');
+            
+            let disp=[]; if($('#disp-integral').is(':checked'))disp.push("Integral"); else { if($('#disp-manha').is(':checked'))disp.push("Manhã"); if($('#disp-tarde').is(':checked'))disp.push("Tarde"); if($('#disp-noite').is(':checked'))disp.push("Noite"); } if($('#disp-extra').is(':checked'))disp.push("Renda Extra"); if(!disp.length) return toast("Selecione disponibilidade", 'error');
+            
+            $('#btn-cadastrar').text("Enviando..."); 
+            const{data,error}=await sbClient.auth.signUp({email:d.email,password:d.senha});
+            if(error) { toast(error.message, 'error'); $('#btn-cadastrar').text("CADASTRAR"); return; }
+            
+            if(data.user){
+                await sbClient.from('motoboys').insert({id:data.user.id,nome:d.nome,cpf:d.cpf,data_nascimento:d.nasc,idade:parseInt(d.idade),whatsapp:d.zap,cep:d.cep,rua:d.rua,numero:d.num,complemento:d.comp,referencia:d.ref,emerg_nome:d.eme_nome,emerg_zap:d.eme_zap,emerg_parentesco:d.eme_parent,modelo:d.moto_mod,cor_moto:d.moto_cor,placa:d.moto_placa,disponibilidade:disp.join(', '),status:'Pendente',pin_carteira:'0000'});
+                await sbClient.from('profiles').insert({id:data.user.id,responsavel:d.nome,funcao:'motoboy',modelo_moto:d.moto_mod,cor_moto:d.moto_cor,placa_moto:d.moto_placa,whatsapp_responsavel:d.zap});
+                toast("Cadastro Enviado!", 'success'); location.reload();
+            }
+        }
+
+        async function savePerfil() {
+            const u = { 
+                whatsapp: document.getElementById('perf-zap').value, data_nascimento: document.getElementById('perf-nasc').value, idade: parseInt(document.getElementById('perf-idade').value),
+                cep: document.getElementById('perf-cep').value, rua: document.getElementById('perf-rua').value, numero: document.getElementById('perf-num').value, complemento: document.getElementById('perf-comp').value, referencia: document.getElementById('perf-ref').value,
+                emerg_nome: document.getElementById('perf-eme-nome').value, emerg_zap: document.getElementById('perf-eme-zap').value, emerg_parentesco: document.getElementById('perf-eme-parent').value,
+                modelo: document.getElementById('perf-modelo').value, cor_moto: document.getElementById('perf-cor').value, placa: document.getElementById('perf-placa').value.toUpperCase()
+            };
+            const btn = document.getElementById('btn-update-perf'); btn.innerText = "...";
+            await sbClient.from('motoboys').update(u).eq('id', userSession.user.id);
+            await sbClient.from('profiles').update({whatsapp_responsavel:u.whatsapp, modelo_moto:u.modelo, placa_moto:u.placa, cor_moto:u.cor_moto}).eq('id', userSession.user.id);
+            toast("Perfil Atualizado!", 'success'); btn.innerText = "SALVAR DADOS";
+        }
+
+        // UTILS
         function toast(msg, type='info') { const b=document.getElementById('toast-box'), t=document.createElement('div'); t.className=`toast ${type}`; t.innerHTML=`<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'} text-lg"></i><span>${msg}</span>`; b.appendChild(t); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},3000); }
         function logout() { if(confirm("Sair?")) { sbClient.auth.signOut(); localStorage.clear(); location.reload(); } }
         function calcIdade() { const n=document.getElementById('cad-nasc').value; if(n) document.getElementById('cad-idade').value=(new Date().getFullYear()-new Date(n).getFullYear())+' anos'; }
         function toggleIntegral(){ const i=document.getElementById('disp-integral').checked; document.querySelectorAll('.chk-item input:not(#disp-integral):not(#disp-extra)').forEach(e=>{e.checked=i;e.disabled=i;}); }
-        function sacar() { const v=document.getElementById('valor-saque').value; if(v) window.open(`https://wa.me/${ADMIN_ZAP}?text=Solicito saque de R$ ${v}`, '_blank'); }
+        function sacar() { const v=document.getElementById('valor-saque').value; if(!v || v<=0) return toast("Valor inválido", 'error'); checkPinAndWithdraw(); }
+        async function checkPinAndWithdraw() { const { data } = await sbClient.from('motoboys').select('pin_carteira').eq('id', userSession.user.id).single(); if (!data.pin_carteira || data.pin_carteira === '0000') { openModal('create-pin'); } else { openModal('validate-pin', 'saque'); } }
         function zap() { window.open(`https://wa.me/55${pedidoAtual.telefone_destinatario.replace(/\D/g,'')}`, '_blank'); }
         function gps(t) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(t==='origem'?pedidoAtual.origem:pedidoAtual.destino)}`,'_blank'); }
         function copiar(t) { navigator.clipboard.writeText(t==='origem'?pedidoAtual.origem:pedidoAtual.destino); toast("Copiado!", 'success'); }
-        function modalPin(s) { document.getElementById('modal-pin').classList.toggle('hidden-force', !s); if(s) document.getElementById('input-pin').value=''; }
         
         async function aceitar(id) { document.getElementById('radar-list').innerHTML=''; const { error } = await sbClient.from('pedidos').update({ status:'pendente', entregador_id:userSession.user.id }).eq('id',id).eq('status','solicitado'); if(error){toast("Perdeu a vez!", 'error'); loadRadar();} else checkActive(); }
-        async function validar() { if(document.getElementById('input-pin').value != pedidoAtual.pin_entrega) return toast("PIN Incorreto", 'error'); const liq=parseFloat(document.getElementById('active-valor').innerText); const novo=parseFloat(document.getElementById('header-saldo').innerText.replace('R$ ',''))+liq; document.getElementById('header-saldo').innerText=`R$ ${novo.toFixed(2)}`; await sbClient.from('pedidos').update({status:'concluido'}).eq('id',pedidoAtual.id); await sbClient.from('motoboys').update({saldo:novo}).eq('id',userSession.user.id); toast("Concluído!", 'success'); modalPin(false); checkActive(); }
         async function cancelar() { if(!confirm("Cancelar?"))return; await sbClient.from('pedidos').update({status:'solicitado',entregador_id:null}).eq('id',pedidoAtual.id); checkActive(); }
         async function loadExtrato() { const l=document.getElementById('history-list'); l.innerHTML='<div class="text-center opacity-50">Carregando...</div>'; const {data}=await sbClient.from('pedidos').select('*').eq('entregador_id',userSession.user.id).eq('status','concluido').order('created_at',{ascending:false}).limit(20); l.innerHTML=''; data?.forEach(p=>{ l.innerHTML+=`<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-[10px] text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${(p.valor_frete-(p.valor_frete*((p.taxa_app_aplicada||10)/100))).toFixed(2)}</p></div>`; }); }
 
-        $(document).ready(function(){ $('#cad-cpf, #perf-cpf').mask('000.000.000-00'); $('#cad-zap, #cad-eme-zap, #perf-zap').mask('(00) 00000-0000'); $('#cad-cep, #perf-cep').mask('00000-000'); });
+        $(document).ready(function(){ $('#cad-cpf, #perf-cpf').mask('000.000.000-00'); $('#cad-zap, #cad-eme-zap, #perf-zap, #perf-eme-zap').mask('(00) 00000-0000'); $('#cad-cep, #perf-cep').mask('00000-000'); });
     </script>
 </body>
 </html>
