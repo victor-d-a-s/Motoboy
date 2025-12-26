@@ -15,415 +15,529 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
     <style>
-        /* --- CORE --- */
-        body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; overflow: hidden; width: 100vw; height: 100vh; user-select: none; -webkit-tap-highlight-color: transparent; }
+        /* --- ESTILO GERAL --- */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; overflow: hidden; width: 100vw; height: 100vh; user-select: none; margin: 0; padding: 0; }
         
-        /* GERENCIADOR DE ESTADOS (CRÍTICO) */
-        .app-state { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow-y: auto; overflow-x: hidden; }
-        .app-state.active { display: block; }
-        
-        /* CLASSES UTILITÁRIAS */
-        .hidden-force { display: none !important; }
-        
-        /* --- ESTILO 99 DRIVER --- */
-        
-        /* Fundo de Mapa Simulado */
-        .map-bg {
-            position: fixed; inset: 0; z-index: 0;
-            background-color: #151f2e;
-            background-image: 
-                radial-gradient(#1f2937 15%, transparent 16%),
-                radial-gradient(#1f2937 15%, transparent 16%);
-            background-size: 20px 20px;
-            background-position: 0 0, 10px 10px;
-            opacity: 0.4;
+        /* SISTEMA DE ESTADOS (CAMADAS) - CORREÇÃO DA SOBREPOSIÇÃO */
+        .app-layer { 
+            display: none; /* Tudo oculto por padrão */
+            position: absolute; inset: 0; width: 100%; height: 100%; 
+            background-color: #111827; z-index: 10; 
+            overflow-y: auto; overflow-x: hidden;
         }
+        
+        /* O Javascript vai controlar qual ID fica com display: flex/block */
+        
+        /* LOADING FIXO (Z-Index Infinito) */
+        #layer-splash { z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111827; }
 
-        /* Botão GO (Iniciar) */
-        .btn-go-container {
-            position: fixed; bottom: 100px; left: 0; right: 0;
-            display: flex; justify-content: center; z-index: 20;
-            pointer-events: none; /* Permite clicar no mapa ao redor */
-        }
-        .btn-go {
-            pointer-events: auto;
-            width: 80px; height: 80px; border-radius: 50%;
-            background: #10B981; border: 4px solid #065F46;
-            color: white; font-size: 14px; font-weight: 900;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
-            transition: 0.3s; cursor: pointer; text-transform: uppercase;
-        }
-        .btn-go:active { transform: scale(0.95); }
-        .btn-go.offline { background: #EF4444; border-color: #7F1D1D; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); }
+        /* COMPONENTES */
+        .input-dark { background: #1F2937; border: 1px solid #374151; color: white; padding: 16px; border-radius: 12px; width: 100%; outline: none; font-size: 16px; transition: 0.3s; }
+        .input-dark:focus { border-color: #FBBF24; box-shadow: 0 0 0 2px rgba(251,191,36,0.2); }
+        
+        .btn-primary { background: #FBBF24; color: #111827; font-weight: 800; padding: 16px; border-radius: 12px; width: 100%; text-transform: uppercase; font-size: 16px; box-shadow: 0 4px 15px rgba(251,191,36,0.3); }
+        .btn-primary:active { transform: scale(0.98); }
 
-        /* Header Flutuante */
-        .floating-header {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-            padding: 15px; display: flex; justify-content: space-between; align-items: flex-start;
-            background: linear-gradient(to bottom, rgba(17,24,39,0.9) 0%, transparent 100%);
+        /* MODAIS (CORREÇÃO VISUAL) */
+        .modal-overlay { 
+            position: fixed; inset: 0; z-index: 5000; 
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; padding: 20px;
         }
+        .modal-overlay.active { display: flex !important; }
         
-        /* Cards e Painéis */
-        .bottom-sheet {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: #1F2937; border-top-left-radius: 20px; border-top-right-radius: 20px;
-            padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.5); z-index: 60;
-            transform: translateY(0); transition: 0.3s;
+        .modal-box { 
+            background: #1F2937; border: 1px solid #374151; 
+            width: 100%; max-width: 340px; padding: 24px; 
+            border-radius: 24px; text-align: center; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* HEADER E MENU APP */
+        .floating-header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding: 15px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(to bottom, rgba(17,24,39,0.95), transparent); }
         
-        /* Inputs & Buttons Gerais */
-        .input-dark { background: #374151; border: 1px solid #4B5563; color: white; padding: 14px; border-radius: 12px; width: 100%; outline: none; }
-        .btn-primary { background: #FBBF24; color: #111827; font-weight: 800; padding: 14px; border-radius: 12px; width: 100%; text-transform: uppercase; }
-        
-        /* Menu Lateral */
-        #side-menu { position: fixed; top: 0; left: -100%; width: 280px; height: 100%; background: #111827; z-index: 200; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.5); border-right: 1px solid #374151; }
+        #side-menu { position: fixed; top: 0; left: -100%; width: 280px; height: 100%; background: #1F2937; z-index: 200; transition: 0.3s; box-shadow: 4px 0 20px rgba(0,0,0,0.5); border-right: 1px solid #374151; display: flex; flex-direction: column; }
         #side-menu.open { left: 0; }
-        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 199; opacity: 0; visibility: hidden; transition: 0.3s; }
-        .menu-overlay.open { opacity: 1; visibility: visible; }
+        .menu-overlay-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 199; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .menu-overlay-bg.open { opacity: 1; pointer-events: auto; }
         
-        /* Modais */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        
-        /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1F2937; border-top: 1px solid #374151; display: flex; justify-content: space-around; padding: 12px 0; z-index: 50; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #9CA3AF; font-size: 10px; transition: 0.2s; }
+        .menu-item { padding: 16px 24px; color: #D1D5DB; display: flex; align-items: center; gap: 16px; border-left: 4px solid transparent; transition: 0.2s; cursor: pointer; font-size: 15px; }
+        .menu-item:active { background: #374151; }
+        .menu-item i { width: 24px; text-align: center; color: #FBBF24; }
+
+        /* POWER BUTTON */
+        .power-container { position: fixed; bottom: 100px; left: 0; right: 0; display: flex; justify-content: center; z-index: 45; pointer-events: none; }
+        .btn-power { 
+            pointer-events: auto; width: 72px; height: 72px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; font-size: 28px; color: white;
+            background: #1F2937; border: 4px solid #374151; box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: 0.3s;
+        }
+        .btn-power:active { transform: scale(0.9); }
+        .btn-power.online { background: #10B981; border-color: #059669; box-shadow: 0 0 25px rgba(16, 185, 129, 0.5); }
+        .btn-power.offline { background: #EF4444; border-color: #991B1B; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* TOAST */
+        #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 350px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: #374151; color: white; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 10px; border: 1px solid #4B5563; animation: slideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: auto; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hidden-force { display: none !important; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1F2937; border-top: 1px solid #374151; display: flex; justify-content: space-around; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)) 0; z-index: 50; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #9CA3AF; font-size: 10px; transition: 0.2s; }
         .nav-item.active { color: #FBBF24; font-weight: bold; transform: translateY(-2px); }
         .nav-item i { font-size: 20px; margin-bottom: 4px; }
-
-        /* Toast */
-        #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 500; display: flex; flex-direction: column; gap: 10px; width: 90%; pointer-events: none; }
-        .toast { background: #374151; color: white; padding: 12px 20px; border-radius: 50px; font-weight: 600; font-size: 13px; opacity: 0; transform: translateY(-20px); transition: 0.3s; pointer-events: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; border: 1px solid #4B5563; }
-        .toast.show { opacity: 1; transform: translateY(0); }
+        
+        /* BOTTOM SHEET */
+        #sheet-activities { position: fixed; bottom: 0; left: 0; right: 0; background: #1F2937; border-top-left-radius: 24px; border-top-right-radius: 24px; z-index: 150; transform: translateY(100%); transition: transform 0.3s; padding-bottom: calc(20px + env(safe-area-inset-bottom)); box-shadow: 0 -10px 40px rgba(0,0,0,0.6); }
+        #sheet-activities.open { transform: translateY(0); }
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .sheet-overlay.open { opacity: 1; visibility: visible; }
     </style>
 </head>
 <body>
 
     <audio id="audio-alert" preload="auto"></audio>
 
-    <div id="state-loading" class="app-state active bg-gray-900 flex flex-col items-center justify-center z-[1000]">
-        <div class="mb-6 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
+    <div id="layer-splash" class="app-layer" style="display: flex;">
+        <div class="mb-4 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
         <div class="w-8 h-8 border-4 border-gray-700 border-t-yellow-500 rounded-full animate-spin"></div>
-        <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Carregando...</p>
+        <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Iniciando App...</p>
     </div>
 
-    <div id="state-guest" class="app-state bg-gray-900">
-        <div id="screen-login" class="h-full flex flex-col justify-center p-8">
+    <div id="layer-guest" class="app-layer">
+        <div id="view-login" class="h-full flex flex-col justify-center p-8">
             <div class="mb-10 text-center">
-                <div class="inline-flex p-5 rounded-full bg-yellow-500/10 text-yellow-500 mb-4 border border-yellow-500/20"><i class="fas fa-bolt text-4xl"></i></div>
+                <div class="inline-flex p-5 rounded-full bg-yellow-500/10 text-yellow-500 mb-6 border border-yellow-500/20"><i class="fas fa-bolt text-4xl"></i></div>
                 <h1 class="text-3xl font-bold text-white">Drop Driver</h1>
-                <p class="text-gray-500 text-sm">App do Parceiro</p>
+                <p class="text-gray-500 text-sm">Parceiro</p>
             </div>
             <div class="space-y-4">
-                <input type="email" id="log-email" class="input-dark" placeholder="E-mail">
-                <input type="password" id="log-senha" class="input-dark" placeholder="Senha">
-                <button onclick="fazerLogin()" id="btn-login" class="btn-primary shadow-lg">ENTRAR</button>
-                <p onclick="toggleGuestScreen('cadastro')" class="text-gray-500 text-xs mt-4 text-center p-4 cursor-pointer">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
+                <div class="relative"><i class="fas fa-envelope input-icon"></i><input type="email" id="log-email" class="input-dark" placeholder="E-mail"></div>
+                <div class="relative"><i class="fas fa-lock input-icon"></i><input type="password" id="log-senha" class="input-dark" placeholder="Senha"></div>
+                <button onclick="fazerLogin()" id="btn-login" class="btn-primary mt-2 shadow-lg">ENTRAR NA CONTA</button>
+                <p onclick="toggleGuestView('cadastro')" class="text-gray-400 text-xs mt-6 text-center cursor-pointer p-4">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
             </div>
         </div>
-
-        <div id="screen-cadastro" class="h-full p-6 pt-10 hidden-force overflow-y-auto">
-            <div class="flex items-center mb-6"><button onclick="toggleGuestScreen('login')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-2">Criar Conta</h2></div>
-            <div class="space-y-4 pb-10">
-                <p class="text-yellow-500 text-xs font-bold uppercase">Pessoal</p>
+        <div id="view-cadastro" class="h-full p-6 pt-10 hidden-force overflow-y-auto">
+            <div class="flex items-center mb-6"><button onclick="toggleGuestView('login')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-2">Criar Conta</h2></div>
+            <div class="space-y-5 pb-20">
+                <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider">Dados Pessoais</p>
                 <input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo">
                 <input type="tel" id="cad-cpf" class="input-dark" placeholder="CPF">
-                <div class="flex gap-2"><input type="date" id="cad-nasc" class="input-dark w-2/3"><input type="text" id="cad-idade" class="input-dark w-1/3 text-center" placeholder="Idade" readonly></div>
+                <div class="flex gap-3"><input type="date" id="cad-nasc" class="input-dark w-2/3" onchange="calcIdade()"><input type="text" id="cad-idade" class="input-dark w-1/3 text-center" placeholder="Idade" readonly></div>
                 <input type="tel" id="cad-zap" class="input-dark" placeholder="WhatsApp">
                 
-                <p class="text-yellow-500 text-xs font-bold uppercase mt-2">Acesso</p>
+                <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider mt-2">Acesso</p>
                 <input type="email" id="cad-email" class="input-dark" placeholder="E-mail">
                 <input type="password" id="cad-senha" class="input-dark" placeholder="Senha">
                 
-                <button onclick="enviarCadastro()" id="btn-cadastrar" class="btn-primary mt-4">ENVIAR</button>
+                <button onclick="enviarCadastro()" id="btn-cadastrar" class="btn-primary mt-4 shadow-lg">FINALIZAR CADASTRO</button>
             </div>
         </div>
     </div>
 
-    <div id="state-pending" class="app-state bg-gray-900 flex flex-col justify-center items-center p-8 text-center">
-        <div class="w-24 h-24 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6 animate-pulse text-yellow-500 border border-yellow-500/30"><i class="fas fa-clock text-5xl"></i></div>
-        <h2 class="text-2xl font-bold text-white mb-2">Em Análise</h2>
-        <p class="text-gray-400 text-sm mb-8 leading-relaxed">Seu cadastro foi enviado. Aguarde a aprovação.</p>
-        <button onclick="logout()" class="text-red-400 text-sm font-bold border border-red-400/30 px-6 py-2 rounded-full">SAIR DA CONTA</button>
+    <div id="layer-pending" class="app-layer flex flex-col justify-center items-center p-8 text-center">
+        <div class="w-32 h-32 bg-yellow-500/10 rounded-full flex items-center justify-center mb-8 animate-pulse text-yellow-500 border border-yellow-500/20"><i class="fas fa-clock text-6xl"></i></div>
+        <h2 class="text-2xl font-bold text-white mb-4">Em Análise</h2>
+        <p class="text-gray-400 text-sm mb-12 leading-relaxed max-w-xs mx-auto">Seu cadastro foi recebido com sucesso. Aguarde a aprovação da administração para começar a rodar.</p>
+        <button onclick="logout()" class="text-red-400 text-sm font-bold border border-red-500/30 px-8 py-3 rounded-full hover:bg-red-500/10 transition">SAIR DA CONTA</button>
     </div>
 
-    <div id="state-app" class="app-state">
+    <div id="layer-app" class="app-layer">
         
         <div class="floating-header">
             <button onclick="toggleMenu()" class="w-10 h-10 bg-gray-800 rounded-full text-white shadow flex items-center justify-center border border-gray-700"><i class="fas fa-bars"></i></button>
-            <div class="bg-gray-800 px-4 py-2 rounded-full border border-gray-700 shadow flex items-center gap-2 cursor-pointer" onclick="toggleSaldo()">
+            <div class="bg-gray-800 px-4 py-2 rounded-full border border-gray-700 shadow flex items-center gap-2 cursor-pointer" onclick="abrirAtividades()">
                 <span class="text-[10px] text-gray-400 uppercase font-bold">SALDO</span>
                 <span id="header-saldo" class="text-sm font-bold text-green-400">R$ ****</span>
-                <i class="fas fa-eye-slash text-xs text-gray-500 ml-1" id="eye-icon"></i>
+                <i class="fas fa-eye-slash text-xs text-gray-500 ml-1" id="eye-icon" onclick="event.stopPropagation(); toggleSaldo()"></i>
             </div>
         </div>
 
-        <div id="menu-overlay" class="menu-overlay" onclick="toggleMenu()"></div>
+        <div id="menu-overlay-bg" class="menu-overlay-bg" onclick="toggleMenu()"></div>
         <div id="side-menu">
-            <div class="p-6 bg-gray-800 border-b border-gray-700 text-center pt-10">
-                <div class="relative w-20 h-20 mx-auto mb-3">
-                    <img id="menu-foto" src="https://ui-avatars.com/api/?name=User" class="w-full h-full rounded-full object-cover border-2 border-yellow-500">
-                    <label for="upload-input" class="absolute bottom-0 right-0 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer border border-gray-600"><i class="fas fa-camera text-[10px]"></i></label>
-                    <input type="file" id="upload-input" hidden accept="image/*" onchange="uploadFoto()">
+            <div class="p-6 bg-gray-800 border-b border-gray-700 flex flex-col items-center text-center pt-12">
+                <div class="relative mb-4 group">
+                    <label for="upload-foto" class="cursor-pointer block relative">
+                        <img id="menu-user-foto" src="https://ui-avatars.com/api/?name=User&background=FBBF24&color=111" class="w-24 h-24 rounded-full border-4 border-yellow-500 object-cover shadow-lg">
+                        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-camera text-white"></i></div>
+                    </label>
+                    <input type="file" id="upload-foto" hidden accept="image/*" onchange="uploadFoto()">
                 </div>
-                <h3 id="menu-nome" class="text-white font-bold text-lg leading-tight">...</h3>
-                <p id="menu-id" class="text-xs text-gray-500 font-mono mt-1">ID: ...</p>
+                <p class="text-white font-bold text-lg leading-tight" id="menu-user-name">Carregando...</p>
+                <p class="text-xs text-gray-400 mt-1 font-mono bg-gray-900 px-2 py-1 rounded" id="menu-user-id">ID: ...</p>
             </div>
-            <div class="py-2">
-                <div class="menu-item" onclick="navegar('radar')"><i class="fas fa-map-marked-alt"></i> Início</div>
-                <div class="menu-item" onclick="navegar('perfil')"><i class="fas fa-user"></i> Perfil</div>
-                <div class="menu-item text-red-400 mt-4" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</div>
+            <div class="flex-1 py-4 space-y-1 overflow-y-auto">
+                <div class="menu-item" onclick="navTo('radar')"><i class="fas fa-map-marked-alt"></i> Início</div>
+                <div class="menu-item" onclick="navTo('active')"><i class="fas fa-box"></i> Corrida Ativa</div>
+                <div class="menu-item" onclick="navTo('extract')"><i class="fas fa-wallet"></i> Ganhos</div>
+                <div class="menu-item" onclick="navTo('perfil')"><i class="fas fa-user-cog"></i> Perfil</div>
+            </div>
+            <div class="p-4 border-t border-gray-700">
+                <div class="menu-item text-red-400 justify-center border-none" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair do App</div>
             </div>
         </div>
 
-        <div class="map-bg"></div> <div id="view-radar" class="w-full h-full pt-20 pb-32 relative">
-            <div id="radar-status" class="flex flex-col items-center justify-center h-1/2 opacity-70">
-                <i class="fas fa-power-off text-4xl text-gray-600 mb-2"></i>
-                <p class="text-lg font-bold text-gray-400">Você está Offline</p>
+        <div id="view-radar" class="w-full h-full pt-20 pb-32 relative">
+            <div id="radar-off-msg" class="flex flex-col items-center justify-center h-full text-center opacity-70 pb-20">
+                <div class="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mb-6 border-4 border-gray-700"><i class="fas fa-power-off text-4xl text-gray-500"></i></div>
+                <p class="text-2xl text-white font-bold">Você está Offline</p>
+                <p class="text-sm text-gray-500 mt-2">Toque no botão abaixo para iniciar.</p>
             </div>
-            <div id="radar-list" class="px-4 space-y-3 pb-24 hidden-force overflow-y-auto h-full"></div>
-            
-            <div class="btn-go-container">
-                <button id="btn-go" class="btn-go" onclick="toggleOnline()">INICIAR</button>
+            <div id="radar-on-content" class="hidden-force h-full flex flex-col">
+                <div id="radar-empty" class="flex flex-col items-center justify-center h-full pb-32 text-center opacity-70">
+                    <div class="w-24 h-24 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 relative"><div class="absolute inset-0 border-4 border-green-500/20 rounded-full animate-ping"></div><i class="fas fa-satellite-dish text-3xl text-green-500"></i></div>
+                    <p class="text-sm text-gray-400">Procurando corridas...</p>
+                </div>
+                <div id="radar-list" class="space-y-4 px-4 pb-32 overflow-y-auto"></div>
+            </div>
+            <div class="power-container">
+                <button id="btn-power" class="btn-power offline" onclick="toggleRadar()"><i class="fas fa-power-off"></i></button>
             </div>
         </div>
 
-        <div id="view-perfil" class="w-full h-full pt-20 px-4 pb-24 hidden-force overflow-y-auto bg-gray-900 z-20 absolute top-0">
-            <h2 class="text-xl font-bold text-white mb-4">Perfil</h2>
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="openModal('pass')" class="bg-gray-800 p-3 rounded-xl border border-gray-700 text-xs font-bold text-gray-300"><i class="fas fa-lock block text-lg mb-1"></i> SENHA</button>
-                    <button onclick="openModal('pin')" class="bg-gray-800 p-3 rounded-xl border border-gray-700 text-xs font-bold text-gray-300"><i class="fas fa-key block text-lg mb-1"></i> PIN</button>
-                </div>
-                <div class="dark-card p-4 space-y-3">
-                    <p class="text-yellow-500 text-xs font-bold uppercase">Dados</p>
-                    <input type="text" id="perf-nome" class="input-dark">
-                    <input type="text" id="perf-cpf" class="input-dark" readonly>
-                    <input type="tel" id="perf-zap" class="input-dark">
-                </div>
-                <button onclick="savePerfil()" id="btn-save-perf" class="btn-primary">SALVAR</button>
+        <div id="view-active" class="w-full h-full pt-24 px-4 hidden-force">
+            <div id="active-empty" class="flex flex-col items-center justify-center h-[60vh] text-center opacity-50"><i class="fas fa-check-circle text-5xl text-gray-700 mb-4"></i><p class="text-lg text-gray-300 font-bold">Sem Corridas</p><button onclick="navTo('radar')" class="mt-4 text-yellow-500 text-sm font-bold">Voltar ao Radar</button></div>
+            <div id="active-content" class="hidden-force">
+                <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-4 shadow-lg"><div class="flex items-center gap-3"><div class="bg-blue-900/30 text-blue-400 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-route"></i></div><div><p class="text-[10px] text-gray-400 uppercase font-bold">Status</p><p class="text-sm font-bold text-white" id="active-status-text">EM ROTA</p></div></div><div class="text-right"><p class="text-[10px] text-gray-400 uppercase font-bold">Ganho</p><p class="text-xl font-bold text-green-400">R$ <span id="active-valor">0,00</span></p></div></div>
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-4 shadow-lg"><div class="mb-6 pb-6 border-b border-gray-700 relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-blue-500 rounded-full"></div><p class="text-[10px] text-blue-400 font-bold uppercase mb-1 ml-2">COLETA</p><div class="flex justify-between"><p class="text-white font-medium text-sm ml-2" id="active-origem">...</p><div class="flex gap-2"><button onclick="copiar('origem')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('origem')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div></div><div class="relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-green-500 rounded-full"></div><p class="text-[10px] text-green-400 font-bold uppercase mb-1 ml-2">ENTREGA</p><div class="flex justify-between mb-4"><div class="ml-2"><p class="text-white font-medium text-sm" id="active-destino">...</p><p class="text-xs text-gray-400 mt-1"><i class="fas fa-user"></i> <span id="active-cliente-nome">...</span></p></div><div class="flex gap-2"><button onclick="copiar('destino')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('destino')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div><button onclick="zap()" class="w-full bg-green-600/20 text-green-400 border border-green-600/50 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-lg"></i> Chamar Cliente</button></div></div>
+                <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-6"><div><p class="text-xs text-gray-400 uppercase font-bold mb-1">Pagamento</p><p class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-hand-holding-usd text-yellow-500"></i> <span id="active-forma">...</span></p></div><span class="text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded font-bold uppercase">Cobrar</span></div>
+                <button id="btn-iniciar" onclick="iniciarEntrega()" class="btn-primary shadow-lg mb-4 hidden-force">INICIAR ENTREGA</button>
+                <button id="btn-finalizar" onclick="openModal('validate-pin', 'entrega')" class="btn-primary shadow-lg mb-4 hidden-force">FINALIZAR</button>
+                <button onclick="cancelar()" class="w-full text-red-500/60 text-xs py-2 hover:text-red-500">Cancelar (Emergência)</button>
+            </div>
+        </div>
+
+        <div id="view-extract" class="w-full h-full pt-24 px-4 hidden-force">
+            <h2 class="text-xl font-bold text-white mb-4">Financeiro</h2>
+            <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 mb-6 shadow-lg"><p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Saldo Disponível</p><p class="text-3xl font-bold text-white mb-4" id="saque-saldo">R$ 0,00</p><div class="flex gap-2"><input type="number" id="valor-saque" class="input-dark" placeholder="Valor (R$)"><button onclick="sacar()" class="bg-green-600 text-white font-bold px-6 rounded-xl shadow-lg">SACAR</button></div></div>
+            <div class="flex gap-2 mb-4"><input type="date" id="filtro-ini" class="input-dark p-2 text-xs h-10 w-full"><input type="date" id="filtro-fim" class="input-dark p-2 text-xs h-10 w-full"><button onclick="loadExtrato()" class="bg-blue-600 h-10 w-12 rounded-xl text-white flex items-center justify-center"><i class="fas fa-search"></i></button></div>
+            <div id="history-list" class="space-y-3 pb-24"></div>
+        </div>
+
+        <div id="view-perfil" class="w-full h-full pt-24 px-4 pb-24 hidden-force overflow-y-auto">
+            <h2 class="text-xl font-bold text-white mb-4">Meus Dados</h2>
+            <div class="dark-card p-5 space-y-6">
+                <div class="grid grid-cols-2 gap-3 mb-2"><button onclick="openModal('change-pass')" class="bg-gray-800 border border-gray-700 p-3 rounded-xl text-xs font-bold text-gray-300 hover:bg-gray-700"><i class="fas fa-lock mb-1 block text-lg"></i> SENHA</button><button onclick="openModal('change-pin')" class="bg-gray-800 border border-gray-700 p-3 rounded-xl text-xs font-bold text-gray-300 hover:bg-gray-700"><i class="fas fa-key mb-1 block text-lg"></i> PIN SAQUE</button></div>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Pessoal</p><div class="space-y-2"><input type="text" id="perf-nome" class="input-dark" placeholder="Nome"><div class="flex gap-2"><input type="text" id="perf-cpf" class="input-dark" readonly><input type="text" id="perf-idade" class="input-dark text-center" readonly></div><input type="tel" id="perf-zap" class="input-dark"></div></div>
+                <div><p class="text-yellow-500 text-[10px] font-bold uppercase mb-2">Moto</p><div class="flex gap-2 mb-2"><input type="text" id="perf-modelo" class="input-dark" placeholder="Modelo"><input type="text" id="perf-cor" class="input-dark" placeholder="Cor"></div><input type="text" id="perf-placa" class="input-dark text-center uppercase font-bold" placeholder="PLACA"></div>
+                <button onclick="savePerfil()" id="btn-update-perf" class="btn-primary">SALVAR DADOS</button>
             </div>
         </div>
 
         <div class="bottom-nav">
-            <div class="nav-item active" id="nav-radar" onclick="navegar('radar')"><i class="fas fa-home"></i>Início</div>
-            <div class="nav-item" id="nav-perfil" onclick="navegar('perfil')"><i class="fas fa-user"></i>Conta</div>
-        </div>
-
-    </div>
-
-    <div id="modal-pin" class="modal-overlay hidden-force">
-        <div class="bg-gray-800 border border-gray-700 w-full max-w-xs p-6 rounded-2xl text-center relative shadow-2xl">
-            <button onclick="closeModal('pin')" class="absolute top-4 right-4 text-gray-500"><i class="fas fa-times"></i></button>
-            <h3 class="text-lg font-bold text-white mb-2">Alterar PIN</h3>
-            <p class="text-xs text-gray-400 mb-4">Use 4 dígitos numéricos.</p>
-            <input type="tel" id="input-pin" maxlength="4" class="bg-gray-900 border border-gray-600 text-white text-center text-3xl p-3 rounded-xl w-full mb-4 tracking-widest outline-none focus:border-yellow-500" placeholder="••••">
-            <button onclick="salvarPin()" class="btn-primary">SALVAR</button>
+            <div class="nav-item active" id="nav-radar" onclick="navTo('radar')"><i class="fas fa-map-marked-alt"></i>Início</div>
+            <div class="nav-item" id="nav-active" onclick="navTo('active')"><i class="fas fa-box"></i>Corrida</div>
+            <div class="nav-item" id="nav-extract" onclick="navTo('extract')"><i class="fas fa-wallet"></i>Ganhos</div>
+            <div class="nav-item" id="nav-perfil" onclick="navTo('perfil')"><i class="fas fa-user"></i>Conta</div>
         </div>
     </div>
 
-    <div id="modal-pass" class="modal-overlay hidden-force">
-        <div class="bg-gray-800 border border-gray-700 w-full max-w-xs p-6 rounded-2xl text-center relative shadow-2xl">
-            <button onclick="closeModal('pass')" class="absolute top-4 right-4 text-gray-500"><i class="fas fa-times"></i></button>
-            <h3 class="text-lg font-bold text-white mb-4">Nova Senha</h3>
-            <input type="password" id="input-pass" class="input-dark mb-4" placeholder="Mínimo 6 caracteres">
-            <button onclick="salvarSenha()" class="btn-primary">SALVAR</button>
+    <div id="modal-validate-pin" class="modal-overlay"><div class="modal-box"><button onclick="closeModal('validate-pin')" class="absolute top-4 right-4 text-gray-500"><i class="fas fa-times text-xl"></i></button><h3 class="text-xl font-bold text-white mb-2">Validar</h3><p class="text-sm text-gray-400 mb-6" id="modal-val-desc">Digite o PIN</p><input type="tel" id="input-val-pin" maxlength="4" class="input-dark text-center text-3xl tracking-[0.5em] mb-6 font-bold" placeholder="••••"><button onclick="processarAcaoPin()" class="btn-primary">CONFIRMAR</button></div></div>
+    <div id="modal-create-pin" class="modal-overlay"><div class="modal-box"><h3 class="text-lg font-bold text-white mb-2">Criar PIN</h3><p class="text-xs text-gray-400 mb-6">Para segurança dos saques.</p><input type="tel" id="input-new-pin" maxlength="4" class="input-dark text-center text-3xl tracking-[0.5em] mb-6 font-bold" placeholder="••••"><button onclick="criarPin()" class="btn-primary">SALVAR PIN</button></div></div>
+    <div id="modal-change-pass" class="modal-overlay"><div class="modal-box"><button onclick="closeModal('change-pass')" class="absolute top-4 right-4 text-gray-500"><i class="fas fa-times text-xl"></i></button><h3 class="text-lg font-bold text-white mb-6">Alterar Senha</h3><input type="password" id="input-new-pass" class="input-dark mb-6" placeholder="Nova Senha"><button onclick="alterarSenha()" class="btn-primary">SALVAR</button></div></div>
+    <div id="modal-change-pin" class="modal-overlay"><div class="modal-box"><button onclick="closeModal('change-pin')" class="absolute top-4 right-4 text-gray-500"><i class="fas fa-times text-xl"></i></button><h3 class="text-lg font-bold text-white mb-6">Redefinir PIN</h3><input type="tel" id="input-change-pin" maxlength="4" class="input-dark text-center text-3xl tracking-[0.5em] mb-6 font-bold" placeholder="••••"><button onclick="alterarPin()" class="btn-primary">SALVAR</button></div></div>
+
+    <div id="sheet-overlay" class="sheet-overlay" onclick="fecharAtividades()"></div>
+    <div id="sheet-activities">
+        <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-6"></div>
+        <div class="px-6">
+            <h3 class="text-xl font-bold text-white mb-6">Resumo do Dia</h3>
+            <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 mb-4 text-center"><p class="text-gray-400 text-xs uppercase mb-1">Saldo Atual</p><p class="text-3xl font-bold text-green-400" id="sheet-saldo">R$ 0,00</p></div>
+            <div class="grid grid-cols-2 gap-4"><div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center"><i class="fas fa-check-circle text-green-500 text-xl mb-2"></i><p class="text-2xl font-bold text-white" id="sheet-finalizadas">0</p><p class="text-[10px] text-gray-400 uppercase">Entregues</p></div><div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center"><i class="fas fa-times-circle text-red-500 text-xl mb-2"></i><p class="text-2xl font-bold text-white" id="sheet-canceladas">0</p><p class="text-[10px] text-gray-400 uppercase">Canceladas</p></div></div>
         </div>
     </div>
 
     <div id="toast-box"></div>
 
     <script>
-        // CONFIGURAÇÃO
         const SUPABASE_URL = 'https://ofpnnijkhgsjarixoyhg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcG5uaWpraGdzamFyaXhveWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjUyNzYsImV4cCI6MjA4MDY0MTI3Nn0.dNOIIETmTz3l1HvhuT-ihAiymJqiaYZnklzzBzDGCFU';
+        const ADMIN_ZAP = "5584982005039";
         
-        let sbClient, userSession, isOnline = false;
-        let saldoReal = 0, isSaldoVisible = false;
+        let sbClient, userSession, isOnline = false, pedidoAtual = null, currentAction = '', saldoReal = 0, isSaldoVisible = false;
 
-        // INICIALIZAÇÃO SEGURA
+        // --- SISTEMA DE ESTADOS (CAMADAS) ---
+        function setLayer(layerName) {
+            document.querySelectorAll('.app-layer').forEach(el => el.style.display = 'none');
+            document.getElementById('layer-' + layerName).style.display = 'flex'; // ou block
+            if(layerName === 'app') document.getElementById('layer-app').style.display = 'block';
+        }
+
+        // --- INICIALIZAÇÃO ---
         (async function init() {
             try {
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 
-                // Timeout de Segurança (2s)
-                setTimeout(() => { if(document.getElementById('state-loading').style.display !== 'none') changeState('guest'); }, 2000);
+                // Fallback de segurança (Se travar no splash por 3s, joga pro login)
+                const fallback = setTimeout(() => {
+                    if (document.getElementById('layer-splash').style.display !== 'none') setLayer('guest');
+                }, 3000);
 
                 const { data } = await sbClient.auth.getSession();
                 if (data.session) {
                     userSession = data.session;
-                    await loadUser();
+                    await loadPerfil();
                 } else {
-                    changeState('guest');
+                    setLayer('guest');
                 }
+                clearTimeout(fallback);
             } catch (e) {
                 console.error(e);
-                changeState('guest'); // Falha segura
+                setLayer('guest');
             }
         })();
 
-        // GERENCIADOR DE ESTADOS (CAMADAS)
-        function changeState(state) {
-            document.querySelectorAll('.app-state').forEach(el => el.classList.remove('active'));
-            document.getElementById('state-' + state).classList.add('active');
+        // --- LÓGICA DE TELAS ---
+        function toggleGuestView(view) {
+            document.getElementById('view-login').classList.toggle('hidden-force', view !== 'login');
+            document.getElementById('view-cadastro').classList.toggle('hidden-force', view !== 'cadastro');
+        }
+
+        function navTo(viewId) {
+            if(viewId === 'radar' && pedidoAtual) viewId = 'active';
             
-            // Remove o splash se ainda estiver visível
-            const splash = document.getElementById('state-loading');
-            if (splash.classList.contains('active') && state !== 'loading') splash.classList.remove('active');
-        }
-
-        function toggleGuestScreen(screen) {
-            document.getElementById('screen-login').classList.toggle('hidden-force', screen !== 'login');
-            document.getElementById('screen-cadastro').classList.toggle('hidden-force', screen !== 'cadastro');
-        }
-
-        function navigate(screenId) {
-            document.querySelectorAll('#member-zone > div[id^="view-"]').forEach(el => el.classList.add('hidden-force'));
-            document.getElementById('view-' + screenId).classList.remove('hidden-force');
+            // Fecha menu
             document.getElementById('side-menu').classList.remove('open');
-            document.getElementById('menu-overlay').classList.remove('open');
+            document.getElementById('menu-overlay-bg').classList.remove('open');
+
+            // Troca tela
+            document.querySelectorAll('#layer-app > div[id^="view-"]').forEach(el => el.classList.add('hidden-force'));
+            document.getElementById('view-' + viewId).classList.remove('hidden-force');
             
-            // Atualiza barra inferior
+            // Atualiza Tab
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const navBtn = document.getElementById('nav-' + screenId);
-            if(navBtn) navBtn.classList.add('active');
+            if(document.getElementById('nav-'+viewId)) document.getElementById('nav-'+viewId).classList.add('active');
         }
 
-        // --- LÓGICA DE USUÁRIO ---
-        async function loadUser() {
-            const { data } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            if (!data) { logout(); return; }
+        function toggleMenu() {
+            document.getElementById('side-menu').classList.toggle('open');
+            document.getElementById('menu-overlay-bg').classList.toggle('open');
+        }
 
+        // --- DADOS DO USUÁRIO ---
+        async function loadPerfil() {
+            const { data } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
+            if(!data) { logout(); return; }
+
+            // LÓGICA DE STATUS
             if (data.status !== 'Aprovado') {
-                changeState('pending');
+                setLayer('pending');
                 return;
             }
 
-            // Preencher dados
-            document.getElementById('menu-nome').innerText = data.nome;
-            document.getElementById('menu-id').innerText = `ID: ${data.id.split('-')[0]}`;
-            if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
+            setLayer('app');
+            preencherPerfil(data);
             
-            saldoReal = data.saldo || 0;
-            updateSaldoDisplay();
+            document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
+            document.getElementById('menu-user-id').innerText = `ID: ${data.id.split('-')[0]}`;
+            document.getElementById('header-id-user').innerText = `ID: ${data.id.split('-')[0]}`;
+            if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
 
-            // Preencher Perfil
-            ['nome','cpf','whatsapp'].forEach(f => {
-                if(document.getElementById('perf-'+(f==='whatsapp'?'zap':f))) 
-                    document.getElementById('perf-'+(f==='whatsapp'?'zap':f)).value = data[f] || '';
+            // Som
+            sbClient.from('app_config').select('som_alerta_url').single().then(({data}) => { 
+                if(data?.som_alerta_url) document.getElementById('audio-alert').src = data.som_alerta_url;
             });
-
-            changeState('app');
-            // Iniciar Radar Realtime aqui se necessário
+            startRealtime();
+            navTo('radar');
         }
 
-        // --- AÇÕES ---
+        function preencherPerfil(d) {
+            saldoReal = d.saldo || 0;
+            updateSaldoUI();
+            
+            const map = {'perf-nome':'nome','perf-cpf':'cpf','perf-zap':'whatsapp','perf-modelo':'modelo','perf-cor':'cor_moto','perf-placa':'placa'};
+            for(let id in map) { if(document.getElementById(id)) document.getElementById(id).value = d[map[id]]||''; }
+            if(d.data_nascimento) document.getElementById('perf-nasc').value = d.data_nascimento;
+            if(d.idade) document.getElementById('perf-idade').value = d.idade + ' anos';
+        }
+
+        function updateSaldoUI() {
+            const txt = isSaldoVisible ? `R$ ${saldoReal.toFixed(2)}` : "R$ ****";
+            document.getElementById('header-saldo').innerText = txt;
+            document.getElementById('saque-saldo').innerText = `R$ ${saldoReal.toFixed(2)}`;
+            document.getElementById('eye-icon').className = isSaldoVisible ? "fas fa-eye ml-1" : "fas fa-eye-slash ml-1";
+        }
+
+        function toggleSaldo() { isSaldoVisible = !isSaldoVisible; updateSaldoUI(); }
+
+        // --- FUNCIONALIDADES ---
+        function toggleRadar() {
+            isOnline = !isOnline;
+            const btn = document.getElementById('btn-power');
+            if(isOnline) {
+                btn.classList.remove('offline'); btn.classList.add('online');
+                document.getElementById('radar-off-msg').classList.add('hidden-force');
+                document.getElementById('radar-on-content').classList.remove('hidden-force');
+                const a = document.getElementById('audio-alert'); a.volume=0; a.play().then(()=>{a.pause();a.currentTime=0;a.volume=1;});
+                loadRadar();
+            } else {
+                btn.classList.remove('online'); btn.classList.add('offline');
+                document.getElementById('radar-off-msg').classList.remove('hidden-force');
+                document.getElementById('radar-on-content').classList.add('hidden-force');
+            }
+        }
+
+        function startRealtime() {
+            checkActive();
+            sbClient.channel('radar').on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, p => {
+                if(p.eventType === 'INSERT' && isOnline) document.getElementById('audio-alert').play().catch(()=>{});
+                if(isOnline) loadRadar();
+                if(pedidoAtual && p.new.id === pedidoAtual.id) checkActive();
+            }).subscribe();
+        }
+
+        async function loadRadar() {
+            if(!isOnline) return;
+            const { data } = await sbClient.from('pedidos').select('*').eq('status', 'solicitado').order('created_at', {ascending:false});
+            const l = document.getElementById('radar-list'); l.innerHTML = '';
+            if(data && data.length) {
+                document.getElementById('radar-empty').classList.add('hidden-force');
+                data.forEach(p => {
+                    const liq = p.valor_frete * 0.9;
+                    l.innerHTML += `<div class="dark-card p-4 border-l-4 border-yellow-500 mb-3 animate-pulse"><div class="flex justify-between mb-2"><span class="bg-gray-700 text-[10px] uppercase font-bold px-2 py-1 rounded text-white">Nova</span><div class="text-right"><p class="text-xs text-gray-400">Ganho estimado</p><p class="text-lg font-bold text-green-400">R$ ${liq.toFixed(2)}</p></div></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Retirada</p><p class="text-white font-bold text-sm truncate">${p.origem}</p></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Entrega</p><p class="text-gray-400 text-sm truncate">${p.destino}</p></div><button onclick="aceitar(${p.id})" class="btn-action shadow-lg">ACEITAR</button></div>`;
+                });
+            } else { document.getElementById('radar-empty').classList.remove('hidden-force'); }
+        }
+
+        async function checkActive() {
+            const { data } = await sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).or('status.eq.pendente,status.eq.em_rota').single();
+            if(data) {
+                pedidoAtual = data;
+                const liq = data.valor_frete * 0.9;
+                document.getElementById('active-origem').innerText = data.origem;
+                document.getElementById('active-destino').innerText = data.destino;
+                document.getElementById('active-cliente-nome').innerText = data.nome_destinatario;
+                document.getElementById('active-valor').innerText = liq.toFixed(2);
+                document.getElementById('active-forma').innerText = data.forma_pagamento;
+                
+                const btnIni = document.getElementById('btn-iniciar');
+                const btnFim = document.getElementById('btn-finalizar');
+                const statusTxt = document.getElementById('active-status-text');
+
+                if(data.status === 'pendente') {
+                    statusTxt.innerText = "COLETAR";
+                    btnIni.classList.remove('hidden-force');
+                    btnFim.classList.add('hidden-force');
+                } else {
+                    statusTxt.innerText = "ENTREGAR";
+                    btnIni.classList.add('hidden-force');
+                    btnFim.classList.remove('hidden-force');
+                }
+                navTo('active');
+            } else { 
+                pedidoAtual = null; 
+                // Se estava na tela ativa, volta pro radar
+                if(!document.getElementById('view-active').classList.contains('hidden-force')) navTo('radar');
+            }
+        }
+
+        // --- AUTH & MODAIS ---
         async function fazerLogin() {
             const e = $('#log-email').val(), p = $('#log-senha').val();
             if(!e || !p) return toast("Preencha tudo", 'error');
-            
             $('#btn-login').text('...');
             const { error } = await sbClient.auth.signInWithPassword({ email:e, password:p });
-            if (error) { 
-                toast("Erro ao entrar", 'error'); 
-                $('#btn-login').text('ENTRAR'); 
-            } else {
-                location.reload();
-            }
+            if (error) { toast("Erro no login", 'error'); $('#btn-login').text('ENTRAR'); } 
+            else location.reload();
         }
 
         async function logout() {
-            if(confirm("Sair do App?")) {
+            if(confirm("Sair do app?")) {
                 await sbClient.auth.signOut();
-                localStorage.clear();
                 location.reload();
             }
         }
 
-        function toggleOnline() {
-            isOnline = !isOnline;
-            const btn = document.getElementById('btn-go');
-            const status = document.getElementById('radar-status');
-            
-            if(isOnline) {
-                btn.classList.add('offline'); // Fica vermelho para parar
-                btn.innerText = "PARAR";
-                status.innerHTML = '<p class="text-green-400 font-bold animate-pulse">Procurando corridas...</p>';
-                // Play sound logic here
-            } else {
-                btn.classList.remove('offline');
-                btn.innerText = "INICIAR";
-                status.innerHTML = '<i class="fas fa-power-off text-4xl text-gray-600 mb-2"></i><p class="text-lg font-bold text-gray-400">Você está Offline</p>';
+        function openModal(id, action=null) {
+            currentAction = action;
+            document.getElementById('modal-'+id).classList.add('active');
+            if(id==='validate-pin') {
+                document.getElementById('input-val-pin').value='';
+                document.getElementById('modal-val-desc').innerText = action === 'entrega' ? 'PIN do Cliente' : 'Seu PIN';
+            }
+        }
+        function closeModal(id) { document.getElementById('modal-'+id).classList.remove('active'); }
+
+        async function processarAcaoPin() {
+            const pin = $('#input-val-pin').val();
+            if(currentAction === 'entrega') {
+                if(pin != pedidoAtual.pin_entrega) return toast("PIN Incorreto", 'error');
+                const liq = parseFloat(document.getElementById('active-valor').innerText);
+                const novoSaldo = saldoReal + liq;
+                await sbClient.from('pedidos').update({ status: 'concluido' }).eq('id', pedidoAtual.id);
+                await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
+                saldoReal = novoSaldo; updateSaldoUI();
+                toast("Sucesso!", 'success'); closeModal('validate-pin'); checkActive();
+            } else if (currentAction === 'saque') {
+                const { data } = await sbClient.from('motoboys').select('pin_carteira, saldo').eq('id', userSession.user.id).single();
+                if(data.pin_carteira !== pin) return toast("PIN Incorreto", 'error');
+                const v = parseFloat($('#valor-saque').val());
+                if(v > data.saldo) return toast("Saldo insuficiente", 'error');
+                const novoSaldo = data.saldo - v;
+                await sbClient.from('motoboys').update({ saldo: novoSaldo }).eq('id', userSession.user.id);
+                saldoReal = novoSaldo; updateSaldoUI();
+                const msg = `Solicito saque de R$ ${v.toFixed(2)}`;
+                window.open(`https://wa.me/${ADMIN_ZAP}?text=${encodeURIComponent(msg)}`, '_blank');
+                closeModal('validate-pin'); toast("Solicitado!", 'success');
             }
         }
 
-        // --- SALDO E SEGURANÇA ---
-        function toggleSaldo() {
-            isSaldoVisible = !isSaldoVisible;
-            updateSaldoDisplay();
+        async function criarPin() {
+            const pin = $('#input-new-pin').val();
+            if(pin.length !== 4) return toast("Use 4 dígitos", 'error');
+            await sbClient.from('motoboys').update({ pin_carteira: pin }).eq('id', userSession.user.id);
+            closeModal('create-pin'); toast("PIN Criado!", 'success');
         }
 
-        function updateSaldoDisplay() {
-            const el = document.getElementById('header-saldo');
-            const icon = document.getElementById('eye-icon');
-            if (isSaldoVisible) {
-                el.innerText = `R$ ${saldoReal.toFixed(2)}`;
-                icon.className = "fas fa-eye ml-1";
-            } else {
-                el.innerText = "R$ ****";
-                icon.className = "fas fa-eye-slash ml-1";
+        async function sacar() {
+            const v = $('#valor-saque').val();
+            if(!v || v<=0) return toast("Valor inválido", 'error');
+            const { data } = await sbClient.from('motoboys').select('pin_carteira').eq('id', userSession.user.id).single();
+            if(!data.pin_carteira || data.pin_carteira==='0000') openModal('create-pin'); else openModal('validate-pin', 'saque');
+        }
+
+        // Helpers
+        async function aceitar(id) { await sbClient.from('pedidos').update({status:'pendente', entregador_id:userSession.user.id}).eq('id',id); checkActive(); }
+        async function iniciarEntrega() { if(confirm("Pedido coletado?")) { await sbClient.from('pedidos').update({status:'em_rota'}).eq('id',pedidoAtual.id); checkActive(); } }
+        async function cancelar() { if(confirm("Cancelar?")) { await sbClient.from('pedidos').update({status:'solicitado',entregador_id:null}).eq('id',pedidoAtual.id); checkActive(); } }
+        async function loadExtrato() {
+            const l = document.getElementById('history-list'); l.innerHTML = '<div class="text-center opacity-50">Carregando...</div>';
+            const {data} = await sbClient.from('pedidos').select('*').eq('entregador_id',userSession.user.id).eq('status','concluido').order('created_at',{ascending:false}).limit(20);
+            l.innerHTML = '';
+            data?.forEach(p => {
+                const liq = p.valor_frete * 0.9;
+                l.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-[10px] text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${liq.toFixed(2)}</p></div>`;
+            });
+        }
+        function abrirAtividades() { document.getElementById('sheet-activities').classList.add('open'); document.getElementById('sheet-overlay').classList.add('open'); }
+        function fecharAtividades() { document.getElementById('sheet-activities').classList.remove('open'); document.getElementById('sheet-overlay').classList.remove('open'); }
+        async function uploadFoto() { const f=$('#upload-foto')[0].files[0]; if(f){ const n=`${userSession.user.id}/${Date.now()}.jpg`; await sbClient.storage.from('avatars').upload(n,f); const{data}=sbClient.storage.from('avatars').getPublicUrl(n); await sbClient.from('motoboys').update({foto_url:data.publicUrl}).eq('id',userSession.user.id); $('#menu-user-foto').attr('src',data.publicUrl); toast("Foto Ok!",'success'); } }
+        function toast(m,t) { const el=$(`<div class="toast ${t}"><i class="fas fa-info-circle"></i> ${m}</div>`); $('#toast-box').append(el); setTimeout(()=>el.addClass('show'),10); setTimeout(()=>{el.removeClass('show');setTimeout(()=>el.remove(),300)},3000); }
+        async function savePerfil() { $('#btn-update-perf').text('...'); await sbClient.from('motoboys').update({ whatsapp:$('#perf-zap').val(), modelo:$('#perf-modelo').val(), cor_moto:$('#perf-cor').val(), placa:$('#perf-placa').val().toUpperCase() }).eq('id',userSession.user.id); $('#btn-update-perf').text('SALVAR DADOS'); toast('Salvo!','success'); }
+        function calcIdade() { const n = $('#cad-nasc').val(); if(n) $('#cad-idade').val((new Date().getFullYear()-new Date(n).getFullYear())+' anos'); }
+        async function enviarCadastro() { 
+            const d={email:$('#cad-email').val(),password:$('#cad-senha').val()}; 
+            if(!d.email||!d.password) return toast("Preencha tudo",'error');
+            $('#btn-cadastrar').text('...');
+            const {data,error} = await sbClient.auth.signUp(d);
+            if(error) { toast(error.message,'error'); $('#btn-cadastrar').text('FINALIZAR CADASTRO'); return; }
+            if(data.user) {
+                await sbClient.from('motoboys').insert({
+                    id: data.user.id, nome: $('#cad-nome').val(), cpf: $('#cad-cpf').val(), whatsapp: $('#cad-zap').val(),
+                    cep: $('#cad-cep').val(), rua: $('#cad-rua').val(), numero: $('#cad-num').val(), complemento: $('#cad-comp').val(), referencia: $('#cad-ref').val(),
+                    emerg_nome: $('#cad-eme-nome').val(), emerg_zap: $('#cad-eme-zap').val(), emerg_parentesco: $('#cad-eme-parent').val(),
+                    modelo: $('#moto-modelo').val(), cor_moto: $('#moto-cor').val(), placa: $('#moto-placa').val(),
+                    status: 'Pendente', pin_carteira: '0000', saldo: 0, disponibilidade: 'Integral', data_nascimento: $('#cad-nasc').val(), idade: parseInt($('#cad-idade').val())
+                });
+                location.reload();
             }
         }
 
-        // --- MODAIS ---
-        function openModal(id) { document.getElementById('modal-'+id).classList.remove('hidden-force'); }
-        function closeModal(id) { document.getElementById('modal-'+id).classList.add('hidden-force'); }
-
-        async function salvarPin() {
-            const pin = $('#input-pin').val();
-            if(pin.length !== 4) return toast("PIN deve ter 4 números", 'error');
-            await sbClient.from('motoboys').update({pin_carteira: pin}).eq('id', userSession.user.id);
-            toast("PIN Salvo!", 'success'); closeModal('pin');
-        }
-
-        // --- NAVEGAÇÃO INTERNA ---
-        function navegar(to) {
-            if (to === 'radar') {
-                document.getElementById('view-perfil').classList.add('hidden-force');
-                document.getElementById('view-radar').classList.remove('hidden-force');
-            } else if (to === 'perfil') {
-                document.getElementById('view-radar').classList.add('hidden-force');
-                document.getElementById('view-perfil').classList.remove('hidden-force');
-            }
-            toggleMenu(false);
-        }
-
-        function toggleMenu(forceClose) {
-            const menu = document.getElementById('side-menu');
-            const overlay = document.getElementById('menu-overlay');
-            if (forceClose === false || menu.classList.contains('open')) {
-                menu.classList.remove('open'); overlay.classList.remove('open');
-            } else {
-                menu.classList.add('open'); overlay.classList.add('open');
-            }
-        }
-
-        // --- UTILS ---
-        function toast(msg, type='info') {
-            const t = document.createElement('div');
-            t.className = `toast ${type}`;
-            t.innerHTML = msg;
-            document.getElementById('toast-box').appendChild(t);
-            requestAnimationFrame(() => t.classList.add('show'));
-            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
-        }
-
-        // JQuery Masks
-        $(document).ready(function(){
-            $('#cad-cpf, #perf-cpf').mask('000.000.000-00');
-            $('#cad-zap, #perf-zap').mask('(00) 00000-0000');
-        });
+        $(document).ready(function(){ $('#cad-cpf, #perf-cpf').mask('000.000.000-00'); $('#cad-zap, #cad-eme-zap, #perf-zap').mask('(00) 00000-0000'); $('#cad-cep, #perf-cep').mask('00000-000'); });
     </script>
 </body>
 </html>
