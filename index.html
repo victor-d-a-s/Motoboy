@@ -15,35 +15,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
     <style>
-        /* RESET E BASE */
+        /* RESET E ESTRUTURA */
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; -webkit-tap-highlight-color: transparent; user-select: none; overflow: hidden; width: 100vw; height: 100vh; margin: 0; padding: 0; }
         
-        /* UTILITÁRIOS */
         .hidden-force { display: none !important; }
         
-        /* ZONAS DA APLICAÇÃO (Camadas) */
+        /* ZONAS (Camadas principais) */
         #guest-zone, #member-zone { width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow-y: auto; overflow-x: hidden; background-color: #111827; }
         #guest-zone { z-index: 50; } 
         #member-zone { z-index: 40; }
         
-        /* Lógica de Exibição de Zonas */
-        body.is-logged-in #guest-zone { display: none !important; }
-        body.not-logged-in #member-zone { display: none !important; }
-
-        /* SCREENS (Telas internas) */
-        .screen { min-height: 100vh; padding-bottom: 120px; display: none; animation: fadeIn 0.3s ease-out; position: absolute; top: 0; left: 0; width: 100%; }
+        /* TELAS INDIVIDUAIS */
+        .screen { min-height: 100vh; padding-bottom: 120px; display: none; animation: fadeIn 0.3s ease-out; position: absolute; top: 0; left: 0; width: 100%; background: #111827; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* LOADING SPLASH (Z-Index Máximo) */
+        /* LOADING SPLASH */
         #splash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #111827; transition: opacity 0.5s; }
 
-        /* COMPONENTES DE UI */
-        .input-dark { background-color: #1F2937; border: 1px solid #374151; color: white; padding: 14px 14px 14px 45px; border-radius: 12px; width: 100%; outline: none; transition: 0.2s; font-size: 15px; }
+        /* ESTILOS DE UI */
+        .input-dark { background-color: #1F2937; border: 1px solid #374151; color: white; padding: 16px 16px 16px 45px; border-radius: 12px; width: 100%; outline: none; transition: 0.2s; font-size: 15px; }
         .input-dark:focus { border-color: #FBBF24; }
-        .input-icon { position: absolute; left: 16px; top: 14px; color: #9CA3AF; z-index: 10; font-size: 16px; }
-        .btn-action { background-color: #FBBF24; color: #111827; font-weight: 800; border-radius: 12px; text-transform: uppercase; width: 100%; padding: 16px; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.2s; cursor: pointer; }
+        .input-icon { position: absolute; left: 16px; top: 16px; color: #9CA3AF; z-index: 10; font-size: 16px; }
+        
+        .btn-action { background-color: #FBBF24; color: #111827; font-weight: 800; border-radius: 12px; text-transform: uppercase; width: 100%; padding: 16px; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.2s; cursor: pointer; border: none; }
         .btn-action:active { transform: scale(0.98); }
+
         .dark-card { background-color: #1F2937; border: 1px solid #374151; border-radius: 16px; overflow: hidden; position: relative; }
 
         /* MENU LATERAL */
@@ -55,7 +52,7 @@
         .menu-item:active { background-color: #374151; }
         .menu-item i { width: 24px; text-align: center; color: #FBBF24; }
 
-        /* BOTÃO POWER CENTRALIZADO */
+        /* BOTÃO POWER */
         .power-container { position: fixed; bottom: 100px; left: 0; right: 0; display: flex; justify-content: center; z-index: 80; pointer-events: none; }
         .btn-power-large { 
             pointer-events: auto; width: 75px; height: 75px; border-radius: 50%; 
@@ -68,22 +65,18 @@
         .btn-power-large.offline { background: #EF4444; border-color: #B91C1C; animation: pulse-red 2s infinite; }
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        /* MODAIS (Correção de Centralização) */
+        /* MODAIS (Corrigido para centralizar e desfocar) */
         .modal-overlay { 
             position: fixed; inset: 0; 
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); 
-            z-index: 3000; /* Z-Index altíssimo para ficar acima de tudo */
-            display: flex; align-items: center; justify-content: center; 
-            padding: 20px; 
-            animation: fadeIn 0.2s;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); 
+            z-index: 3000; display: flex; align-items: center; justify-content: center; 
+            padding: 20px; animation: fadeIn 0.2s;
         }
         .modal-box { 
-            background: #1F2937; border: 1px solid #374151; 
-            width: 100%; max-width: 320px; 
+            background: #1F2937; border: 1px solid #374151; width: 100%; max-width: 320px; 
             padding: 24px; border-radius: 24px; text-align: center; 
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); 
             transform: scale(1); animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            position: relative;
         }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
@@ -93,7 +86,7 @@
         .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; opacity: 0; visibility: hidden; transition: 0.3s; }
         .sheet-overlay.open { opacity: 1; visibility: visible; }
 
-        /* TOAST E NAV */
+        /* TOAST & NAV */
         #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none; }
         .toast { background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(10px); color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(-20px); transition: all 0.3s; pointer-events: auto; border: 1px solid #374151; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         .toast.show { opacity: 1; transform: translateY(0); }
@@ -104,16 +97,16 @@
         
         .chk-container { display: flex; flex-wrap: wrap; gap: 8px; }
         .chk-item input { display: none; }
-        .chk-label { padding: 8px 12px; background: #374151; border-radius: 8px; font-size: 12px; color: #D1D5DB; border: 1px solid #4B5563; }
+        .chk-label { padding: 8px 12px; background: #374151; border-radius: 8px; font-size: 12px; color: #D1D5DB; border: 1px solid #4B5563; transition: 0.2s; }
         .chk-item input:checked + .chk-label { background: #FBBF24; color: black; border-color: #F59E0B; font-weight: bold; }
     </style>
 </head>
-<body class="not-logged-in"> 
+<body>
 
     <audio id="audio-alert" preload="auto"></audio>
 
     <div id="splash">
-        <div class="mb-4 text-yellow-500 text-5xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
+        <div class="mb-4 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
         <div class="w-8 h-8 border-4 border-gray-700 border-t-yellow-500 rounded-full animate-spin"></div>
         <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Iniciando...</p>
     </div>
@@ -123,46 +116,46 @@
     <div id="guest-zone">
         <div id="screen-welcome" class="screen active flex flex-col justify-center p-8 h-full">
             <div class="mb-10 text-center mt-10">
-                <div class="inline-flex p-4 rounded-full bg-yellow-500/10 text-yellow-500 mb-4 border border-yellow-500/20"><i class="fas fa-bolt text-4xl"></i></div>
+                <div class="inline-flex p-5 rounded-full bg-yellow-500/10 text-yellow-500 mb-6 border border-yellow-500/20"><i class="fas fa-bolt text-4xl"></i></div>
                 <h1 class="text-3xl font-bold text-white tracking-tight">Drop Entregas</h1>
                 <p class="text-gray-500 text-sm mt-1">Parceiro</p>
             </div>
             <div class="space-y-4 w-full flex-1">
                 <div class="relative"><i class="fas fa-envelope input-icon"></i><input type="email" id="log-email" class="input-dark" placeholder="E-mail"></div>
                 <div class="relative"><i class="fas fa-lock input-icon"></i><input type="password" id="log-senha" class="input-dark" placeholder="Senha"></div>
-                <button onclick="fazerLogin()" id="btn-login" class="btn-action shadow-lg mt-2">ENTRAR</button>
-                <p onclick="showGuestScreen('cadastro')" class="text-gray-500 text-xs mt-6 text-center cursor-pointer p-3 hover:text-yellow-500 transition">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
+                <button onclick="fazerLogin()" id="btn-login" class="btn-action shadow-lg mt-4">ENTRAR</button>
+                <p onclick="showGuestScreen('cadastro')" class="text-gray-500 text-xs mt-6 text-center cursor-pointer p-4 hover:text-yellow-500 transition">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
             </div>
         </div>
 
-        <div id="screen-pending" class="screen flex flex-col justify-center items-center p-8 h-full text-center">
-            <div class="w-24 h-24 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6 animate-pulse text-yellow-500"><i class="fas fa-clock text-5xl"></i></div>
-            <h2 class="text-2xl font-bold text-white mb-2">Em Análise</h2>
-            <p class="text-gray-400 text-sm mb-8 leading-relaxed">Seu cadastro foi enviado com sucesso. Aguarde a aprovação da administração para acessar o sistema.</p>
-            <button onclick="logout()" class="text-gray-500 text-sm underline hover:text-white p-4">Sair da conta</button>
+        <div id="screen-pending" class="screen flex flex-col justify-center items-center p-8 h-full text-center bg-[#111827]">
+            <div class="w-28 h-28 bg-yellow-500/10 rounded-full flex items-center justify-center mb-8 animate-pulse text-yellow-500 border border-yellow-500/30"><i class="fas fa-clock text-5xl"></i></div>
+            <h2 class="text-2xl font-bold text-white mb-3">Em Análise</h2>
+            <p class="text-gray-400 text-sm mb-10 leading-relaxed max-w-xs">Seu cadastro foi enviado com sucesso. Aguarde a aprovação da administração para acessar o sistema.</p>
+            <button onclick="logout()" class="text-gray-500 text-sm font-bold underline hover:text-white p-4">SAIR DA CONTA</button>
         </div>
 
-        <div id="screen-cadastro" class="screen p-5 pt-8">
+        <div id="screen-cadastro" class="screen p-5 pt-8 overflow-y-auto">
             <div class="flex items-center mb-6"><button onclick="showGuestScreen('welcome')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-2">Criar Conta</h2></div>
-            <div class="space-y-5 pb-20">
+            <div class="space-y-6 pb-24">
                 <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider">Dados Pessoais</p>
                 <div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo"></div>
                 <div class="relative"><i class="fas fa-id-card input-icon"></i><input type="tel" id="cad-cpf" class="input-dark" placeholder="CPF"></div>
                 <div class="flex gap-3"><div class="relative w-2/3"><i class="fas fa-calendar input-icon"></i><input type="date" id="cad-nasc" class="input-dark text-gray-400" onchange="calcIdade()"></div><div class="relative w-1/3"><input type="text" id="cad-idade" class="input-dark text-center font-bold" placeholder="Idade" readonly></div></div>
                 <div class="relative"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="cad-zap" class="input-dark" placeholder="WhatsApp"></div>
                 
-                <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider mt-2">Endereço</p>
+                <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider">Endereço</p>
                 <div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="tel" id="cad-cep" class="input-dark" placeholder="CEP"></div>
                 <div class="flex gap-3"><div class="relative w-3/4"><input type="text" id="cad-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="cad-num" class="input-dark pl-4" placeholder="Nº"></div></div>
                 <div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="cad-comp" class="input-dark" placeholder="Complemento"></div>
                 <div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="cad-ref" class="input-dark" placeholder="Referência"></div>
 
-                <p class="text-red-400 text-[10px] font-bold uppercase tracking-wider mt-2">Emergência</p>
+                <p class="text-red-400 text-[10px] font-bold uppercase tracking-wider">Emergência</p>
                 <div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="cad-eme-nome" class="input-dark" placeholder="Nome Contato"></div>
                 <div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="cad-eme-zap" class="input-dark" placeholder="WhatsApp Contato"></div>
                 <div class="relative"><i class="fas fa-users input-icon"></i><input type="text" id="cad-eme-parent" class="input-dark" placeholder="Parentesco"></div>
 
-                <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider mt-2">Moto & Acesso</p>
+                <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider">Moto & Acesso</p>
                 <div class="relative"><i class="fas fa-motorcycle input-icon"></i><input type="text" id="moto-modelo" class="input-dark" placeholder="Modelo Moto"></div>
                 <div class="flex gap-3"><div class="relative w-1/2"><i class="fas fa-palette input-icon"></i><input type="text" id="moto-cor" class="input-dark" placeholder="Cor"></div><div class="relative w-1/2"><i class="fas fa-credit-card input-icon"></i><input type="text" id="moto-placa" class="input-dark font-bold uppercase text-center" placeholder="PLACA"></div></div>
                 <div class="chk-container">
@@ -175,12 +168,12 @@
                 <div class="relative"><i class="fas fa-envelope input-icon"></i><input type="email" id="cad-email" class="input-dark" placeholder="E-mail"></div>
                 <div class="relative"><i class="fas fa-lock input-icon"></i><input type="password" id="cad-senha" class="input-dark" placeholder="Senha"></div>
                 
-                <button onclick="enviarCadastro()" id="btn-cadastrar" class="btn-action shadow-lg mt-4">ENVIAR CADASTRO</button>
+                <button onclick="enviarCadastro()" id="btn-cadastrar" class="btn-action shadow-lg mt-6">ENVIAR CADASTRO</button>
             </div>
         </div>
     </div>
 
-    <div id="member-zone">
+    <div id="member-zone" class="hidden-force">
         
         <div class="fixed top-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 z-30 px-5 py-3 max-w-md mx-auto">
             <div class="flex justify-between items-center">
@@ -211,11 +204,11 @@
                 <p class="text-xs text-gray-400 mt-1 font-mono bg-gray-900 px-2 py-1 rounded" id="menu-user-id">ID: ...</p>
             </div>
             <div class="py-4 space-y-1">
-                <div class="menu-item cursor-pointer hover:bg-gray-800" onclick="navegar('radar')"><i class="fas fa-map-marked-alt"></i> Início</div>
-                <div class="menu-item cursor-pointer hover:bg-gray-800" onclick="navegar('active')"><i class="fas fa-box"></i> Corrida Ativa</div>
-                <div class="menu-item cursor-pointer hover:bg-gray-800" onclick="navegar('extract')"><i class="fas fa-wallet"></i> Ganhos</div>
-                <div class="menu-item cursor-pointer hover:bg-gray-800" onclick="navegar('perfil')"><i class="fas fa-user-cog"></i> Perfil</div>
-                <div class="menu-item text-red-400 mt-8 cursor-pointer hover:bg-gray-800" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair do App</div>
+                <div class="menu-item hover:bg-gray-800" onclick="navegar('radar')"><i class="fas fa-map-marked-alt"></i> Início</div>
+                <div class="menu-item hover:bg-gray-800" onclick="navegar('active')"><i class="fas fa-box"></i> Corrida Ativa</div>
+                <div class="menu-item hover:bg-gray-800" onclick="navegar('extract')"><i class="fas fa-wallet"></i> Ganhos</div>
+                <div class="menu-item hover:bg-gray-800" onclick="navegar('perfil')"><i class="fas fa-user-cog"></i> Perfil</div>
+                <div class="menu-item text-red-400 mt-8 hover:bg-gray-800" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair do App</div>
             </div>
         </div>
 
@@ -300,32 +293,40 @@
         (async function init() {
             try {
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                setTimeout(() => { if(document.getElementById('splash').style.display !== 'none') finishSplash(); }, 2000); // Força saída do splash em 2s
+                // Trava de segurança: remove splash após 3s se não carregar
+                setTimeout(() => { 
+                    if(document.getElementById('splash').style.display !== 'none') {
+                        document.getElementById('splash').style.display = 'none';
+                        document.getElementById('guest-zone').style.display = 'block'; // Fallback para login
+                    }
+                }, 3000); 
                 
                 const { data } = await sbClient.auth.getSession();
                 if (data.session) {
                     userSession = data.session;
-                    document.body.classList.add('is-logged-in');
-                    document.body.classList.remove('not-logged-in');
                     await loadPerfil();
                 } else {
                     switchZone(false);
                 }
-            } catch (e) { console.error(e); switchZone(false); }
-            finishSplash();
+            } catch (e) { 
+                console.error("Erro critico init:", e); 
+                switchZone(false); 
+            }
+            document.getElementById('splash').style.display = 'none';
         })();
 
-        function finishSplash() { document.getElementById('splash').style.display = 'none'; }
-
-        // --- NAVEGAÇÃO ---
+        // --- SISTEMA DE ZONAS (CRÍTICO) ---
         function switchZone(isLoggedIn) {
+            const guest = document.getElementById('guest-zone');
+            const member = document.getElementById('member-zone');
+            
             if (isLoggedIn) {
-                document.body.classList.add('is-logged-in');
-                document.body.classList.remove('not-logged-in');
+                guest.classList.add('hidden-force');
+                member.classList.remove('hidden-force');
                 navApp('radar');
             } else {
-                document.body.classList.remove('is-logged-in');
-                document.body.classList.add('not-logged-in');
+                member.classList.add('hidden-force');
+                guest.classList.remove('hidden-force');
                 showGuestScreen('welcome');
             }
         }
@@ -338,7 +339,6 @@
         function navApp(tab) {
             if(tab === 'radar' && pedidoAtual) tab = 'active';
             
-            // Força fechamento do menu lateral
             document.getElementById('side-menu').classList.remove('open');
             document.getElementById('menu-overlay').classList.remove('open');
 
@@ -352,18 +352,55 @@
         }
 
         function toggleMenu() {
-            const menu = document.getElementById('side-menu');
-            const overlay = document.getElementById('menu-overlay');
-            if (menu.classList.contains('open')) {
-                menu.classList.remove('open');
-                overlay.classList.remove('open');
-            } else {
-                menu.classList.add('open');
-                overlay.classList.add('open');
-            }
+            document.getElementById('side-menu').classList.toggle('open');
+            document.getElementById('menu-overlay').classList.toggle('open');
         }
 
-        // --- APP LOGIC ---
+        // --- CORE FUNCTIONS ---
+        async function loadPerfil() {
+            const { data } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
+            if(!data) { switchZone(false); return; }
+            
+            // Se pendente, força tela de análise e mata o resto
+            if (data.status !== 'Aprovado') {
+                document.getElementById('member-zone').classList.add('hidden-force');
+                document.getElementById('guest-zone').classList.remove('hidden-force');
+                showGuestScreen('pending');
+                return;
+            }
+
+            // Se aprovado, carrega o app
+            switchZone(true);
+            preencherPerfil(data);
+            
+            document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
+            const shortId = data.id.split('-')[0];
+            document.getElementById('menu-user-id').innerText = `ID: ${shortId}`;
+            document.getElementById('header-id-user').innerText = `ID: ${shortId}`;
+            if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
+
+            sbClient.from('app_config').select('som_alerta_url').single().then(({data}) => { 
+                if(data?.som_alerta_url) document.getElementById('audio-alert').src = data.som_alerta_url;
+            });
+            startRealtime();
+        }
+
+        function preencherPerfil(d) {
+            saldoReal = d.saldo || 0;
+            if(isSaldoVisible) document.getElementById('header-saldo-display').innerText = `R$ ${saldoReal.toFixed(2)}`;
+            document.getElementById('saque-saldo').innerText = `R$ ${saldoReal.toFixed(2)}`;
+            
+            const fields = ['nome','cpf','whatsapp','cep','rua','numero','complemento','referencia','emerg_nome','emerg_zap','emerg_parentesco','modelo','cor_moto','placa'];
+            fields.forEach(f => {
+                const map = f==='whatsapp'?'zap':(f==='emerg_nome'?'eme-nome':(f==='emerg_zap'?'eme-zap':(f==='emerg_parentesco'?'eme-parent':f))); 
+                const elId = f==='cor_moto'?'perf-cor':(f==='data_nascimento'?'perf-nasc':'perf-'+map);
+                const el = document.getElementById(elId);
+                if(el) el.value = d[f] || '';
+            });
+            if(d.data_nascimento) document.getElementById('perf-nasc').value = d.data_nascimento;
+            if(d.idade) document.getElementById('perf-idade').value = d.idade + ' anos';
+        }
+
         function toggleRadar() {
             isOnline = !isOnline;
             const btn = document.getElementById('btn-power-large');
@@ -382,13 +419,34 @@
             }
         }
 
-        // --- CORE FUNCTIONS ---
+        // --- OUTRAS FUNÇÕES ---
+        function startRealtime() {
+            checkActive();
+            sbClient.channel('radar').on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, p => {
+                if(p.eventType === 'INSERT' && isOnline) document.getElementById('audio-alert').play().catch(()=>{});
+                if(isOnline) loadRadar();
+                if(pedidoAtual && p.new.id === pedidoAtual.id) checkActive();
+            }).subscribe();
+        }
+
+        async function loadRadar() {
+            if(!isOnline) return;
+            const { data } = await sbClient.from('pedidos').select('*').eq('status', 'solicitado').order('created_at', {ascending:false});
+            const l = document.getElementById('radar-list'); l.innerHTML = '';
+            if(data && data.length) {
+                document.getElementById('radar-empty').classList.add('hidden-force');
+                data.forEach(p => {
+                    const liq = p.valor_frete - (p.valor_frete * ((p.taxa_app_aplicada || 10) / 100));
+                    l.innerHTML += `<div class="dark-card p-4 border-l-4 border-yellow-500 mb-3 animate-pulse"><div class="flex justify-between mb-2"><span class="bg-gray-700 text-[10px] uppercase font-bold px-2 py-1 rounded text-white">Nova</span><div class="text-right"><span class="text-white font-bold text-xs opacity-50 block line-through">R$ ${p.valor_frete.toFixed(2)}</span><span class="text-green-400 font-bold text-lg">R$ ${liq.toFixed(2)}</span></div></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Retirada</p><p class="text-white font-bold text-sm truncate">${p.origem}</p></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Entrega</p><p class="text-gray-400 text-sm truncate">${p.destino}</p></div><button onclick="aceitar(${p.id})" class="btn-action shadow-lg">ACEITAR</button></div>`;
+                });
+            } else { document.getElementById('radar-empty').classList.remove('hidden-force'); }
+        }
+
         async function checkActive() {
             const { data } = await sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).or('status.eq.pendente,status.eq.em_rota').single();
             if(data) {
                 pedidoAtual = data;
                 const liq = data.valor_frete - (data.valor_frete * ((data.taxa_app_aplicada||10)/100));
-                
                 document.getElementById('active-origem').innerText = data.origem;
                 document.getElementById('active-destino').innerText = data.destino;
                 document.getElementById('active-cliente-nome').innerText = data.nome_destinatario;
@@ -419,7 +477,6 @@
             checkActive();
         }
 
-        // --- AÇÕES GERAIS ---
         function toggleSaldoVisibilidade() {
             isSaldoVisible = !isSaldoVisible;
             const icon = document.getElementById('eye-icon');
@@ -443,7 +500,6 @@
             document.getElementById('sheet-overlay').classList.remove('open');
         }
 
-        // --- MODAIS ---
         function openModal(id, action=null) {
             currentAction = action;
             document.getElementById('modal-'+id).classList.remove('hidden-force');
@@ -507,7 +563,6 @@
             toast("PIN alterado!", 'success'); closeModal('change-pin');
         }
 
-        // --- AUTH & UPLOAD & PERFIL ---
         async function fazerLogin() { 
             const e = $('#log-email').val(), p = $('#log-senha').val();
             const { error } = await sbClient.auth.signInWithPassword({email:e, password:p});
@@ -550,49 +605,6 @@
             $('#btn-update-perf').text("...");
             await sbClient.from('motoboys').update(u).eq('id', userSession.user.id);
             toast("Salvo!", 'success'); $('#btn-update-perf').text("SALVAR DADOS");
-        }
-
-        async function loadPerfil() {
-            const { data } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            if(!data) { switchZone(false); return; }
-            
-            preencherPerfil(data);
-            
-            document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
-            const shortId = data.id.split('-')[0];
-            document.getElementById('menu-user-id').innerText = `ID: ${shortId}`;
-            document.getElementById('header-id-user').innerText = `ID: ${shortId}`;
-            
-            if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
-            
-            if (data.status !== 'Aprovado') {
-                document.body.classList.remove('is-logged-in');
-                document.body.classList.add('not-logged-in');
-                document.getElementById('guest-zone').style.display='block';
-                showGuestScreen('pending');
-            } else {
-                sbClient.from('app_config').select('som_alerta_url').single().then(({data}) => { 
-                    if(data?.som_alerta_url) document.getElementById('audio-alert').src = data.som_alerta_url;
-                });
-                navApp('radar');
-                startRealtime();
-            }
-        }
-
-        function preencherPerfil(d) {
-            saldoReal = d.saldo || 0;
-            if(isSaldoVisible) document.getElementById('header-saldo-display').innerText = `R$ ${saldoReal.toFixed(2)}`;
-            document.getElementById('saque-saldo').innerText = `R$ ${saldoReal.toFixed(2)}`;
-            
-            const fields = ['nome','cpf','whatsapp','cep','rua','numero','complemento','referencia','emerg_nome','emerg_zap','emerg_parentesco','modelo','cor_moto','placa'];
-            fields.forEach(f => {
-                const map = f==='whatsapp'?'zap':(f==='emerg_nome'?'eme-nome':(f==='emerg_zap'?'eme-zap':(f==='emerg_parentesco'?'eme-parent':f))); 
-                const elId = f==='cor_moto'?'perf-cor':(f==='data_nascimento'?'perf-nasc':'perf-'+map);
-                const el = document.getElementById(elId);
-                if(el) el.value = d[f] || '';
-            });
-            if(d.data_nascimento) document.getElementById('perf-nasc').value = d.data_nascimento;
-            if(d.idade) document.getElementById('perf-idade').value = d.idade + ' anos';
         }
 
         function calcIdade() { const n = $('#cad-nasc').val(); if(n) $('#cad-idade').val((new Date().getFullYear()-new Date(n).getFullYear())+' anos'); }
