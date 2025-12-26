@@ -23,35 +23,22 @@
             display: none; /* Oculto por padrão */
             flex-direction: column; overflow-y: auto; overflow-x: hidden;
         }
-        
-        /* Apenas a camada ativa aparece */
         .layer.active { display: flex !important; }
 
-        /* LOADING SPLASH FIXO (Z-Index Máximo) */
-        #splash-screen { 
-            position: fixed; inset: 0; z-index: 9999; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            background-color: #111827; 
-            transition: opacity 0.5s;
-        }
+        /* LOADING SPLASH */
+        #layer-splash { z-index: 9999; justify-content: center; align-items: center; }
 
-        /* CLASSES UTILITÁRIAS */
+        /* UTILITÁRIOS */
         .hidden-force { display: none !important; }
-        
-        /* --- ESTILOS VISUAIS --- */
         .input-dark { background: #1F2937; border: 1px solid #374151; color: white; padding: 16px; border-radius: 12px; width: 100%; outline: none; font-size: 15px; transition: 0.2s; }
         .input-dark:focus { border-color: #FBBF24; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2); }
-        
         .btn-primary { background: #FBBF24; color: #111827; font-weight: 800; padding: 16px; border-radius: 12px; width: 100%; text-transform: uppercase; font-size: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.2s; }
         .btn-primary:active { transform: scale(0.98); }
 
-        /* MAPA BACKGROUND */
+        /* UI ELEMENTS */
         .map-bg { position: fixed; inset: 0; background-color: #111827; background-image: radial-gradient(#1f2937 15%, transparent 16%); background-size: 20px 20px; opacity: 0.3; z-index: 0; pointer-events: none; }
-
-        /* HEADER */
         .floating-header { position: absolute; top: 0; left: 0; right: 0; padding: 15px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 50; background: linear-gradient(to bottom, rgba(17,24,39,0.9), transparent); }
-
-        /* BOTÃO POWER */
+        
         .power-container { position: fixed; bottom: 90px; left: 0; right: 0; display: flex; justify-content: center; z-index: 60; pointer-events: none; }
         .btn-power { pointer-events: auto; width: 75px; height: 75px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; background: #1F2937; border: 4px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: 0.3s; }
         .btn-power.online { background: #10B981; border-color: #059669; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
@@ -75,6 +62,12 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #9CA3AF; font-size: 10px; transition: 0.2s; cursor: pointer; }
         .nav-item.active { color: #FBBF24; font-weight: bold; transform: translateY(-2px); }
 
+        /* SHEET */
+        #sheet-activities { position: fixed; bottom: 0; left: 0; right: 0; background: #1F2937; border-top-left-radius: 24px; border-top-right-radius: 24px; z-index: 150; transform: translateY(100%); transition: transform 0.3s; padding-bottom: calc(20px + env(safe-area-inset-bottom)); box-shadow: 0 -10px 40px rgba(0,0,0,0.6); }
+        #sheet-activities.open { transform: translateY(0); }
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .sheet-overlay.open { opacity: 1; visibility: visible; }
+
         /* TOAST */
         #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5000; width: 90%; max-width: 350px; pointer-events: none; }
         .toast { background: #374151; color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; margin-bottom: 10px; border: 1px solid #4B5563; opacity: 0; transform: translateY(-10px); transition: 0.3s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -90,14 +83,13 @@
 
     <audio id="audio-alert" preload="auto"></audio>
 
-    <div id="splash-screen">
-        <div class="mb-4 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
+    <div id="layer-splash" class="layer active">
+        <div class="mb-6 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
         <div class="w-8 h-8 border-4 border-gray-700 border-t-yellow-500 rounded-full animate-spin"></div>
-        <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Iniciando...</p>
+        <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Carregando...</p>
     </div>
 
-    <div id="layer-guest" class="layer active z-50">
-        
+    <div id="layer-guest" class="layer">
         <div id="view-login" class="h-full flex flex-col justify-center p-8 max-w-md mx-auto w-full">
             <div class="mb-10 text-center">
                 <div class="inline-flex p-5 rounded-full bg-yellow-500/10 text-yellow-500 mb-4 border border-yellow-500/20"><i class="fas fa-bolt text-4xl"></i></div>
@@ -105,8 +97,8 @@
                 <p class="text-gray-500 text-sm">App do Parceiro</p>
             </div>
             <div class="space-y-4">
-                <div class="relative"><i class="fas fa-envelope input-icon"></i><input type="email" id="log-email" class="input-dark" placeholder="E-mail"></div>
-                <div class="relative"><i class="fas fa-lock input-icon"></i><input type="password" id="log-senha" class="input-dark" placeholder="Senha"></div>
+                <div class="relative"><i class="fas fa-envelope absolute left-4 top-4 text-gray-500"></i><input type="email" id="log-email" class="input-dark pl-12" placeholder="E-mail"></div>
+                <div class="relative"><i class="fas fa-lock absolute left-4 top-4 text-gray-500"></i><input type="password" id="log-senha" class="input-dark pl-12" placeholder="Senha"></div>
                 <button onclick="fazerLogin()" id="btn-login" class="btn-primary mt-2">ENTRAR NA CONTA</button>
                 <p onclick="toggleGuestView('cadastro')" class="text-gray-400 text-xs mt-6 text-center cursor-pointer p-4 hover:text-white transition">Não tem conta? <span class="text-yellow-500 font-bold">Cadastre-se</span></p>
             </div>
@@ -114,36 +106,31 @@
 
         <div id="view-cadastro" class="h-full p-6 pt-10 hidden-force overflow-y-auto">
             <div class="flex items-center mb-6"><button onclick="toggleGuestView('login')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold text-white ml-2">Criar Conta</h2></div>
-            
             <div class="space-y-6 pb-24">
                 <div class="space-y-3">
                     <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider">Dados Pessoais</p>
-                    <div class="relative"><i class="fas fa-user input-icon"></i><input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo"></div>
-                    <div class="relative"><i class="fas fa-id-card input-icon"></i><input type="tel" id="cad-cpf" class="input-dark" placeholder="CPF"></div>
-                    <div class="flex gap-3"><div class="relative w-2/3"><i class="fas fa-calendar input-icon"></i><input type="date" id="cad-nasc" class="input-dark text-gray-400" onchange="calcIdade()"></div><div class="relative w-1/3"><input type="text" id="cad-idade" class="input-dark text-center font-bold" placeholder="Idade" readonly></div></div>
-                    <div class="relative"><i class="fab fa-whatsapp input-icon"></i><input type="tel" id="cad-zap" class="input-dark" placeholder="WhatsApp"></div>
+                    <input type="text" id="cad-nome" class="input-dark" placeholder="Nome Completo">
+                    <input type="tel" id="cad-cpf" class="input-dark" placeholder="CPF">
+                    <div class="flex gap-3"><input type="date" id="cad-nasc" class="input-dark w-2/3" onchange="calcIdade()"><input type="text" id="cad-idade" class="input-dark w-1/3 text-center" placeholder="Idade" readonly></div>
+                    <input type="tel" id="cad-zap" class="input-dark" placeholder="WhatsApp">
                 </div>
-
                 <div class="space-y-3">
                     <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider">Endereço</p>
-                    <div class="relative"><i class="fas fa-map-marker-alt input-icon"></i><input type="tel" id="cad-cep" class="input-dark" placeholder="CEP"></div>
-                    <div class="flex gap-3"><div class="relative w-3/4"><input type="text" id="cad-rua" class="input-dark pl-4" placeholder="Rua"></div><div class="relative w-1/4"><input type="text" id="cad-num" class="input-dark pl-4" placeholder="Nº"></div></div>
-                    <div class="relative"><i class="fas fa-info-circle input-icon"></i><input type="text" id="cad-comp" class="input-dark" placeholder="Complemento"></div>
-                    <div class="relative"><i class="fas fa-map-pin input-icon"></i><input type="text" id="cad-ref" class="input-dark" placeholder="Referência"></div>
+                    <input type="tel" id="cad-cep" class="input-dark" placeholder="CEP">
+                    <div class="flex gap-3"><input type="text" id="cad-rua" class="input-dark w-3/4" placeholder="Rua"><input type="text" id="cad-num" class="input-dark w-1/4" placeholder="Nº"></div>
+                    <input type="text" id="cad-comp" class="input-dark" placeholder="Complemento">
+                    <input type="text" id="cad-ref" class="input-dark" placeholder="Referência">
                 </div>
-
                 <div class="space-y-3 bg-gray-800 p-4 rounded-xl border border-gray-700">
                     <p class="text-red-400 text-[10px] font-bold uppercase tracking-wider">Emergência</p>
-                    <div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="cad-eme-nome" class="input-dark" placeholder="Nome Contato"></div>
-                    <div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="cad-eme-zap" class="input-dark" placeholder="WhatsApp Contato"></div>
-                    <div class="relative"><i class="fas fa-users input-icon"></i><input type="text" id="cad-eme-parent" class="input-dark" placeholder="Parentesco"></div>
+                    <input type="text" id="cad-eme-nome" class="input-dark" placeholder="Nome Contato">
+                    <input type="tel" id="cad-eme-zap" class="input-dark" placeholder="WhatsApp Contato">
+                    <input type="text" id="cad-eme-parent" class="input-dark" placeholder="Parentesco">
                 </div>
-
                 <div class="space-y-3">
                     <p class="text-yellow-500 text-[10px] font-bold uppercase tracking-wider">Veículo & Acesso</p>
-                    <div class="relative"><i class="fas fa-motorcycle input-icon"></i><input type="text" id="moto-modelo" class="input-dark" placeholder="Modelo Moto"></div>
-                    <div class="flex gap-3"><div class="relative w-1/2"><i class="fas fa-palette input-icon"></i><input type="text" id="moto-cor" class="input-dark" placeholder="Cor"></div><div class="relative w-1/2"><i class="fas fa-credit-card input-icon"></i><input type="text" id="moto-placa" class="input-dark font-bold uppercase text-center" placeholder="PLACA"></div></div>
-                    
+                    <input type="text" id="moto-modelo" class="input-dark" placeholder="Modelo Moto">
+                    <div class="flex gap-3"><input type="text" id="moto-cor" class="input-dark w-1/2" placeholder="Cor"><input type="text" id="moto-placa" class="input-dark w-1/2 text-center uppercase" placeholder="PLACA"></div>
                     <div class="chk-container">
                         <label class="chk-item"><input type="checkbox" id="disp-integral" onchange="toggleIntegral()"><span class="chk-label">Integral</span></label>
                         <label class="chk-item"><input type="checkbox" id="disp-manha" class="disp-opt"><span class="chk-label">Manhã</span></label>
@@ -151,27 +138,24 @@
                         <label class="chk-item"><input type="checkbox" id="disp-noite" class="disp-opt"><span class="chk-label">Noite</span></label>
                         <label class="chk-item"><input type="checkbox" id="disp-extra"><span class="chk-label">Renda Extra</span></label>
                     </div>
-
-                    <div class="relative mt-4"><i class="fas fa-envelope input-icon"></i><input type="email" id="cad-email" class="input-dark" placeholder="E-mail"></div>
-                    <div class="relative"><i class="fas fa-lock input-icon"></i><input type="password" id="cad-senha" class="input-dark" placeholder="Senha"></div>
+                    <input type="email" id="cad-email" class="input-dark mt-2" placeholder="E-mail">
+                    <input type="password" id="cad-senha" class="input-dark" placeholder="Senha">
                 </div>
-
                 <button onclick="enviarCadastro()" id="btn-cadastrar" class="btn-primary mt-6 shadow-lg">FINALIZAR CADASTRO</button>
             </div>
         </div>
     </div>
 
-    <div id="layer-pending" class="layer z-50">
-        <div class="flex flex-col justify-center items-center h-full p-8 text-center bg-[#111827]">
+    <div id="layer-pending" class="layer">
+        <div class="flex flex-col justify-center items-center h-full p-8 text-center">
             <div class="w-32 h-32 bg-yellow-500/10 rounded-full flex items-center justify-center mb-8 animate-pulse text-yellow-500 border border-yellow-500/20"><i class="fas fa-clock text-6xl"></i></div>
             <h2 class="text-2xl font-bold text-white mb-4">Em Análise</h2>
-            <p class="text-gray-400 text-sm mb-12 leading-relaxed max-w-xs mx-auto">Seu cadastro foi recebido com sucesso. Aguarde a aprovação da administração para começar a rodar.</p>
+            <p class="text-gray-400 text-sm mb-12 leading-relaxed max-w-xs mx-auto">Seu cadastro foi recebido com sucesso. Aguarde a aprovação da administração.</p>
             <button onclick="logout()" class="text-red-400 text-sm font-bold border border-red-500/30 px-8 py-3 rounded-full hover:bg-red-500/10 transition">SAIR DA CONTA</button>
         </div>
     </div>
 
-    <div id="layer-app" class="layer z-40 bg-[#111827]">
-        
+    <div id="layer-app" class="layer bg-[#111827]">
         <div class="map-bg"></div>
 
         <div class="floating-header">
@@ -286,38 +270,33 @@
             document.getElementById('layer-' + layerName).classList.add('active');
         }
 
-        // --- INICIALIZAÇÃO SEGURA ---
+        // --- INICIALIZAÇÃO E GESTÃO DE SESSÃO ---
         (async function init() {
-            // Válvula de segurança: Se o JS travar, em 3s forçamos o login para destravar a tela
-            const safetyValve = setTimeout(() => {
-                if (document.getElementById('splash-screen').style.display !== 'none') {
-                    document.getElementById('splash-screen').style.display = 'none';
-                    setLayer('guest');
-                }
-            }, 3000);
-
             try {
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                
+                // Fallback para evitar Splash eterno
+                const fallback = setTimeout(() => {
+                    if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest');
+                }, 3000);
+
                 const { data } = await sbClient.auth.getSession();
                 
-                // Limpa o timer, pois conectou com sucesso
-                clearTimeout(safetyValve);
-                document.getElementById('splash-screen').style.display = 'none';
-
+                // Se tiver sessão, carrega o perfil. Se não, vai pro login.
                 if (data.session) {
                     userSession = data.session;
                     await loadPerfil();
                 } else {
                     setLayer('guest');
                 }
+                clearTimeout(fallback); // Cancela o fallback se carregou
             } catch (e) {
                 console.error("Erro init:", e);
                 setLayer('guest');
-                document.getElementById('splash-screen').style.display = 'none';
             }
         })();
 
-        // --- NAVEGAÇÃO INTERNA ---
+        // --- NAVEGAÇÃO ---
         function toggleGuestView(view) {
             document.getElementById('view-login').classList.toggle('hidden-force', view !== 'login');
             document.getElementById('view-cadastro').classList.toggle('hidden-force', view !== 'cadastro');
@@ -325,16 +304,10 @@
 
         function navApp(viewId) {
             if(viewId === 'radar' && pedidoAtual) viewId = 'active';
-            
-            // Fecha menu se aberto
             document.getElementById('side-menu').classList.remove('open');
             document.getElementById('menu-overlay').classList.remove('open');
-
-            // Troca tela
             document.querySelectorAll('#layer-app > div[id^="view-"]').forEach(el => el.classList.add('hidden-force'));
             document.getElementById('view-' + viewId).classList.remove('hidden-force');
-            
-            // Atualiza Tab
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if(document.getElementById('nav-'+viewId)) document.getElementById('nav-'+viewId).classList.add('active');
         }
@@ -344,24 +317,47 @@
             document.getElementById('menu-overlay').classList.toggle('open');
         }
 
-        // --- CARREGAMENTO DE DADOS ---
+        // --- AUTH ---
+        async function fazerLogin() {
+            const e = $('#log-email').val(), p = $('#log-senha').val();
+            if(!e || !p) return toast("Preencha tudo", 'error');
+            $('#btn-login').text('...');
+            const { data, error } = await sbClient.auth.signInWithPassword({ email:e, password:p });
+            if (error) { toast("Erro no login", 'error'); $('#btn-login').text('ENTRAR NA CONTA'); } 
+            else {
+                // SUCESSO: Carrega diretamente sem recarregar a página
+                userSession = data.session;
+                await loadPerfil(); 
+            }
+        }
+
+        async function logout() {
+            if(confirm("Sair do app?")) {
+                await sbClient.auth.signOut();
+                location.reload(); // Recarrega para limpar memória
+            }
+        }
+
+        // --- CARREGAMENTO DO USUÁRIO ---
         async function loadPerfil() {
             const { data } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            if(!data) { logout(); return; }
+            if(!data) { 
+                // Se o usuário autenticou mas não tem perfil (erro grave), desloga
+                await sbClient.auth.signOut(); 
+                setLayer('guest'); 
+                return; 
+            }
 
-            // LÓGICA DE STATUS: SE PENDENTE, VAI PARA CAMADA PENDENTE
             if (data.status !== 'Aprovado') {
                 setLayer('pending');
                 return;
             }
 
-            // SE APROVADO, VAI PARA O APP
-            setLayer('app');
+            setLayer('app'); // Só agora mostra o app
             preencherPerfil(data);
             
             document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
             document.getElementById('menu-user-id').innerText = `ID: ${data.id.split('-')[0]}`;
-            document.getElementById('header-id-user').innerText = `ID: ${data.id.split('-')[0]}`;
             if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
 
             sbClient.from('app_config').select('som_alerta_url').single().then(({data}) => { 
@@ -389,7 +385,7 @@
 
         function toggleSaldo() { isSaldoVisible = !isSaldoVisible; updateSaldoUI(); }
 
-        // --- RADAR E AÇÕES ---
+        // --- APP FUNCIONAL ---
         function toggleRadar() {
             isOnline = !isOnline;
             const btn = document.getElementById('btn-power');
@@ -454,25 +450,7 @@
                 navApp('active');
             } else { 
                 pedidoAtual = null; 
-                // Se estava na tela ativa, volta pro radar
                 if(!document.getElementById('view-active').classList.contains('hidden-force')) navApp('radar');
-            }
-        }
-
-        // --- AUTH & ACTIONS ---
-        async function fazerLogin() {
-            const e = $('#log-email').val(), p = $('#log-senha').val();
-            if(!e || !p) return toast("Preencha tudo", 'error');
-            $('#btn-login').text('...');
-            const { error } = await sbClient.auth.signInWithPassword({ email:e, password:p });
-            if (error) { toast("Erro no login", 'error'); $('#btn-login').text('ENTRAR'); } 
-            else location.reload();
-        }
-
-        async function logout() {
-            if(confirm("Sair do app?")) {
-                await sbClient.auth.signOut();
-                location.reload();
             }
         }
 
@@ -494,7 +472,7 @@
             }
         }
 
-        // --- MODALS & UTILS ---
+        // --- UTILS ---
         function openModal(id, action=null) {
             currentAction = action;
             document.getElementById('modal-'+id).classList.add('active');
