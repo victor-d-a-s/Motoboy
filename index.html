@@ -16,7 +16,7 @@
         /* --- CORE --- */
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; overflow: hidden; width: 100vw; height: 100vh; margin: 0; padding: 0; user-select: none; }
         
-        /* SISTEMA DE CAMADAS (LAYER SYSTEM) - CORREÇÃO DEFINITIVA */
+        /* SISTEMA DE CAMADAS (LAYER SYSTEM) */
         .layer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #111827; z-index: 10; 
@@ -27,9 +27,16 @@
         /* Apenas a camada ativa aparece */
         .layer.active { display: flex !important; }
 
+        /* LOADING SPLASH FIXO (Z-Index Máximo) */
+        #splash-screen { 
+            position: fixed; inset: 0; z-index: 9999; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            background-color: #111827; 
+            transition: opacity 0.5s;
+        }
+
         /* CLASSES UTILITÁRIAS */
         .hidden-force { display: none !important; }
-        .flex-center { display: flex; align-items: center; justify-content: center; }
         
         /* --- ESTILOS VISUAIS --- */
         .input-dark { background: #1F2937; border: 1px solid #374151; color: white; padding: 16px; border-radius: 12px; width: 100%; outline: none; font-size: 15px; transition: 0.2s; }
@@ -83,13 +90,13 @@
 
     <audio id="audio-alert" preload="auto"></audio>
 
-    <div id="layer-splash" class="layer active z-[9999] flex-center bg-gray-900">
-        <div class="mb-6 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
+    <div id="splash-screen">
+        <div class="mb-4 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
         <div class="w-8 h-8 border-4 border-gray-700 border-t-yellow-500 rounded-full animate-spin"></div>
         <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Iniciando...</p>
     </div>
 
-    <div id="layer-guest" class="layer z-50">
+    <div id="layer-guest" class="layer active z-50">
         
         <div id="view-login" class="h-full flex flex-col justify-center p-8 max-w-md mx-auto w-full">
             <div class="mb-10 text-center">
@@ -128,7 +135,7 @@
                 <div class="space-y-3 bg-gray-800 p-4 rounded-xl border border-gray-700">
                     <p class="text-red-400 text-[10px] font-bold uppercase tracking-wider">Emergência</p>
                     <div class="relative"><i class="fas fa-user-nurse input-icon"></i><input type="text" id="cad-eme-nome" class="input-dark" placeholder="Nome Contato"></div>
-                    <div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="cad-eme-zap" class="input-dark" placeholder="Zap Contato"></div>
+                    <div class="relative"><i class="fas fa-phone input-icon"></i><input type="tel" id="cad-eme-zap" class="input-dark" placeholder="WhatsApp Contato"></div>
                     <div class="relative"><i class="fas fa-users input-icon"></i><input type="text" id="cad-eme-parent" class="input-dark" placeholder="Parentesco"></div>
                 </div>
 
@@ -255,6 +262,16 @@
     <div id="modal-change-pass" class="modal-overlay"><div class="modal-box"><button onclick="closeModal('change-pass')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><h3 class="text-lg font-bold text-white mb-6">Alterar Senha</h3><input type="password" id="input-new-pass" class="input-dark mb-6" placeholder="Nova Senha"><button onclick="alterarSenha()" class="btn-primary">SALVAR</button></div></div>
     <div id="modal-change-pin" class="modal-overlay"><div class="modal-box"><button onclick="closeModal('change-pin')" class="absolute top-4 right-4 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><h3 class="text-lg font-bold text-white mb-6">Redefinir PIN</h3><input type="tel" id="input-change-pin" maxlength="4" class="input-dark text-center text-3xl tracking-[0.5em] mb-6 font-bold" placeholder="••••"><button onclick="alterarPin()" class="btn-primary">SALVAR</button></div></div>
 
+    <div id="sheet-overlay" class="sheet-overlay" onclick="fecharAtividades()"></div>
+    <div id="sheet-activities">
+        <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-6"></div>
+        <div class="px-6">
+            <h3 class="text-xl font-bold text-white mb-6">Resumo do Dia</h3>
+            <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 mb-4 text-center"><p class="text-gray-400 text-xs uppercase mb-1">Saldo Atual</p><p class="text-3xl font-bold text-green-400" id="sheet-saldo">R$ 0,00</p></div>
+            <div class="grid grid-cols-2 gap-4"><div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center"><i class="fas fa-check-circle text-green-500 text-xl mb-2"></i><p class="text-2xl font-bold text-white" id="sheet-finalizadas">0</p><p class="text-[10px] text-gray-400 uppercase">Entregues</p></div><div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center"><i class="fas fa-times-circle text-red-500 text-xl mb-2"></i><p class="text-2xl font-bold text-white" id="sheet-canceladas">0</p><p class="text-[10px] text-gray-400 uppercase">Canceladas</p></div></div>
+        </div>
+    </div>
+
     <div id="toast-box"></div>
 
     <script>
@@ -264,35 +281,43 @@
         
         let sbClient, userSession, isOnline = false, pedidoAtual = null, currentAction = '', saldoReal = 0, isSaldoVisible = false;
 
-        // --- MÁQUINA DE ESTADOS (CAMADAS) ---
-        // Garante que APENAS UMA camada esteja visível
-        function gotoLayer(layerName) {
+        function setLayer(layerName) {
             document.querySelectorAll('.layer').forEach(el => el.classList.remove('active'));
             document.getElementById('layer-' + layerName).classList.add('active');
         }
 
-        // --- INICIALIZAÇÃO ---
+        // --- INICIALIZAÇÃO SEGURA ---
         (async function init() {
+            // Válvula de segurança: Se o JS travar, em 3s forçamos o login para destravar a tela
+            const safetyValve = setTimeout(() => {
+                if (document.getElementById('splash-screen').style.display !== 'none') {
+                    document.getElementById('splash-screen').style.display = 'none';
+                    setLayer('guest');
+                }
+            }, 3000);
+
             try {
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                
-                // Fallback de segurança (Se travar no splash por 3s, força login)
-                setTimeout(() => { if (document.getElementById('layer-splash').classList.contains('active')) gotoLayer('guest'); }, 3000);
-
                 const { data } = await sbClient.auth.getSession();
+                
+                // Limpa o timer, pois conectou com sucesso
+                clearTimeout(safetyValve);
+                document.getElementById('splash-screen').style.display = 'none';
+
                 if (data.session) {
                     userSession = data.session;
                     await loadPerfil();
                 } else {
-                    gotoLayer('guest');
+                    setLayer('guest');
                 }
             } catch (e) {
-                console.error("Init Error:", e);
-                gotoLayer('guest');
+                console.error("Erro init:", e);
+                setLayer('guest');
+                document.getElementById('splash-screen').style.display = 'none';
             }
         })();
 
-        // --- GERENCIAMENTO DE TELAS INTERNAS ---
+        // --- NAVEGAÇÃO INTERNA ---
         function toggleGuestView(view) {
             document.getElementById('view-login').classList.toggle('hidden-force', view !== 'login');
             document.getElementById('view-cadastro').classList.toggle('hidden-force', view !== 'cadastro');
@@ -301,7 +326,7 @@
         function navApp(viewId) {
             if(viewId === 'radar' && pedidoAtual) viewId = 'active';
             
-            // Fecha menu lateral se aberto
+            // Fecha menu se aberto
             document.getElementById('side-menu').classList.remove('open');
             document.getElementById('menu-overlay').classList.remove('open');
 
@@ -324,19 +349,19 @@
             const { data } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
             if(!data) { logout(); return; }
 
-            // LÓGICA DE STATUS
+            // LÓGICA DE STATUS: SE PENDENTE, VAI PARA CAMADA PENDENTE
             if (data.status !== 'Aprovado') {
-                gotoLayer('pending');
+                setLayer('pending');
                 return;
             }
 
-            gotoLayer('app');
+            // SE APROVADO, VAI PARA O APP
+            setLayer('app');
             preencherPerfil(data);
             
             document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
-            const shortId = data.id.split('-')[0];
-            document.getElementById('menu-user-id').innerText = `ID: ${shortId}`;
-            document.getElementById('header-id-user').innerText = `ID: ${shortId}`;
+            document.getElementById('menu-user-id').innerText = `ID: ${data.id.split('-')[0]}`;
+            document.getElementById('header-id-user').innerText = `ID: ${data.id.split('-')[0]}`;
             if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
 
             sbClient.from('app_config').select('som_alerta_url').single().then(({data}) => { 
