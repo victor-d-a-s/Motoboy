@@ -69,9 +69,10 @@
         .sheet-overlay.open { opacity: 1; visibility: visible; }
 
         /* TOAST */
-        #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5000; width: 90%; max-width: 350px; pointer-events: none; }
-        .toast { background: #374151; color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; margin-bottom: 10px; border: 1px solid #4B5563; opacity: 0; transform: translateY(-10px); transition: 0.3s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 350px; pointer-events: none; }
+        .toast { background: #374151; color: white; padding: 14px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; margin-bottom: 10px; border: 1px solid #4B5563; opacity: 0; transform: translateY(-10px); transition: 0.3s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.5); }
         .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.error { border-color: #EF4444; background: #7F1D1D; }
         
         .chk-container { display: flex; flex-wrap: wrap; gap: 8px; }
         .chk-item input { display: none; }
@@ -266,58 +267,39 @@
         const SUPABASE_URL = 'https://ofpnnijkhgsjarixoyhg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcG5uaWpraGdzamFyaXhveWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjUyNzYsImV4cCI6MjA4MDY0MTI3Nn0.dNOIIETmTz3l1HvhuT-ihAiymJqiaYZnklzzBzDGCFU';
         const ADMIN_ZAP = "5584982005039";
-        const INACTIVITY_TIME = 1000 * 60 * 120; // 120 minutos de inatividade
+        const INACTIVITY_TIME = 1000 * 60 * 15;
         
         let sbClient, userSession, isOnline = false, pedidoAtual = null, currentAction = '', saldoReal = 0, isSaldoVisible = false;
         let inactivityTimer;
 
-        // SISTEMA DE CAMADAS
         function setLayer(layerName) {
             document.querySelectorAll('.layer').forEach(el => el.classList.remove('active'));
             document.getElementById('layer-' + layerName).classList.add('active');
         }
 
-        // --- INICIALIZAÇÃO SEGURA ---
         (async function init() {
             try {
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                
-                // Válvula de segurança: Remove splash após 3s se travar
-                setTimeout(() => { 
-                    if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest'); 
-                }, 3000);
-
+                setTimeout(() => { if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest'); }, 3000);
                 const { data } = await sbClient.auth.getSession();
-                
                 if (data.session) {
                     userSession = data.session;
                     await loadPerfil();
                 } else {
                     setLayer('guest');
                 }
-            } catch (e) {
-                console.error("Erro init:", e);
-                setLayer('guest');
-            }
+            } catch (e) { console.error("Erro init:", e); setLayer('guest'); }
         })();
 
-        // --- MONITOR DE INATIVIDADE ---
         function startInactivityMonitor() {
             resetInactivityTimer();
-            ['click', 'touchstart', 'scroll', 'keypress'].forEach(evt => 
-                document.addEventListener(evt, resetInactivityTimer, {passive: true})
-            );
+            ['click', 'touchstart', 'scroll', 'keypress'].forEach(evt => document.addEventListener(evt, resetInactivityTimer, {passive: true}));
         }
-
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(() => {
-                alert("Sessão expirada por inatividade.");
-                logout();
-            }, INACTIVITY_TIME);
+            inactivityTimer = setTimeout(() => { alert("Sessão expirada."); logout(); }, INACTIVITY_TIME);
         }
 
-        // --- NAVEGAÇÃO ---
         function toggleGuestView(view) {
             document.getElementById('view-login').classList.toggle('hidden-force', view !== 'login');
             document.getElementById('view-cadastro').classList.toggle('hidden-force', view !== 'cadastro');
@@ -325,62 +307,42 @@
 
         function navApp(viewId) {
             if(viewId === 'radar' && pedidoAtual) viewId = 'active';
-            
-            // Fecha menu lateral
             document.getElementById('side-menu').classList.remove('open');
             document.getElementById('menu-overlay').classList.remove('open');
-
-            // Troca tela
             document.querySelectorAll('#layer-app > div[id^="view-"]').forEach(el => el.classList.add('hidden-force'));
             document.getElementById('view-' + viewId).classList.remove('hidden-force');
-            
-            // Atualiza Tab
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if(document.getElementById('nav-'+viewId)) document.getElementById('nav-'+viewId).classList.add('active');
         }
 
-        function toggleMenu() {
-            document.getElementById('side-menu').classList.toggle('open');
-            document.getElementById('menu-overlay').classList.toggle('open');
-        }
+        function toggleMenu() { document.getElementById('side-menu').classList.toggle('open'); document.getElementById('menu-overlay').classList.toggle('open'); }
 
-        // --- AUTH ---
         async function fazerLogin() {
             const e = $('#log-email').val(), p = $('#log-senha').val();
             if(!e || !p) return toast("Preencha tudo", 'error');
             $('#btn-login').text('...');
             const { data, error } = await sbClient.auth.signInWithPassword({ email:e, password:p });
             if (error) { toast("Erro no login", 'error'); $('#btn-login').text('ENTRAR NA CONTA'); } 
-            else {
-                userSession = data.session;
-                await loadPerfil(); // Carrega direto sem reload
-            }
+            else { userSession = data.session; await loadPerfil(); }
         }
 
-        async function logout() {
-            if(confirm("Sair do app?")) {
-                await sbClient.auth.signOut();
-                location.reload(); 
-            }
-        }
+        async function logout() { if(confirm("Sair do app?")) { await sbClient.auth.signOut(); location.reload(); } }
 
-        // --- CARREGAMENTO DO USUÁRIO ---
         async function loadPerfil() {
-            const { data } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
-            if(!data) { 
-                await sbClient.auth.signOut(); 
-                setLayer('guest'); 
-                return; 
-            }
-
-            if (data.status !== 'Aprovado') {
-                setLayer('pending');
+            const { data, error } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
+            // BLOQUEIO DE SEGURANÇA: Se não achou na tabela 'motoboys'
+            if (error || !data) {
+                await sbClient.auth.signOut();
+                toast("Acesso negado: Apenas Motoboys.", "error");
+                setLayer('guest');
                 return;
             }
 
-            setLayer('app'); // MOSTRA O APP
+            if (data.status !== 'Aprovado') { setLayer('pending'); return; }
+
+            setLayer('app');
             preencherPerfil(data);
-            startInactivityMonitor(); // Inicia monitor
+            startInactivityMonitor();
             
             document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
             document.getElementById('menu-user-id').innerText = `ID: ${data.id.split('-')[0]}`;
@@ -412,7 +374,6 @@
 
         function toggleSaldo() { isSaldoVisible = !isSaldoVisible; updateSaldoUI(); }
 
-        // --- RADAR E AÇÕES ---
         function toggleRadar() {
             isOnline = !isOnline;
             const btn = document.getElementById('btn-power');
@@ -446,7 +407,7 @@
                 document.getElementById('radar-empty').classList.add('hidden-force');
                 data.forEach(p => {
                     const liq = p.valor_frete * 0.9;
-                    l.innerHTML += `<div class="dark-card p-4 border-l-4 border-yellow-500 mb-3 animate-pulse"><div class="flex justify-between mb-2"><span class="bg-gray-700 text-[10px] uppercase font-bold px-2 py-1 rounded text-white">Nova</span><div class="text-right"><p class="text-xs text-gray-400">Ganho estimado</p><p class="text-lg font-bold text-green-400">R$ ${liq.toFixed(2)}</p></div></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Retirada</p><p class="text-white font-bold text-sm truncate">${p.origem}</p></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Entrega</p><p class="text-gray-400 text-sm truncate">${p.destino}</p></div><button onclick="aceitar(${p.id})" class="btn-action shadow-lg">ACEITAR</button></div>`;
+                    l.innerHTML += `<div class="dark-card p-4 border-l-4 border-yellow-500 mb-3 animate-pulse"><div class="flex justify-between mb-2"><span class="bg-gray-700 text-[10px] uppercase font-bold px-2 py-1 rounded text-white">Nova</span><div class="text-right"><p class="text-xs text-gray-400">Ganho estimado</p><p class="text-lg font-bold text-green-400">R$ ${liq.toFixed(2)}</p></div></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Retirada</p><p class="text-white font-bold text-sm truncate">${p.origem}</p></div><div class="mb-3"><p class="text-[10px] text-gray-500 font-bold uppercase">Entrega</p><p class="text-gray-400 text-sm truncate">${p.destino}</p></div><button onclick="aceitar(${p.id})" class="btn-primary shadow-lg">ACEITAR</button></div>`;
                 });
             } else { document.getElementById('radar-empty').classList.remove('hidden-force'); }
         }
@@ -461,23 +422,12 @@
                 document.getElementById('active-cliente-nome').innerText = data.nome_destinatario;
                 document.getElementById('active-valor').innerText = liq.toFixed(2);
                 
-                // ESCONDE TODOS OS BOTÕES DE AÇÃO
-                const btns = ['btn-cheguei', 'btn-iniciar', 'btn-finalizar'];
-                btns.forEach(id => document.getElementById(id).classList.add('hidden-force'));
-                
+                ['btn-cheguei', 'btn-iniciar', 'btn-finalizar'].forEach(id => document.getElementById(id).classList.add('hidden-force'));
                 const statusTxt = document.getElementById('active-status-text');
 
-                // LÓGICA DE STATUS 99
-                if(data.status === 'pendente') {
-                    statusTxt.innerText = "INDO ATÉ A LOJA";
-                    document.getElementById('btn-cheguei').classList.remove('hidden-force');
-                } else if(data.status === 'aguardando') {
-                    statusTxt.innerText = "AGUARDANDO NA LOJA";
-                    document.getElementById('btn-iniciar').classList.remove('hidden-force');
-                } else if(data.status === 'em_rota') {
-                    statusTxt.innerText = "EM ROTA DE ENTREGA";
-                    document.getElementById('btn-finalizar').classList.remove('hidden-force');
-                }
+                if(data.status === 'pendente') { statusTxt.innerText = "INDO ATÉ A LOJA"; document.getElementById('btn-cheguei').classList.remove('hidden-force'); }
+                else if(data.status === 'aguardando') { statusTxt.innerText = "AGUARDANDO NA LOJA"; document.getElementById('btn-iniciar').classList.remove('hidden-force'); }
+                else if(data.status === 'em_rota') { statusTxt.innerText = "EM ROTA DE ENTREGA"; document.getElementById('btn-finalizar').classList.remove('hidden-force'); }
                 navApp('active');
             } else { 
                 pedidoAtual = null; 
@@ -503,7 +453,6 @@
             }
         }
 
-        // --- MODALS & UTILS ---
         function openModal(id, action=null) {
             currentAction = action;
             document.getElementById('modal-'+id).classList.add('active');
@@ -578,21 +527,8 @@
         function calcIdade() { const n = $('#cad-nasc').val(); if(n) $('#cad-idade').val((new Date().getFullYear()-new Date(n).getFullYear())+' anos'); }
         function calcIdadePerfil() { const n = $('#perf-nasc').val(); if(n) $('#perf-idade').val((new Date().getFullYear()-new Date(n).getFullYear())+' anos'); }
         function toggleIntegral(){ const i=$('#disp-integral').is(':checked'); $('.chk-item input').not('#disp-integral, #disp-extra').prop('checked', i).prop('disabled', i); }
-        async function aceitar(id) { await sbClient.from('pedidos').update({status:'pendente', entregador_id:userSession.user.id}).eq('id',id); checkActive(); }
-        
-        // NOVOS STATUS 99
-        async function chegueiLoja() {
-            if(!confirm("Você chegou no estabelecimento?")) return;
-            await sbClient.from('pedidos').update({status:'aguardando'}).eq('id',pedidoAtual.id);
-            checkActive();
-        }
-        
-        async function iniciarEntrega() { 
-            if(!confirm("Pedido coletado? Iniciar rota?")) return; 
-            await sbClient.from('pedidos').update({status:'em_rota'}).eq('id',pedidoAtual.id); 
-            checkActive(); 
-        }
-        
+        async function chegueiLoja() { if(!confirm("Chegou no estabelecimento?")) return; await sbClient.from('pedidos').update({status:'aguardando'}).eq('id',pedidoAtual.id); checkActive(); }
+        async function iniciarEntrega() { if(!confirm("Pedido coletado?")) return; await sbClient.from('pedidos').update({status:'em_rota'}).eq('id',pedidoAtual.id); checkActive(); }
         async function cancelar() { if(confirm("Cancelar?")) { await sbClient.from('pedidos').update({status:'solicitado',entregador_id:null}).eq('id',pedidoAtual.id); checkActive(); } }
         async function loadExtrato() { const l = document.getElementById('history-list'); l.innerHTML = '<div class="text-center opacity-50">Carregando...</div>'; const {data} = await sbClient.from('pedidos').select('*').eq('entregador_id',userSession.user.id).eq('status','concluido').order('created_at',{ascending:false}).limit(20); l.innerHTML = ''; data?.forEach(p => { const liq = p.valor_frete * 0.9; l.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-[10px] text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${liq.toFixed(2)}</p></div>`; }); }
         async function uploadFoto() { const f=$('#upload-foto')[0].files[0]; if(f){ const n=`${userSession.user.id}/${Date.now()}.jpg`; await sbClient.storage.from('avatars').upload(n,f); const{data}=sbClient.storage.from('avatars').getPublicUrl(n); await sbClient.from('motoboys').update({foto_url:data.publicUrl}).eq('id',userSession.user.id); $('#menu-user-foto').attr('src',data.publicUrl); toast("Foto Ok!",'success'); } }
