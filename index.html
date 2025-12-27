@@ -16,11 +16,12 @@
         /* --- CORE --- */
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; overflow: hidden; width: 100vw; height: 100vh; margin: 0; padding: 0; user-select: none; }
         
-        /* SISTEMA DE CAMADAS */
+        /* SISTEMA DE CAMADAS (LAYER SYSTEM) */
         .layer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #111827; z-index: 10; 
-            display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden;
+            display: none; /* Oculto por padrão */
+            flex-direction: column; overflow-y: auto; overflow-x: hidden;
         }
         .layer.active { display: flex !important; }
 
@@ -265,9 +266,12 @@
         const SUPABASE_URL = 'https://ofpnnijkhgsjarixoyhg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcG5uaWpraGdzamFyaXhveWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjUyNzYsImV4cCI6MjA4MDY0MTI3Nn0.dNOIIETmTz3l1HvhuT-ihAiymJqiaYZnklzzBzDGCFU';
         const ADMIN_ZAP = "5584982005039";
+        const INACTIVITY_TIME = 1000 * 60 * 120; // 120 minutos de inatividade
         
         let sbClient, userSession, isOnline = false, pedidoAtual = null, currentAction = '', saldoReal = 0, isSaldoVisible = false;
+        let inactivityTimer;
 
+        // SISTEMA DE CAMADAS
         function setLayer(layerName) {
             document.querySelectorAll('.layer').forEach(el => el.classList.remove('active'));
             document.getElementById('layer-' + layerName).classList.add('active');
@@ -278,8 +282,9 @@
             try {
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 
-                const fallback = setTimeout(() => {
-                    if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest');
+                // Válvula de segurança: Remove splash após 3s se travar
+                setTimeout(() => { 
+                    if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest'); 
                 }, 3000);
 
                 const { data } = await sbClient.auth.getSession();
@@ -290,14 +295,29 @@
                 } else {
                     setLayer('guest');
                 }
-                clearTimeout(fallback);
             } catch (e) {
                 console.error("Erro init:", e);
                 setLayer('guest');
             }
         })();
 
-        // --- NAVEGAÇÃO INTERNA ---
+        // --- MONITOR DE INATIVIDADE ---
+        function startInactivityMonitor() {
+            resetInactivityTimer();
+            ['click', 'touchstart', 'scroll', 'keypress'].forEach(evt => 
+                document.addEventListener(evt, resetInactivityTimer, {passive: true})
+            );
+        }
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                alert("Sessão expirada por inatividade.");
+                logout();
+            }, INACTIVITY_TIME);
+        }
+
+        // --- NAVEGAÇÃO ---
         function toggleGuestView(view) {
             document.getElementById('view-login').classList.toggle('hidden-force', view !== 'login');
             document.getElementById('view-cadastro').classList.toggle('hidden-force', view !== 'cadastro');
@@ -305,10 +325,16 @@
 
         function navApp(viewId) {
             if(viewId === 'radar' && pedidoAtual) viewId = 'active';
+            
+            // Fecha menu lateral
             document.getElementById('side-menu').classList.remove('open');
             document.getElementById('menu-overlay').classList.remove('open');
+
+            // Troca tela
             document.querySelectorAll('#layer-app > div[id^="view-"]').forEach(el => el.classList.add('hidden-force'));
             document.getElementById('view-' + viewId).classList.remove('hidden-force');
+            
+            // Atualiza Tab
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if(document.getElementById('nav-'+viewId)) document.getElementById('nav-'+viewId).classList.add('active');
         }
@@ -327,7 +353,7 @@
             if (error) { toast("Erro no login", 'error'); $('#btn-login').text('ENTRAR NA CONTA'); } 
             else {
                 userSession = data.session;
-                await loadPerfil(); 
+                await loadPerfil(); // Carrega direto sem reload
             }
         }
 
@@ -354,6 +380,7 @@
 
             setLayer('app'); // MOSTRA O APP
             preencherPerfil(data);
+            startInactivityMonitor(); // Inicia monitor
             
             document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
             document.getElementById('menu-user-id').innerText = `ID: ${data.id.split('-')[0]}`;
@@ -553,7 +580,7 @@
         function toggleIntegral(){ const i=$('#disp-integral').is(':checked'); $('.chk-item input').not('#disp-integral, #disp-extra').prop('checked', i).prop('disabled', i); }
         async function aceitar(id) { await sbClient.from('pedidos').update({status:'pendente', entregador_id:userSession.user.id}).eq('id',id); checkActive(); }
         
-        // --- NOVAS FUNÇÕES DO FLUXO 99 ---
+        // NOVOS STATUS 99
         async function chegueiLoja() {
             if(!confirm("Você chegou no estabelecimento?")) return;
             await sbClient.from('pedidos').update({status:'aguardando'}).eq('id',pedidoAtual.id);
