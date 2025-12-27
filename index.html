@@ -16,12 +16,11 @@
         /* --- CORE --- */
         body { font-family: 'Segoe UI', sans-serif; background-color: #111827; color: #e5e7eb; overflow: hidden; width: 100vw; height: 100vh; margin: 0; padding: 0; user-select: none; }
         
-        /* SISTEMA DE CAMADAS (LAYER SYSTEM) */
+        /* SISTEMA DE CAMADAS */
         .layer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #111827; z-index: 10; 
-            display: none; /* Oculto por padrão */
-            flex-direction: column; overflow-y: auto; overflow-x: hidden;
+            display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden;
         }
         .layer.active { display: flex !important; }
 
@@ -86,7 +85,7 @@
     <div id="layer-splash" class="layer active">
         <div class="mb-6 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
         <div class="w-8 h-8 border-4 border-gray-700 border-t-yellow-500 rounded-full animate-spin"></div>
-        <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Iniciando...</p>
+        <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Carregando...</p>
     </div>
 
     <div id="layer-guest" class="layer">
@@ -211,8 +210,11 @@
                 <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-4 shadow-lg"><div class="flex items-center gap-3"><div class="bg-blue-900/30 text-blue-400 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-route"></i></div><div><p class="text-[10px] text-gray-400 uppercase font-bold">Status</p><p class="text-sm font-bold text-white" id="active-status-text">EM ROTA</p></div></div><div class="text-right"><p class="text-[10px] text-gray-400 uppercase font-bold">Ganho</p><p class="text-xl font-bold text-green-400">R$ <span id="active-valor">0,00</span></p></div></div>
                 <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-4 shadow-lg"><div class="mb-6 pb-6 border-b border-gray-700 relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-blue-500 rounded-full"></div><p class="text-[10px] text-blue-400 font-bold uppercase mb-1 ml-2">COLETA</p><div class="flex justify-between"><p class="text-white font-medium text-sm ml-2" id="active-origem">...</p><div class="flex gap-2"><button onclick="copiar('origem')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('origem')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div></div><div class="relative"><div class="absolute left-[-10px] top-1 w-2 h-2 bg-green-500 rounded-full"></div><p class="text-[10px] text-green-400 font-bold uppercase mb-1 ml-2">ENTREGA</p><div class="flex justify-between mb-4"><div class="ml-2"><p class="text-white font-medium text-sm" id="active-destino">...</p><p class="text-xs text-gray-400 mt-1"><i class="fas fa-user"></i> <span id="active-cliente-nome">...</span></p></div><div class="flex gap-2"><button onclick="copiar('destino')" class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-gray-400"><i class="far fa-copy"></i></button><button onclick="gps('destino')" class="h-8 bg-gray-700 px-3 rounded text-white text-xs font-bold flex items-center gap-1"><i class="fas fa-location-arrow"></i> GPS</button></div></div><button onclick="zap()" class="w-full bg-green-600/20 text-green-400 border border-green-600/50 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-lg"></i> Chamar Cliente</button></div></div>
                 <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl flex justify-between items-center mb-6"><div><p class="text-xs text-gray-400 uppercase font-bold mb-1">Cobrança</p><p class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-hand-holding-usd text-yellow-500"></i> <span id="active-forma">...</span></p></div><span class="text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded font-bold uppercase">Confirmar na Loja</span></div>
+                
+                <button id="btn-cheguei" onclick="chegueiLoja()" class="btn-primary shadow-lg mb-4 hidden-force bg-yellow-600 text-white">CHEGUEI NO ESTABELECIMENTO</button>
                 <button id="btn-iniciar" onclick="iniciarEntrega()" class="btn-primary shadow-lg mb-4 hidden-force bg-blue-600 text-white">INICIAR ENTREGA</button>
-                <button id="btn-finalizar" onclick="openModal('validate-pin', 'entrega')" class="btn-primary shadow-lg mb-4 hidden-force">FINALIZAR ENTREGA</button>
+                <button id="btn-finalizar" onclick="openModal('validate-pin', 'entrega')" class="btn-primary shadow-lg mb-4 hidden-force">FINALIZAR</button>
+                
                 <button onclick="cancelar()" class="w-full text-red-500/60 text-xs py-2 hover:text-red-500">Cancelar (Emergência)</button>
             </div>
         </div>
@@ -276,8 +278,9 @@
             try {
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 
-                // Fallback de segurança (Se travar no splash por 3s, força login)
-                setTimeout(() => { if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest'); }, 3000);
+                const fallback = setTimeout(() => {
+                    if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest');
+                }, 3000);
 
                 const { data } = await sbClient.auth.getSession();
                 
@@ -287,8 +290,9 @@
                 } else {
                     setLayer('guest');
                 }
+                clearTimeout(fallback);
             } catch (e) {
-                console.error("Init Error:", e);
+                console.error("Erro init:", e);
                 setLayer('guest');
             }
         })();
@@ -421,7 +425,7 @@
         }
 
         async function checkActive() {
-            const { data } = await sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).or('status.eq.pendente,status.eq.em_rota').single();
+            const { data } = await sbClient.from('pedidos').select('*').eq('entregador_id', userSession.user.id).or('status.eq.pendente,status.eq.em_rota,status.eq.aguardando').single();
             if(data) {
                 pedidoAtual = data;
                 const liq = data.valor_frete * 0.9;
@@ -430,18 +434,22 @@
                 document.getElementById('active-cliente-nome').innerText = data.nome_destinatario;
                 document.getElementById('active-valor').innerText = liq.toFixed(2);
                 
-                const btnIni = document.getElementById('btn-iniciar');
-                const btnFim = document.getElementById('btn-finalizar');
+                // ESCONDE TODOS OS BOTÕES DE AÇÃO
+                const btns = ['btn-cheguei', 'btn-iniciar', 'btn-finalizar'];
+                btns.forEach(id => document.getElementById(id).classList.add('hidden-force'));
+                
                 const statusTxt = document.getElementById('active-status-text');
 
+                // LÓGICA DE STATUS 99
                 if(data.status === 'pendente') {
-                    statusTxt.innerText = "COLETAR";
-                    btnIni.classList.remove('hidden-force');
-                    btnFim.classList.add('hidden-force');
-                } else {
-                    statusTxt.innerText = "ENTREGAR";
-                    btnIni.classList.add('hidden-force');
-                    btnFim.classList.remove('hidden-force');
+                    statusTxt.innerText = "INDO ATÉ A LOJA";
+                    document.getElementById('btn-cheguei').classList.remove('hidden-force');
+                } else if(data.status === 'aguardando') {
+                    statusTxt.innerText = "AGUARDANDO NA LOJA";
+                    document.getElementById('btn-iniciar').classList.remove('hidden-force');
+                } else if(data.status === 'em_rota') {
+                    statusTxt.innerText = "EM ROTA DE ENTREGA";
+                    document.getElementById('btn-finalizar').classList.remove('hidden-force');
                 }
                 navApp('active');
             } else { 
@@ -544,6 +552,20 @@
         function calcIdadePerfil() { const n = $('#perf-nasc').val(); if(n) $('#perf-idade').val((new Date().getFullYear()-new Date(n).getFullYear())+' anos'); }
         function toggleIntegral(){ const i=$('#disp-integral').is(':checked'); $('.chk-item input').not('#disp-integral, #disp-extra').prop('checked', i).prop('disabled', i); }
         async function aceitar(id) { await sbClient.from('pedidos').update({status:'pendente', entregador_id:userSession.user.id}).eq('id',id); checkActive(); }
+        
+        // --- NOVAS FUNÇÕES DO FLUXO 99 ---
+        async function chegueiLoja() {
+            if(!confirm("Você chegou no estabelecimento?")) return;
+            await sbClient.from('pedidos').update({status:'aguardando'}).eq('id',pedidoAtual.id);
+            checkActive();
+        }
+        
+        async function iniciarEntrega() { 
+            if(!confirm("Pedido coletado? Iniciar rota?")) return; 
+            await sbClient.from('pedidos').update({status:'em_rota'}).eq('id',pedidoAtual.id); 
+            checkActive(); 
+        }
+        
         async function cancelar() { if(confirm("Cancelar?")) { await sbClient.from('pedidos').update({status:'solicitado',entregador_id:null}).eq('id',pedidoAtual.id); checkActive(); } }
         async function loadExtrato() { const l = document.getElementById('history-list'); l.innerHTML = '<div class="text-center opacity-50">Carregando...</div>'; const {data} = await sbClient.from('pedidos').select('*').eq('entregador_id',userSession.user.id).eq('status','concluido').order('created_at',{ascending:false}).limit(20); l.innerHTML = ''; data?.forEach(p => { const liq = p.valor_frete * 0.9; l.innerHTML += `<div class="dark-card p-3 flex justify-between items-center mb-2"><div><p class="text-sm font-bold text-white">${p.destino}</p><p class="text-[10px] text-gray-500">${new Date(p.created_at).toLocaleDateString()}</p></div><p class="text-green-400 font-bold">+ R$ ${liq.toFixed(2)}</p></div>`; }); }
         async function uploadFoto() { const f=$('#upload-foto')[0].files[0]; if(f){ const n=`${userSession.user.id}/${Date.now()}.jpg`; await sbClient.storage.from('avatars').upload(n,f); const{data}=sbClient.storage.from('avatars').getPublicUrl(n); await sbClient.from('motoboys').update({foto_url:data.publicUrl}).eq('id',userSession.user.id); $('#menu-user-foto').attr('src',data.publicUrl); toast("Foto Ok!",'success'); } }
