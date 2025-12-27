@@ -86,7 +86,7 @@
     <div id="layer-splash" class="layer active">
         <div class="mb-6 text-yellow-500 text-6xl animate-bounce"><i class="fas fa-motorcycle"></i></div>
         <div class="w-8 h-8 border-4 border-gray-700 border-t-yellow-500 rounded-full animate-spin"></div>
-        <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Carregando...</p>
+        <p class="text-gray-500 text-xs mt-4 font-bold tracking-widest uppercase">Iniciando...</p>
     </div>
 
     <div id="layer-guest" class="layer">
@@ -156,6 +156,7 @@
     </div>
 
     <div id="layer-app" class="layer bg-[#111827]">
+        
         <div class="map-bg"></div>
 
         <div class="floating-header">
@@ -270,33 +271,29 @@
             document.getElementById('layer-' + layerName).classList.add('active');
         }
 
-        // --- INICIALIZAÇÃO E GESTÃO DE SESSÃO ---
+        // --- INICIALIZAÇÃO SEGURA ---
         (async function init() {
             try {
                 sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 
-                // Fallback para evitar Splash eterno
-                const fallback = setTimeout(() => {
-                    if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest');
-                }, 3000);
+                // Fallback de segurança (Se travar no splash por 3s, força login)
+                setTimeout(() => { if (document.getElementById('layer-splash').classList.contains('active')) setLayer('guest'); }, 3000);
 
                 const { data } = await sbClient.auth.getSession();
                 
-                // Se tiver sessão, carrega o perfil. Se não, vai pro login.
                 if (data.session) {
                     userSession = data.session;
                     await loadPerfil();
                 } else {
                     setLayer('guest');
                 }
-                clearTimeout(fallback); // Cancela o fallback se carregou
             } catch (e) {
-                console.error("Erro init:", e);
+                console.error("Init Error:", e);
                 setLayer('guest');
             }
         })();
 
-        // --- NAVEGAÇÃO ---
+        // --- NAVEGAÇÃO INTERNA ---
         function toggleGuestView(view) {
             document.getElementById('view-login').classList.toggle('hidden-force', view !== 'login');
             document.getElementById('view-cadastro').classList.toggle('hidden-force', view !== 'cadastro');
@@ -325,7 +322,6 @@
             const { data, error } = await sbClient.auth.signInWithPassword({ email:e, password:p });
             if (error) { toast("Erro no login", 'error'); $('#btn-login').text('ENTRAR NA CONTA'); } 
             else {
-                // SUCESSO: Carrega diretamente sem recarregar a página
                 userSession = data.session;
                 await loadPerfil(); 
             }
@@ -334,7 +330,7 @@
         async function logout() {
             if(confirm("Sair do app?")) {
                 await sbClient.auth.signOut();
-                location.reload(); // Recarrega para limpar memória
+                location.reload(); 
             }
         }
 
@@ -342,7 +338,6 @@
         async function loadPerfil() {
             const { data } = await sbClient.from('motoboys').select('*').eq('id', userSession.user.id).single();
             if(!data) { 
-                // Se o usuário autenticou mas não tem perfil (erro grave), desloga
                 await sbClient.auth.signOut(); 
                 setLayer('guest'); 
                 return; 
@@ -353,11 +348,12 @@
                 return;
             }
 
-            setLayer('app'); // Só agora mostra o app
+            setLayer('app'); // MOSTRA O APP
             preencherPerfil(data);
             
             document.getElementById('menu-user-name').innerText = data.nome || 'Motoboy';
             document.getElementById('menu-user-id').innerText = `ID: ${data.id.split('-')[0]}`;
+            document.getElementById('header-id-user').innerText = `ID: ${data.id.split('-')[0]}`;
             if(data.foto_url) document.getElementById('menu-user-foto').src = data.foto_url;
 
             sbClient.from('app_config').select('som_alerta_url').single().then(({data}) => { 
@@ -385,7 +381,7 @@
 
         function toggleSaldo() { isSaldoVisible = !isSaldoVisible; updateSaldoUI(); }
 
-        // --- APP FUNCIONAL ---
+        // --- RADAR E AÇÕES ---
         function toggleRadar() {
             isOnline = !isOnline;
             const btn = document.getElementById('btn-power');
@@ -472,7 +468,7 @@
             }
         }
 
-        // --- UTILS ---
+        // --- MODALS & UTILS ---
         function openModal(id, action=null) {
             currentAction = action;
             document.getElementById('modal-'+id).classList.add('active');
